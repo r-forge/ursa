@@ -1,0 +1,105 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: Raster to vector (polygon) conversion.</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="file:///C:/Software/R/doc/html/R.css" />
+</head><body>
+
+<table width="100%" summary="page for polygonize"><tr><td>polygonize</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>
+Raster to vector (polygon) conversion.
+</h2>
+
+<h3>Description</h3>
+
+<p>Representing each raster cell as a polygon. In comparison to common GIS raster to vector conversion, where neighbor cells with the same value are combined to the single polygon, the number of output polygons is equal to number of non-<code>NA</code> values.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre>
+polygonize(obj, fname, verbose = TRUE, ...)
+</pre>
+
+
+<h3>Arguments</h3>
+
+<table summary="R argblock">
+<tr valign="top"><td><code>obj</code></td>
+<td>
+
+<p>Object of class <code>rmapRaster</code>.
+</p>
+</td></tr>
+<tr valign="top"><td><code>fname</code></td>
+<td>
+
+<p>Missing or character. If specified, then ESRI Shapefile is created. Default is <a href="../../base/html/missing.html">missing</a>.
+</p>
+</td></tr>
+<tr valign="top"><td><code>verbose</code></td>
+<td>
+
+<p>Logical. If <code>TRUE</code> then convertion is attended by progress bar. Default is <code>TRUE</code>.
+</p>
+</td></tr>
+<tr valign="top"><td><code>...</code></td>
+<td>
+
+<p>Additional arguments, which are passed to internal function for writting ESRI Shapefile.
+</p>
+
+<dl>
+<dt><code>compress</code></dt><dd><p>Logical. Should output ESRI Shapefile files be compressed by zip? Default is <code>FALSE</code>.</p>
+</dd>
+</dl>
+
+</td></tr>
+</table>
+
+
+<h3>Details</h3>
+
+<p>Some GIS software (e.g., QGIS) has broad tools for display vector data. Excepting choroplets, it is assumed that visualization of each cell separately is more attractive than displaying of polygons with different forms, which are produced, for example, by GDAL convertion utillity <a href="http://www.gdal.org/gdal_polygonize.html">gdal_polygonize.py</a>.
+</p>
+<p><code>polyigonize</code> uses <a href="../../sp/html/SpatialPolygons.html">&quot;Spatial Polygons&quot;</a> functions from <span class="pkg">sp</span> package. ESRI Shapefile is created by <code><a href="../../rgdal/html/writeOGR.html">writeOGR</a></code> function from <span class="pkg">rgdal</span> package.
+</p>
+
+
+<h3>Value</h3>
+
+<p>If missing <code>fname</code>, then object of class &quot;SpatialPolygonsDataFrame&quot; (package <span class="pkg">sp</span>).
+<br />
+If <code>fname</code> is specified, then <code>NULL</code>.
+</p>
+
+
+<h3>Note</h3>
+
+<p>Implementation is very slow even for moderate image size. Use progress bar (<code>verbose=TRUE</code>) to control this process.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Nikita Platonov <a href="mailto:platonov@sevin.ru">platonov@sevin.ru</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre>
+session.grid(NULL)
+a &lt;- rmap.dummy(mul=1/16)
+a &lt;- a[a&gt;100]
+print(a)
+print(band.mean(a))
+b &lt;- polygonize(a)
+print(apply(b@data,2,mean,na.rm=TRUE))
+print(with(rmap.grid(a),array(c(minx,miny,maxx,maxy),dim=c(2,2)
+                             ,dimnames=list(c("x","y"),c("min","max")))))
+print(b@bbox)
+</pre>
+
+
+</body></html>

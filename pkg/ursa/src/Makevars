@@ -1,0 +1,4 @@
+# BINPREF ?= $(SOFTWARE)/Rtools/mingw_32/bin/
+# LOCAL_SOFT = .
+# LOCAL_CPPFLAGS = 
+# LOCAL_LIBS = 

@@ -1,0 +1,15 @@
+image - matrix
+
+raster  - image with georeference
+
+border - extarnal part of image
+
+margin - outside of the image
+
+graticule - grid
+
+colortable rmap.colortable ctable rmap.ctable
+
+rmap.crs - rmap.grid
+session.crs - rmap.crs
+session.grid - rmap.grid

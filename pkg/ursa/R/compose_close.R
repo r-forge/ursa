@@ -1,0 +1,160 @@
+'compose_close' <- function(...) {
+   if (.skipPlot(FALSE))
+      return(invisible(NULL))
+   arglist <- list(...)
+   kind <- .getPrm(arglist,name="(^$|crop|kind)",valid=c("crop","crop2","nocrop"))
+   border <- .getPrm(arglist,name="(border|frame)",default=5L)
+   bpp <- .getPrm(arglist,name="bpp",valid=c(8L,24L)
+              ,default=switch(getOption("ursaPngDevice"),windows=8L,cairo=24L))
+   execute <- .getPrm(arglist,name="(execute|view|open)",default=TRUE)
+   verbose <- .getPrm(arglist,name="verb(ose)*",kwd="close",default=FALSE)
+  # wait_new <- .getPrm(arglist,name="wait",default=)
+   .compose_close(kind=kind,border=border,bpp=bpp,execute=execute,verbose=verbose)
+}
+'.compose_close' <- function(kind=c("crop2","crop","nocrop")
+                            ,border=5,bpp=0,execute=TRUE,verbose=FALSE){
+   if (verbose)
+      str(list(kind=kind,border=border,bpp=bpp,execute=execute,verbose=verbose))
+   delafter <- getOption("ursaPngDelafter")
+   fileout <- getOption("ursaPngFileout")
+   if (!(bpp %in% c(8,24)))
+      bpp <- switch(getOption("ursaPngDevice"),windows=8,cairo=24)
+   on.exit({
+      op <- options()
+      if (length(ind <- .grep("^ursaPng.+",names(op))))
+         options(lapply(op[ind],function(x) NULL))
+      NULL
+   })
+   syswait <- FALSE
+   if ((FALSE)&&(execute)) { ## patch for "shell" 
+      con <- showConnections(all=TRUE)
+      ind <- which(!is.na(match(con[,"class"],"file")))
+      if (length(ind)) {
+         con <- con[ind,,drop=FALSE]
+         unable <- grep("\\.unpacked(.*)\\~$",con[,"description"])
+         if (length(unable)) {
+            opW <- options(warn=1)
+            w <- paste0("Detected opened connection(s): "
+                       ,paste(dQuote(basename(con[unable,"description"]))
+                             ,collapse=", ")
+                       ,".")
+            warning(w)
+            w <- "Script is suspended until close of image viewer."
+            message(w)
+            options(opW)
+            syswait <- TRUE
+         }
+      }
+   }
+   if (getOption("ursaPngFigure")==0L) ## plot layout only
+   {
+      if (TRUE) {## introduced 20150916 to deprecate 'dev' arg in compose_open()
+         mosaic <- getOption("ursaPngLayout")
+        # print(mosaic)
+        # print(fileout)
+         layout.show(max(mosaic$layout))
+         grDevices::dev.off()
+         if (execute) {
+            if (interactive()) {
+               op <- par(mar=c(0,0,0,0))
+               plot(grDevices::as.raster(png::readPNG(fileout)))
+               par(op)
+            }
+            else {
+               if (.Platform$OS.type=="windows")
+                  system2("open",list(fileout),wait=!.isRscript()) ## wait=syswait
+               else
+                  stop("How to implement file association in Unix-like systems?")
+               }
+            }
+         if (delafter)
+         {
+            if (execute) {
+               wait <- getOption("ursaPngWaitBeforeRemove")
+               Sys.sleep(wait)
+            }
+            file.remove(fileout)
+         }
+      }
+      else { ## original
+         graphics.off()
+         if ((delafter)&&(file.exists(fileout)))
+            file.remove(fileout)
+         }
+      return(invisible(NULL))
+   }
+   if ((getOption("ursaPngBox"))&&
+               (getOption("ursaPngFigure")==getOption("ursaPngLayout")$image))
+      panel_box()
+   grDevices::dev.off()
+  # kind <- match.arg(kind)
+   do.call(paste0(".",kind),list(fileout,border,verbose))
+   n <- 999L
+   if (!(bpp %in% c(8,24))) {
+      requireNamespace("png")
+      x <- png::readPNG(fileout,native=TRUE,info=FALSE)
+      if (verbose)
+         .elapsedTime("uniqueColor:start")
+      n <- length(unique(c(x)))
+      if (verbose)
+         .elapsedTime(paste0("uniqueColor:finish (",n,")"))
+      bpp <- ifelse(n<256,8,24)
+   }
+   if ((!FALSE)&&(bpp==8)) { ## not for package
+      cmd <- paste("i_view32",fileout,"/bpp=8",paste0("/convert=",fileout))
+      if (verbose)
+         message(cmd)
+      system(cmd)
+   }
+   else if ((bpp==-8)&&(nchar(im <- Sys.getenv("R_IMAGEMAGICK"))>0)&&(file.exists(im))) {
+      cmd <- paste(im,fileout,ifelse(n>=255,"-colors 255","")
+                  ,paste0("png8:",fileout))
+      if (verbose)
+         message(cmd)
+      system(cmd)
+   }
+   if (execute)
+   {
+      if (interactive()) {
+         message(fileout)
+         op <- par(mar=c(0,0,0,0))
+         if (TRUE)
+            plot(grDevices::as.raster(png::readPNG(fileout)))
+         else { ## failed asp=1
+            img <- png::readPNG(fileout,native=TRUE)
+            dima <- dim(img)
+            plot(0,0,type="n",axes=FALSE,xlim=c(0,dima[1]),ylim=c(0,dima[2]),asp=1,xlab="",ylab="")
+            rasterImage(img,0,0,dima[1],dima[2])
+         }
+         par(op)
+      }
+      else {
+         if (.Platform$OS.type=="windows") {
+            system2("open",list(fileout),wait=TRUE) #!.isRscript()) ## wait=syswait
+         }
+         else
+            stop("How to implement file association in Unix-like systems?")
+     }
+      wait <- getOption("ursaPngWaitBeforeRemove")
+      if (delafter)
+         Sys.sleep(wait)
+   }
+   if (delafter) {
+      if (FALSE) {
+         fpath <- dirname(fileout)
+         isTempDir <- tempdir()==normalizePath(fpath)
+         file.remove(fileout)
+         if (isTempDir) {
+            a <- .dir(path=fpath)
+            print(fpath)
+            if (!length(a)) {
+               res <- unlink(fpath,force=TRUE)
+               print(res)
+            }
+         }
+      }
+      else
+         file.remove(fileout)
+   }
+   invisible(NULL)
+}
