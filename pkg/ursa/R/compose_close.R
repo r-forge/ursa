@@ -101,18 +101,21 @@
          .elapsedTime(paste0("uniqueColor:finish (",n,")"))
       bpp <- ifelse(n<256,8,24)
    }
-   if ((!FALSE)&&(bpp==8)) { ## not for package
-      cmd <- paste("i_view32",fileout,"/bpp=8",paste0("/convert=",fileout))
-      if (verbose)
-         message(cmd)
-      system(cmd)
-   }
-   else if ((bpp==-8)&&(nchar(im <- Sys.getenv("R_IMAGEMAGICK"))>0)&&(file.exists(im))) {
-      cmd <- paste(im,fileout,ifelse(n>=255,"-colors 255","")
-                  ,paste0("png8:",fileout))
-      if (verbose)
-         message(cmd)
-      system(cmd)
+   if (bpp==8) {
+      if (nchar(Sys.which("i_view32"))) {
+         cmd <- paste("i_view32",fileout,"/bpp=8",paste0("/convert=",fileout))
+      }
+      else if ((nchar(im <- Sys.getenv("R_IMAGEMAGICK"))>0)&&(file.exists(im))) {
+         cmd <- paste(im,fileout,ifelse(n>=255,"-colors 255","")
+                     ,paste0("png8:",fileout))
+      } ## else if... (other ways to force to bpp=8
+      else
+         cmd <- ""
+      if (nchar(cmd)) {
+         if (verbose)
+            message(cmd)
+         system(cmd)
+      }
    }
    if (execute)
    {

@@ -34,7 +34,6 @@
       light <- light/255
    }
    value <- unname(sort(value))
-   print(value)
    if (missing(n))
       n <- if (length(value)) length(value) else 256L
    k <- round(1/(exp(n^0.5)),6)

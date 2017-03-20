@@ -129,7 +129,7 @@ if (exam3 <- TRUE) {
       display(a2)
       session_grid(a)
    }
-   compose_open(device="windows")
+   compose_open() ## device="windows")
    panel_new()
    ct1 <- panel_raster(a,ramp=FALSE,interval=TRUE)
    ct2 <- panel_contour(a,"label")

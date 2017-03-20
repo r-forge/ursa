@@ -35,7 +35,6 @@
 
 '.as.raster2' <- function(obj,...) { # quicker
    max <- .getPrm(list(...),name=".*",default=255)
-   print(max)
    verbose <- FALSE
    nb <- nband(obj)
    if (verbose)

@@ -4,5 +4,5 @@ invisible({
    set.seed(500)
    a <- ursa_dummy(nband=3,min=0,max=255)
    a <- ursa_stack(a)
-   display_rgb(a,device="windows",decor=FALSE)
+   display_rgb(a,decor=FALSE) ## ,device="windows"
 })
