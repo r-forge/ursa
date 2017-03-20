@@ -1,4 +1,4 @@
-'ursaProgressBar' <- function(kind=c("tk","win","txt")
+'ursaProgressBar' <- function(kind=c("tk","txt")
                            ,title=basename(strsplit(commandArgs(FALSE)[4],"=")[[1]][2])
                            ,label=""
                            ,min=0,max=1,initial=min,width=NA,style=1) {
@@ -16,12 +16,12 @@
       pb <- tcltk::tkProgressBar(title=title,label=label,min=min,max=max
                          ,initial=initial,width=width)
    }
-   else if ((.Platform$OS.type=="windows")&&(kind=="win")) {
-      if (is.na(width))
-         width <- 300
-      pb <- utils::winProgressBar(title=title,label=label,min=min,max=max
-                          ,initial=initial,width=width)
-   }
+   ##~ else if ((.Platform$OS.type=="windows")&&(kind=="win")) {
+      ##~ if (is.na(width))
+         ##~ width <- 300
+      ##~ pb <- utils::winProgressBar(title=title,label=label,min=min,max=max
+                          ##~ ,initial=initial,width=width)
+   ##~ }
    else
       pb <- utils::txtProgressBar(title=title,label=label,min=min,max=max
                           ,initial=initial,width=width,style=style)
@@ -111,7 +111,7 @@
    }
    if (cl=="tkProgressBar")
       return(tcltk::setTkProgressBar(pb,value,title=title,label=label))
-   else if ((cl=="winProgressBar")&&(.Platform$OS.type=="windows"))
-      return(utils::setWinProgressBar(pb,value,label=label))
+   ##~ else if ((cl=="winProgressBar")&&(.Platform$OS.type=="windows"))
+      ##~ return(utils::setWinProgressBar(pb,value,label=label))
    utils::setTxtProgressBar(pb,value,title=title,label=label)
 }

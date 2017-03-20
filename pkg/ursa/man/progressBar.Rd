@@ -8,7 +8,7 @@ Progress bar
 Informative progress bars with dispaying elapsed and remained time.
 }
 \usage{
-ursaProgressBar(kind = c("tk", "win", "txt"),
+ursaProgressBar(kind = c("tk", "txt"),
                 title = basename(strsplit(commandArgs(FALSE)[4],"=")[[1]][2]),
                 label = "", min = 0, max = 1, initial = min, width = NA, style = 1)
 
@@ -49,7 +49,11 @@ Character. Type or progress bar.
 }
 }
 \details{
-Wrapper to one of \code{\link[utils:txtProgressBar]{txtProgressBar}}, \code{\link[utils:winProgressBar]{winProgressBar}}, \code{\link[tcltk:tkProgressBar]{tkProgressBar}}. 
+Wrapper to one of
+\code{\link[utils:txtProgressBar]{txtProgressBar}},
+%%~ \code{\link[utils:winProgressBar]{winProgressBar}},
+\code{\link[tcltk:tkProgressBar]{tkProgressBar}}
+. 
 
 Method \code{close(con,...)} depends on class of progress bar.
 
@@ -76,9 +80,7 @@ Function name in style \emph{camelCase} for consistence with other progress bar 
 
 \seealso{
 \code{\link[utils:txtProgressBar]{txtProgressBar}}
-
-\code{\link[utils:winProgressBar]{winProgressBar}}
-
+%%~ \code{\link[utils:winProgressBar]{winProgressBar}}
 \code{\link[tcltk:tkProgressBar]{tkProgressBar}}
 
 }

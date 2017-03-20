@@ -700,7 +700,7 @@ void readBsqLineInteger(char **fname,int *dim,int *index,int *nindex,int *dtype
    FILE *Fin;
    Fin=fopen(fname[0],"rb");
    if (Fin==NULL)
-      fprintf(stderr,"%s not found\n",fname[0]);
+      REprintf("%s not found\n",fname[0]);
    int datasize=0;
    if ((datatype==1)||(datatype==11))
       datasize=1;
@@ -789,7 +789,7 @@ void readBsqLineDouble(char **fname,int *dim,int *index,int *nindex,int *dtype
    FILE *Fin;
    Fin=fopen(fname[0],"rb");
    if (Fin==NULL)
-      fprintf(stderr,"%s not found\n",fname[0]);
+      REprintf("%s not found\n",fname[0]);
    int datasize=0;
    if (datatype==4)
       datasize=4;
@@ -863,7 +863,7 @@ void readBsqBandInteger(char **fname,int *dim,int *index,int *nindex,int *dtype
    FILE *Fin;
    Fin=fopen(fname[0],"rb");
    if (Fin==NULL)
-      fprintf(stderr,"%s not found\n",fname[0]);
+      REprintf("%s not found\n",fname[0]);
    int datasize=0;
    if ((datatype==1)||(datatype==11))
       datasize=1;
@@ -955,7 +955,7 @@ void readBsqBandDouble(char **fname,int *dim,int *index,int *nindex,int *dtype
    FILE *Fin;
    Fin=fopen(fname[0],"rb");
    if (Fin==NULL)
-      fprintf(stderr,"%s not found\n",fname[0]);
+      REprintf("%s not found\n",fname[0]);
    int datasize=0;
    if (datatype==4)
       datasize=4;
@@ -1032,7 +1032,7 @@ void readBilLineInteger(char **fname,int *dim,int *index,int *nindex,int *dtype
    FILE *Fin;
    Fin=fopen(fname[0],"rb");
    if (Fin==NULL)
-      fprintf(stderr,"%s not found\n",fname[0]);
+      REprintf("%s not found\n",fname[0]);
    int datasize=0;
    if ((datatype==1)||(datatype==11))
       datasize=1;
@@ -1122,7 +1122,7 @@ void readBilLineInteger2(char **fname,int *dim,int *index,int *nindex,int *dtype
    FILE *Fin;
    Fin=fopen(fname[0],"rb");
    if (Fin==NULL)
-      fprintf(stderr,"%s not found\n",fname[0]);
+      REprintf("%s not found\n",fname[0]);
    int datasize=0;
    if ((datatype==1)||(datatype==11))
       datasize=1;
@@ -1216,7 +1216,7 @@ void readBilLineDouble(char **fname,int *dim,int *index,int *nindex,int *dtype
    FILE *Fin;
    Fin=fopen(fname[0],"rb");
    if (Fin==NULL)
-      fprintf(stderr,"%s not found\n",fname[0]);
+      REprintf("%s not found\n",fname[0]);
    int datasize=0;
    if (datatype==4)
       datasize=4;
@@ -1290,7 +1290,7 @@ void readBilLineDouble2(char **fname,int *dim,int *index,int *nindex,int *dtype
    FILE *Fin;
    Fin=fopen(fname[0],"rb");
    if (Fin==NULL)
-      fprintf(stderr,"%s not found\n",fname[0]);
+      REprintf("%s not found\n",fname[0]);
    int datasize=0;
    if (datatype==4)
       datasize=4;
@@ -1369,7 +1369,7 @@ void readBilBandInteger(char **fname,int *dim,int *index,int *nindex,int *dtype
    FILE *Fin;
    Fin=fopen(fname[0],"rb");
    if (Fin==NULL)
-      fprintf(stderr,"%s not found\n",fname[0]);
+      REprintf("%s not found\n",fname[0]);
    int datasize=0;
    if ((datatype==1)||(datatype==11))
       datasize=1;
@@ -1460,7 +1460,7 @@ void readBilBandDouble(char **fname,int *dim,int *index,int *nindex,int *dtype
    FILE *Fin;
    Fin=fopen(fname[0],"rb");
    if (Fin==NULL)
-      fprintf(stderr,"%s not found\n",fname[0]);
+      REprintf("%s not found\n",fname[0]);
    int datasize=0;
    if (datatype==4)
       datasize=4;
@@ -1536,7 +1536,7 @@ void writeBilBandInteger(char **fname,int *value,int *dim,int *index
    FILE *Fout;
    Fout=fopen(fname[0],"rb+");
    if (Fout==NULL)
-      fprintf(stderr,"%s not found\n",fname[0]);
+      REprintf("%s not found\n",fname[0]);
    int datasize=0;
    if ((datatype==1)||(datatype==11))
       datasize=1;
@@ -1603,7 +1603,7 @@ void writeBilBandDouble(char **fname,double *value,int *dim,int *index
    FILE *Fout;
    Fout=fopen(fname[0],"rb+");
    if (Fout==NULL)
-      fprintf(stderr,"%s not found\n",fname[0]);
+      REprintf("%s not found\n",fname[0]);
    int datasize=0;
    if (datatype==4)
       datasize=4;

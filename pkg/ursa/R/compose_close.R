@@ -64,9 +64,10 @@
                if (.Platform$OS.type=="windows")
                   system2("open",list(fileout),wait=!.isRscript()) ## wait=syswait
                else
-                  stop("How to implement file association in Unix-like systems?")
-               }
+                  system2("open",list(fileout),wait=!.isRscript()) ## wait=syswait
+                 # stop("How to implement file association in Unix-like systems?")
             }
+         }
          if (delafter)
          {
             if (execute) {
@@ -132,9 +133,11 @@
          if (.Platform$OS.type=="windows") {
             system2("open",list(fileout),wait=TRUE) #!.isRscript()) ## wait=syswait
          }
-         else
-            stop("How to implement file association in Unix-like systems?")
-     }
+         else {
+            system2("open",list(fileout),wait=TRUE) #!.isRscript()) ## wait=syswait
+           # stop("How to implement file association in Unix-like systems?")
+         }
+      }
       wait <- getOption("ursaPngWaitBeforeRemove")
       if (delafter)
          Sys.sleep(wait)
