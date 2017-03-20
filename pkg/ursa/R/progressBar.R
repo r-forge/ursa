@@ -16,7 +16,7 @@
       pb <- tcltk::tkProgressBar(title=title,label=label,min=min,max=max
                          ,initial=initial,width=width)
    }
-   else if (kind=="win") {
+   else if ((.Platform$OS.type=="windows")&&(kind=="win")) {
       if (is.na(width))
          width <- 300
       pb <- utils::winProgressBar(title=title,label=label,min=min,max=max
@@ -111,7 +111,7 @@
    }
    if (cl=="tkProgressBar")
       return(tcltk::setTkProgressBar(pb,value,title=title,label=label))
-   else if (cl=="winProgressBar")
+   else if ((cl=="winProgressBar")&&(.Platform$OS.type=="windows"))
       return(utils::setWinProgressBar(pb,value,label=label))
    utils::setTxtProgressBar(pb,value,title=title,label=label)
 }

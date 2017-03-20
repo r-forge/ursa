@@ -9,9 +9,8 @@ importFrom("graphics", "abline", "axTicks", "axis", "contour",
            "par", "points", "segments")
 importFrom("stats", "aggregate", "density", "loess", "median", "pf",
            "predict", "runif", "sd", "var", "na.omit")
-importFrom("utils", "str", "download.file", "head", "methods", "object.size",
-           "setTxtProgressBar", "setWinProgressBar", "tail",
-           "txtProgressBar", "unzip", "winProgressBar")
+importFrom("utils", "str", "download.file", "head", "tail", "methods",
+           "object.size", "unzip")
 
 exportPattern("^([A-Za-z]|\\[|\\.on).+")
 

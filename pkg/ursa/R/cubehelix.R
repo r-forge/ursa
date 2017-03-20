@@ -34,6 +34,7 @@
       light <- light/255
    }
    value <- unname(sort(value))
+   print(value)
    if (missing(n))
       n <- if (length(value)) length(value) else 256L
    k <- round(1/(exp(n^0.5)),6)
@@ -45,7 +46,7 @@
          divergent <- FALSE
       else {
          eps <- min(abs(value))
-         eps <- 1e-15 #ifelse(eps<1e-11,1e-11,0)
+         eps <- 1e-14 #ifelse(eps<1e-11,1e-11,0)
          npos <- length(which(value>(-eps)))
          nneg <- length(which(value<(+eps)))
          nzer1 <- length(which(abs(value)<eps))
@@ -69,8 +70,8 @@
             }
             rest <- n-max(npos,nneg)#-as.integer(isInterval)
             n <- n-rest
-           # print(c(pos=npos,neg=nneg,z1=nzer1,z2=nzer2,n=n,rest=rest,indZ=indZ
-           #        ,int=isInterval,cat=isCategory))
+            print(c(pos=npos,neg=nneg,z1=nzer1,z2=nzer2,n=n,rest=rest,indZ=indZ
+                   ,int=isInterval,cat=isCategory))
          }
       }
    }
@@ -157,7 +158,7 @@
          out <- out[,-toOmit]
    }
    out <- pmin(pmax(out, 0), 1)
-   out <- apply(out, 2, function(x) rgb(x[1], x[2], x[3]))
+   out <- apply(out,2,function(x) rgb(x[1],x[2],x[3]))
    if ((FALSE)&&((light-dark)/n<0.005))
       out <- sample(out)
   # if ((length(value))&&(nneg>npos))

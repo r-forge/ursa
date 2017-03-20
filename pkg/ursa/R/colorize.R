@@ -933,10 +933,12 @@
             }
             else {
                argname <- names(as.list(args(pal)))
-               if ("value" %in% argname)
+               if ("value" %in% argname) {
                   col <- pal(n,value=unname(value))
-               else
+               }
+               else {
                   col <- pal(n)
+               }
             }
          }
          else if (is.character(pal))
