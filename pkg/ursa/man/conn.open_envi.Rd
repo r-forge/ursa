@@ -30,11 +30,11 @@ If ENVI binary file is compressed and you have not to use ENVI values then put \
 }
   \item{\dots}{
 %%     ~~Describe \code{\dots} here~~
-If input file does not exists then these additional arguments will be passed to \code{\link[ursa:conn.any.create]{create_envi}} function.
+If input file does not exists then these additional arguments will be passed to \code{\link[ursa:conn.create_any]{create_envi}} function.
 }
 }
 \details{
-\code{open_envi} try to find ENVI files (binary and header) and open them. If unsuccessful then function passes \code{\dots}-arguments to \code{\link[ursa:conn.any.create]{create_envi}} function
+\code{open_envi} try to find ENVI files (binary and header) and open them. If unsuccessful then function passes \code{\dots}-arguments to \code{\link[ursa:conn.create_any]{create_envi}} function
 
 %%  ~~ If necessary, more details than the description above ~~
 }
@@ -58,7 +58,7 @@ If input file does not exists then these additional arguments will be passed to 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-\code{\link[ursa:classRaster_close]{close}}, \code{\link[ursa:conn.any.create]{create_envi}}
+\code{\link[ursa:classRaster_close]{close}}, \code{\link[ursa:conn.create_any]{create_envi}}
 }
 
 \examples{

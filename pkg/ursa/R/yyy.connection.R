@@ -857,7 +857,7 @@
           (!("package:rgdal" %in% search()))) {
          wktout <- paste0(.maketmp(),".wkt~")
         # shell(paste("gdalsrsinfo -o wkt",paste0("\"",proj4,"\""),"1>",wktout))
-        # 20170319 dQuote() returns  “” in interactive(); GDAL doesnt understand “”
+        # 20170319 dQuote() returns non-symmetrical quotes in interactive() 
          system2("gdalsrsinfo",list("-o wkt",paste0("\"",proj4,"\""))
                 ,stdout=wktout)
          wkt <- readLines(wktout,warn=FALSE)

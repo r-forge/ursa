@@ -15,7 +15,7 @@ write_envi(obj, ...)
 Object of class \code{ursaRaster}.
 }
   \item{\dots}{
-Arguments, which are passed to \code{\link[ursa:conn.any.create]{create_envi}}. Usually, only file name (character) is required. If \link[base]{missing}, then occasional name is assigned.
+Arguments, which are passed to \code{\link[ursa:conn.create_any]{create_envi}}. Usually, only file name (character) is required. If \link[base]{missing}, then occasional name is assigned.
 }
 }
 \details{
@@ -43,7 +43,7 @@ Nikita Platonov \email{platonov@sevin.ru}
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-\code{\link[ursa:conn.any.create]{create_envi}}, \emph{\link[ursa:classRaster.Replace]{Replace}} method \code{\link[ursa:classRaster.Replace]{[<-}} for \code{ursaRaster} object, \code{\link[ursa:classRaster_close]{envi.close}} (\code{\link[ursa:classRaster_close]{close}} for \code{ursaRaster} object).
+\code{\link[ursa:conn.create_any]{create_envi}}, \emph{\link[ursa:classRaster.Replace]{Replace}} method \code{\link[ursa:classRaster.Replace]{[<-}} for \code{ursaRaster} object, \code{\link[ursa:classRaster_close]{envi.close}} (\code{\link[ursa:classRaster_close]{close}} for \code{ursaRaster} object).
 
 \code{\link[ursa:conn.write_gdal]{write_gdal}(...,driver="ENVI")} uses GDAL (\pkg{rgdal}) for writting \code{ursaRaster} object to the ENVI .hdr Labelled Raster file.
 

@@ -18,7 +18,7 @@ ursa_new(...)
          \item{\code{nband}}{Positive integer. Number of bands. Default is \code{1L}.}
          \item{\code{bandname}}{Character. Band names. Default is \code{NULL}. If specified, then \code{nband} is ignored, and the number of bands is equal to length of \code{bandname} character vector.}
          \item{\code{ignorevalue}}{Integer or numeric. Value in ENVI binary file, which is iterpetted as \code{NA} in \R.}
-         \item{\code{datatype}}{Positive integer \code{c(1L, 2L, 3L, 4L, 5L, 11L, 12L, 13L)} or character. Data type (integer, floating-point) and byte length. See details for argument \code{datatype} of function \code{\link[ursa:conn.any.create]{create_envi}}. Required for writting raster to ENVI binart file. Optional for rasters in memory. Default is \code{NA}: data type is defined internally.}
+         \item{\code{datatype}}{Positive integer \code{c(1L, 2L, 3L, 4L, 5L, 11L, 12L, 13L)} or character. Data type (integer, floating-point) and byte length. See details for argument \code{datatype} of function \code{\link[ursa:conn.create_any]{create_envi}}. Required for writting raster to ENVI binart file. Optional for rasters in memory. Default is \code{NA}: data type is defined internally.}
          \item{\code{colortable}}{Object of class \code{\link[ursa:classColorTable]{ursaColorTable}}. Color table for raster. Default is \code{NULL}: color table is absent}
          \item{\code{permute}}{Logical. Should dimensions of input matrix be changed. Default is \code{FALSE}.}
          \item{\code{flip}}{Logical. Vertical flip for input matrix. Default is \code{FALSE}: no flip.}
@@ -54,7 +54,7 @@ Nikita Platonov \email{platonov@sevin.ru}
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-\code{\link[ursa:ursa_as]{as.ursa}}, \code{\link[ursa:conn.any.create]{create_envi}}.
+\code{\link[ursa:ursa_as]{as.ursa}}, \code{\link[ursa:conn.create_any]{create_envi}}.
 }
 \examples{
 session_grid(NULL)

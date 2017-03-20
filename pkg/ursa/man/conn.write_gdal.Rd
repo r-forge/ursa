@@ -17,7 +17,7 @@ ursa_write(obj, fname)
 Object of class \code{ursaRaster}.
 }
   \item{\dots}{
-Arguments, which are passed to \code{\link[ursa:conn.any.create]{create_gdal}}. Usually, only file name with extension (character) is required. If extension is ".envi", then GDAL driver "ENVI" is used. If extension is ".tif", then GDAL driver "GTiff" is used. If extension is ".img", then GDAL driver "HFA" is used. If extension is ".jpg" or "*.jpeg", then GDAL driver "JPEG" is used. If extension is ".bmp", then GDAL driver "BMP" is used. If extension is ".png", then GDAL driver "PNG" is used. Additionally, argument \code{driver} should be specified. If argument \code{\dots} is \link[base]{missing}, then occasional name is assigned. 
+Arguments, which are passed to \code{\link[ursa:conn.create_any]{create_gdal}}. Usually, only file name with extension (character) is required. If extension is ".envi", then GDAL driver "ENVI" is used. If extension is ".tif", then GDAL driver "GTiff" is used. If extension is ".img", then GDAL driver "HFA" is used. If extension is ".jpg" or "*.jpeg", then GDAL driver "JPEG" is used. If extension is ".bmp", then GDAL driver "BMP" is used. If extension is ".png", then GDAL driver "PNG" is used. Additionally, argument \code{driver} should be specified. If argument \code{\dots} is \link[base]{missing}, then occasional name is assigned. 
 }
   \item{fname}{
 Character. File name with extension.
@@ -51,7 +51,7 @@ Nikita Platonov \email{platonov@sevin.ru}
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-\code{\link[ursa:conn.any.create]{create_gdal}}, \emph{\link[ursa:classRaster.Replace]{Replace}} method \code{\link[ursa:classRaster.Replace]{[<-}} for \code{ursaRaster} object, \code{\link[ursa:classRaster_close]{close}} method for \code{ursaRaster} object.
+\code{\link[ursa:conn.create_any]{create_gdal}}, \emph{\link[ursa:classRaster.Replace]{Replace}} method \code{\link[ursa:classRaster.Replace]{[<-}} for \code{ursaRaster} object, \code{\link[ursa:classRaster_close]{close}} method for \code{ursaRaster} object.
 
 \code{\link[ursa:conn.write_envi]{write_envi}}
 }

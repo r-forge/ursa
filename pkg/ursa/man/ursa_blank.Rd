@@ -21,7 +21,7 @@ Object of class \code{ursaRaster}
 }
 }
 \details{
-It is defined locally that if all values of band are \code{NA} or 0, then such band band_blank. The fact is \code{\link[ursa]{ursa_new}} create new object in memory with default values \code{NA}, but \code{\link[ursa:conn.any.create]{create_envi}} writes zeros to disk quick. It is decided to consider both these cases as blank. Function \code{band_blank} checks blanks for each band of image. If all bands are blank then function \code{ursa_blank} returns \code{TRUE}.
+It is defined locally that if all values of band are \code{NA} or 0, then such band band_blank. The fact is \code{\link[ursa]{ursa_new}} create new object in memory with default values \code{NA}, but \code{\link[ursa:conn.create_any]{create_envi}} writes zeros to disk quick. It is decided to consider both these cases as blank. Function \code{band_blank} checks blanks for each band of image. If all bands are blank then function \code{ursa_blank} returns \code{TRUE}.
 %%~ Function \code{which.blank} gives band numbers of blank bands.
 }
 \value{
