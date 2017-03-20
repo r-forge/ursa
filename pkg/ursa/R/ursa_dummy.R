@@ -18,7 +18,7 @@
       bandname(b) <- bandname
    else {
       lT <- Sys.getlocale("LC_TIME")
-      Sys.setlocale("LC_TIME","English")
+      Sys.setlocale("LC_TIME","C") # "English_United States.1252"
       bandname(b) <- format(Sys.time()+(seq(nband)-1)*24*60*60,"%A %d")
       Sys.setlocale("LC_TIME",lT)
    }

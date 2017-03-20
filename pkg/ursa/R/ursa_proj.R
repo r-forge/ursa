@@ -37,8 +37,6 @@
       return(obj)
    }
    obj$grid$proj4 <- ursa_proj(value)
-   str(obj)
-   q()
    if (!keepGrid)
       session_grid(obj)
    obj
