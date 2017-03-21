@@ -1,4 +1,4 @@
-'envi.close' <- function(...) close(...)
+'close_envi' <- function(...) close(...)
 'close.ursaRaster' <- function(...)
 {
    args <- list(...)

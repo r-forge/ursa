@@ -146,6 +146,8 @@
       }
      # print(c(path=path,pattern=pattern))
    }
+   if ((substr(pattern,1,1))=="+")
+      pattern <- paste0("\\\\",pattern)
    patt1a <- patt1 <- .gsub("\\.hdr$","",pattern)
    patt1 <- .gsub("(\\.)$","",patt1)
    patt1a <- patt1
@@ -159,6 +161,8 @@
    if (!length(list2))
       return(character())
    ind <- try(.grep(patt1,basename(list2)),silent=TRUE)
+   if (inherits(ind,"try-error"))
+      ind <- integer()
    if (length(ind))
       return(.noESRI(list2[ind]))
    ind <- try(.grep(patt2,basename(list2)))
@@ -167,7 +171,9 @@
    if (length(ind))
       return(.noESRI(list2[ind]))
    patt2a <- .gsub("(\\..+)$","",patt2)
-   ind <- .grep(patt2a,basename(list2)) ## truncate binary file extension
+   ind <- try(.grep(patt2a,basename(list2))) ## truncate binary file extension
+   if (inherits(ind,"try-error"))
+      ind <- integer()
    if (length(ind)==1L) ## only exact matching!
       return(.noESRI(list2[ind]))
    ind <- .grep(patt2,basename(list2))

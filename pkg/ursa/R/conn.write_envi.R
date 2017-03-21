@@ -16,8 +16,9 @@
    if (!isCT) {
       ursa_colortable(obj) <- character(0)
    }
-   if (!FALSE) # deprecated (20161225 really?)
+   if (!FALSE) {# deprecated (20161225 really?)
       res <- create_envi(obj,...)
+   }
    else {
       nodata <- .getPrm(arglist,name="(^bg$|nodata|ignore)",default=NA)
       if ((is.na(nodata))&&(anyNA(obj$value)))

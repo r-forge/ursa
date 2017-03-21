@@ -1,18 +1,18 @@
 \name{close}
 \alias{close.ursaRaster}
-\alias{envi.close}
+\alias{close_envi}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Close connections for files with data
 }
 \description{
-\code{close()} for \code{ursaRaster} object closes connection for opened file using inheritted function \code{\link[base:connections]{base::close}}. Function \code{envi.close()} closes opened connection for ENVI binary file. 
-%~ \code{envi.close()} (or quite \code{close()} for \code{imageRaster} object) closes connection for opened ENVI binary file using inheritted function.
+\code{close()} for \code{ursaRaster} object closes connection for opened file using inheritted function \code{\link[base:connections]{base::close}}. Function \code{close_envi()} closes opened connection for ENVI binary file. 
+%~ \code{close_envi()} (or quite \code{close()} for \code{imageRaster} object) closes connection for opened ENVI binary file using inheritted function.
 }
 \usage{
 \method{close}{ursaRaster}(...)
 
-envi.close(...)
+close_envi(...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

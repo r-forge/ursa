@@ -106,7 +106,7 @@ Use \code{\link[ursa]{session_grid}} to check or specify parameters of grid befo
 
 Use \code{\link[ursa:classRaster.Replace]{[<-}} to assign values to ENVI binary file after calling \code{create_envi}.
 
-Use \code{\link[ursa:classRaster_close]{close}} (or \code{\link[ursa:classRaster_close]{envi.close}}) to close \code{\link[base]{connections}}.
+Use \code{\link[ursa:classRaster_close]{close}} (or \code{\link[ursa:classRaster_close]{close_envi}}) to close \code{\link[base]{connections}}.
 }
 \examples{
 session_grid(NULL)

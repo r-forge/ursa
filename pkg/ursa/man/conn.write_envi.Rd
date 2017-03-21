@@ -43,7 +43,7 @@ Nikita Platonov \email{platonov@sevin.ru}
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-\code{\link[ursa:conn.create_any]{create_envi}}, \emph{\link[ursa:classRaster.Replace]{Replace}} method \code{\link[ursa:classRaster.Replace]{[<-}} for \code{ursaRaster} object, \code{\link[ursa:classRaster_close]{envi.close}} (\code{\link[ursa:classRaster_close]{close}} for \code{ursaRaster} object).
+\code{\link[ursa:conn.create_any]{create_envi}}, \emph{\link[ursa:classRaster.Replace]{Replace}} method \code{\link[ursa:classRaster.Replace]{[<-}} for \code{ursaRaster} object, \code{\link[ursa:classRaster_close]{close_envi}} (\code{\link[ursa:classRaster_close]{close}} for \code{ursaRaster} object).
 
 \code{\link[ursa:conn.write_gdal]{write_gdal}(...,driver="ENVI")} uses GDAL (\pkg{rgdal}) for writting \code{ursaRaster} object to the ENVI .hdr Labelled Raster file.
 
