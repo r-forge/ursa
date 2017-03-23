@@ -1,3 +1,10 @@
+# version 3.6-2
+
+* Added argument "..." to function 'read_gdal'.
+      Now, if 'as.ursa(uri)' or 'display(uri)',
+           then additional arguments can be passed to 'download.file'.
+      For example, if you need 'mode="wb"' or ignore certificate for HTTPS
+
 # version 3.6-1
 
 * Added 'session_pngviewer()' and 'session_tempdir()' to follow CRAN policy.

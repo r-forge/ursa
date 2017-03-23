@@ -8,7 +8,7 @@ Read GDAL supported raster files.
 \code{read_gdal} creates \code{ursaRaster} object from GDAL supported raster files using functions from \pkg{rgdal} packages.
 }
 \usage{
-read_gdal(fname, resetGrid = TRUE, band = NULL, verbose = FALSE)
+read_gdal(fname, resetGrid = TRUE, band = NULL, verbose = FALSE, ...)
 
 ursa_read(fname, verbose = FALSE)
 }
@@ -26,9 +26,9 @@ Character (\link[base:regex]{regular expression}) or integer.
   \item{verbose}{
 Logical. Value \code{TRUE} may provide some additional information on console. Default is \code{FALSE}.
 }
-%%~   \item{\dots}{
-%%~ Ignored.
-%%~ }
+  \item{\dots}{
+Ignored.
+}
 }
 \details{
 \code{ursa_read} is simplified implementation of \code{gdal_read}.

@@ -1,4 +1,4 @@
-'.glance' <- function(fname,crs,attr=".+",len=640,expand=1.05
+'.glance' <- function(dsn,layer=".*",crs,attr=".+",len=640,expand=1.05
                         ,border=15,lat0=NA,lon0=NA,resetProj=FALSE
                         ,proj=c("auto","stere","laea","merc","internal"
                                ,"google","longlat")
@@ -8,7 +8,7 @@
    proj <- match.arg(proj)
    feature <- match.arg(feature)
    if (!requireNamespace("sf")) {
-      res <- .rasterize(fname=fname,crs=crs,attr=attr,len=len,res=NA,nodata=-9999
+      res <- .rasterize(fname=dsn,crs=crs,attr=attr,len=len,res=NA,nodata=-9999
                         ,expand=expand,border=border,lat0=lat0,lon0=lon0
                         ,internalCall=FALSE,gdalopt="",ogropt="",where=""
                         ,strings=FALSE,resetProj=resetProj
@@ -17,43 +17,51 @@
       return(res)
    }
    cpg <- NULL
-   if (!((is.character(fname))&&(length(fname)==1))) {
-      if (inherits(fname,"SpatialPointsDataFrame")) {
-         a <- sf::st_as_sfc(fname);rm(fname)
+   if (!((is.character(dsn))&&(length(dsn)==1))) {
+      if (inherits(dsn,"SpatialPointsDataFrame")) {
+         a <- sf::st_as_sfc(dsn);rm(dsn)
       }
-      else if (inherits(fname,"sf")) {
-         a <- fname;rm(fname)
+      else if (inherits(dsn,"sf")) {
+         a <- dsn;rm(dsn)
       }
-      else if (is.array(fname)) {
-         return(display(fname,...))
+      else if (is.array(dsn)) {
+         return(display(dsn,...))
       }
       else {
-         a <- try(sf::st_as_sfc(fname))
+         a <- try(sf::st_as_sfc(dsn))
       }
       if (inherits(a,"try-error")) {
-         print(class(fname))
+         print(class(dsn))
          return(31L)
       }
    }
    else {
-      if (!file.exists(fname)) {
-         aname <- paste0(fname,".zip")
+      if (!file.exists(dsn)) {
+         aname <- paste0(dsn,".zip")
          if (isZip <- file.exists(aname)) {
             ziplist <- unzip(aname);on.exit(file.remove(ziplist))
-            fname <- .grep("\\.shp$",ziplist,value=TRUE)
+            dsn <- .grep("\\.shp$",ziplist,value=TRUE)
          }
       }
       else {
-         if (isZip <- .lgrep("\\.zip$",fname)>0) {
-            ziplist <- unzip(fname);on.exit(file.remove(ziplist))
-            fname <- .grep("\\.shp$",ziplist,value=TRUE)
+         if (isZip <- .lgrep("\\.zip$",dsn)>0) {
+            ziplist <- unzip(dsn);on.exit(file.remove(ziplist))
+            dsn <- .grep("\\.shp$",ziplist,value=TRUE)
          }
       }
       opW <- options(warn=0)
-      a <- sf::st_read(fname,quiet=TRUE)
+      lname <- sf::st_layers(dsn)$name
+      if (length(lname)>1) {
+         layer <- .grep(layer,lname,value=TRUE)
+         if (length(layer)>1) {
+            print(paste("Select only one layer:",paste(paste0(seq(layer),")"),sQuote(layer),collapse=", ")),quote=FALSE)
+            return(30L)
+         }
+      }
+      a <- sf::st_read(dsn,layer=layer,quiet=TRUE)
       options(opW)
-      if (.lgrep("\\.shp$",fname)) {
-         cpgname <- .gsub("\\.shp$",".cpg",fname)
+      if (.lgrep("\\.shp$",dsn)) {
+         cpgname <- .gsub("\\.shp$",".cpg",dsn)
          if (file.exists(cpgname)) {
             cpg <- readLines(cpgname,warn=FALSE)
             if (cpg=="UTF-8")

@@ -249,8 +249,13 @@
       if (file.exists(obj))
          return(read_gdal(obj,...))
       if (isURL <- .lgrep("^(http://|https://|ftp://|file:///)",obj)>0) {
+         arglist <- list(...)
          fname <- tempfile()
-         download.file(obj,fname,method="curl");on.exit(try(file.remove(fname)))
+        # download.file(obj,fname,...)
+         ind <- .grep("(method|mode|cache|extra)",names(arglist))
+         args2 <- c(url=obj,destfile=fname,arglist[ind])
+         do.call("download.file",args2)
+         on.exit(try(file.remove(fname)))
          return(read_gdal(fname,...))
       }
    }

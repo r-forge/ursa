@@ -17,7 +17,10 @@
       if ((is.character(obj))&&(!is.matrix(obj))) {
          if (isURL <- .lgrep("^(http://|https://|ftp://|file:///)",obj)>0) {
             fname <- tempfile()
-            download.file(obj,fname,method="curl")
+           # download.file(obj,fname,method="curl")
+            ind <- .grep("(method|mode|cache|extra)",names(arglist))
+            args2 <- c(url=obj,destfile=fname,arglist[ind])
+            do.call("download.file",args2)
             obj <- read_gdal(fname,...)
             try(file.remove(fname))
          }
