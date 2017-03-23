@@ -1,5 +1,6 @@
 'ursaProgressBar' <- function(kind=c("tk","txt")
-                           ,title=basename(strsplit(commandArgs(FALSE)[4],"=")[[1]][2])
+                          # ,title=basename(strsplit(commandArgs(FALSE)[4],"=")[[1]][2])
+                           ,title=.argv0()
                            ,label=""
                            ,min=0,max=1,initial=min,width=NA,style=1) {
    kind <- match.arg(kind)

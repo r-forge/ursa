@@ -7,15 +7,23 @@
   # print("ursa -- .onLoad")
    p <- proc.time()
    options(ursaTimeStart=p,ursaTimeDelta=p)
+   session_pngviewer()
+   session_tempdir()
+  # if ((FALSE)&&(interactive()))
+  #    print(data.frame(pngviewer=session_pngviewer()
+  #                    ,tempdir=session_tempdir()
+  #                    ,row.names="session"))
   # welcome2 <- .elapsedTime("ursa -- onload 1111",toPrint=FALSE)
    fpath <- file.path(chartr("\\","/",Sys.getenv("R_USER")),"template.idr")
    if (file.exists(fpath)) {
-      ok <- try(Sys.setenv(R_RMAP_TEMPLATE=fpath))
+     # ok <- try(Sys.setenv(R_RMAP_TEMPLATE=fpath))
+      ok <- try(options(ursaTemplate=fpath))
       if (!inherits(ok,"try-error"))
          return(invisible(0L))
    }
    fpath <- system.file("template",package="ursa")
-   try(Sys.setenv(R_RMAP_TEMPLATE=fpath))
+  # try(Sys.setenv(R_RMAP_TEMPLATE=fpath))
+   try(options(ursaTemplate=fpath))
    invisible(0L)
 }
 .onAttach <- function(lib, pkg) { ## FAILED for 'Rscript -e "ursa::display()"'

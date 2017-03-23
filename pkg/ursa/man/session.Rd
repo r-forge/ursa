@@ -1,24 +1,36 @@
-\name{session_grid}
+\name{session}
 \alias{session_grid}
 \alias{session_proj4}
 \alias{session_cellsize}
+\alias{session_pngviewer}
+\alias{session_tempdir}
 \title{
-Get and set sessional parameters for grid.
+Get and set sessional parameters for grid, CRS, external software for open PNG files.
 }
 \description{
 
 \code{session_grid} without arguments returns current grid properties. \code{session_grid} with arguments specifies grid, which is used by functions of this package, e.g., for plotting, for opened and created raster images during current session.
+
+\code{session_pngviwer} is used to permit external software to open PNG files.
+
+\code{session_tempdir} spefies directory for temporal files in some cases.
+
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
 session_grid(obj)
 session_proj4()
 session_cellsize()
+
+session_pngviewer(allow = NA)
+session_tempdir(dst = character())
+
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{obj}{Either missing, or \code{NULL}, or file name, or object of class \code{ursaRaster}, or object of class \code{\link[ursa:classGrid]{ursaGrid}}
-}
+  \item{obj}{Either missing, or \code{NULL}, or file name, or object of class \code{ursaRaster}, or object of class \code{\link[ursa:classGrid]{ursaGrid}}.}
+  \item{allow}{Logical. If \code{TRUE} then it is allowed to use external software for viewing PNG files. \code{NA} is interpreted as \code{TRUE} in the case of "Rscript" usage, and intepreted as \code{FALSE} in the case of interactive session or "R CMD BATCH" usage. Default is \code{NA}.}
+  \item{dst}{Character. Directory name for temporal files. Empty character or non-character is interpreted as \code{\link[base:getwd]{getwd()}} in the case of "Rscript" usage, and intepreted as \code{\link[base:tempfile]{tempdir()}} in the case of interactive session or "R CMD BATCH" usage. Default is \code{character()} (empty character).}
 }
 \details{
 %%  ~~ If necessary, more details than the description above ~~
@@ -62,6 +74,8 @@ NULL
 \code{session_proj4} returns item \code{proj4}.
 
 \code{session_cellsize} returns squared root from multiplication of cell dimension: \code{sqrt(resx*resy)}.
+
+\code{sessiong_pngviewer} returns value of \code{getOption("ursaAllowPngViewer")}.
 }
 %%~ \references{
 %%~ %% ~put references to the literature/web site here ~
@@ -89,6 +103,8 @@ session_grid(g1)
 session_grid(NULL)
 a <- ursa_new(value=3)
 session_grid(a)
+
+print(session_pngviewer())
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

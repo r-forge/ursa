@@ -3,7 +3,6 @@
       return(as.ursa(attr,...))
    }
    if (missing(attr)) {
-      print("0313 B")
       if (is.character(obj)) {
          if (.lgrep("grid",obj))
             return(session_grid())
@@ -56,6 +55,8 @@
       return(ursa_grid(obj)$columns)
    if (.lgrep("(nrow|rows|lines)",attr))
       return(ursa_grid(obj)$rows)
+   if (.lgrep("(info|meta(data)*)",attr))
+      return(ursa_info(obj))
    return(NULL)
 }
 'ursa<-' <- function(obj,attr,...,value) {

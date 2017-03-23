@@ -69,8 +69,8 @@
             }
             rest <- n-max(npos,nneg)#-as.integer(isInterval)
             n <- n-rest
-            print(c(pos=npos,neg=nneg,z1=nzer1,z2=nzer2,n=n,rest=rest,indZ=indZ
-                   ,int=isInterval,cat=isCategory))
+           # print(c(pos=npos,neg=nneg,z1=nzer1,z2=nzer2,n=n,rest=rest,indZ=indZ
+           #        ,int=isInterval,cat=isCategory))
          }
       }
    }

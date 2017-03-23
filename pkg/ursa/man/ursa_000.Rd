@@ -45,6 +45,7 @@ Initializing function \code{ursa} with missing argument \code{attr} is a wrapper
 \cr\code{"(nrow|rows|lines)"} \tab No \tab Number of rows of raster image \tab \code{ursa_grid(obj)$rows}
 \cr\code{"(ncol|columns|samples)"} \tab No \tab Number of columns of raster image \tab \code{ursa_grid(obj)$columns}
 \cr\code{"con"} \tab No \tab \strong{str}ucture of connection \tab \code{obj$con}
+\cr\code{"(info|meta(data)*)"} \tab No \tab Metadata, brief info \tab \code{\link[ursa:ursa_info]{ursa_info}}
 }
 Argument \dots is used to specify band index or band pattern in \code{ursa(obj,"value",...)}
 

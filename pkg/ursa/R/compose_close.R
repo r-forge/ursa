@@ -15,6 +15,11 @@
                             ,border=5,bpp=0,execute=TRUE,verbose=FALSE){
    if (verbose)
       str(list(kind=kind,border=border,bpp=bpp,execute=execute,verbose=verbose))
+   toOpen <- session_pngviewer()
+   if (FALSE) {
+      message(paste(commandArgs(FALSE),collapse=" "))
+      print(Sys.getenv()[grep("^(_)*R_",names(Sys.getenv()))])
+   }
    delafter <- getOption("ursaPngDelafter")
    fileout <- getOption("ursaPngFileout")
    if (!(bpp %in% c(8,24)))
@@ -46,6 +51,12 @@
          }
       }
    }
+   if (!toOpen) {
+      if (delafter)
+         delafter <- dirname(fileout)==tempdir()
+      message(paste("Use",sQuote("session_pngviewer(TRUE)"),"to open"
+                   ,sQuote(fileout),"\nby external software."))
+   }
    if (getOption("ursaPngFigure")==0L) ## plot layout only
    {
       if (TRUE) {## introduced 20150916 to deprecate 'dev' arg in compose_open()
@@ -55,7 +66,7 @@
          layout.show(max(mosaic$layout))
          grDevices::dev.off()
          if (execute) {
-            if (interactive()) {
+            if (!toOpen) {
                op <- par(mar=c(0,0,0,0))
                plot(grDevices::as.raster(png::readPNG(fileout)))
                par(op)
@@ -103,13 +114,24 @@
    }
    if (bpp==8) {
       if (nchar(Sys.which("i_view32"))) {
-         cmd <- paste("i_view32",fileout,"/bpp=8",paste0("/convert=",fileout))
+         FoutTmp <- ifelse(dirname(fileout)==".",fileout,normalizePath(fileout))
+         cmd <- paste("i_view32",FoutTmp,"/bpp=8",paste0("/convert=",FoutTmp))
       }
       else if ((nchar(im <- Sys.getenv("R_IMAGEMAGICK"))>0)&&(file.exists(im))) {
          cmd <- paste(im,fileout,ifelse(n>=255,"-colors 255","")
                      ,paste0("png8:",fileout))
-      } ## else if... (other ways to force to bpp=8
-      else
+      } 
+      else if ((nchar(im <- Sys.which("convert"))>0)&& ##
+                     (dirname(dirname(im))!=Sys.getenv("WINDIR"))) {
+         cmd <- paste(im,fileout,ifelse(n>=255,"-colors 255","")
+                     ,paste0("png8:",fileout))
+      }
+      else if ((nchar(imdisplay <- Sys.which("imdisplay"))>0)) {
+         cmd <- paste(file.path(dirname(imdisplay),"convert")
+                     ,fileout,ifelse(n>=255,"-colors 255","")
+                     ,paste0("png8:",fileout))
+      }
+      else ## else if... (other ways to force to bpp=8
          cmd <- ""
       if (nchar(cmd)) {
          if (verbose)
@@ -119,8 +141,7 @@
    }
    if (execute)
    {
-      if (interactive()) {
-         message(fileout)
+      if (!toOpen) {
          op <- par(mar=c(0,0,0,0))
          if (TRUE)
             plot(grDevices::as.raster(png::readPNG(fileout)))
@@ -162,5 +183,7 @@
       else
          file.remove(fileout)
    }
+   if (file.exists(fileout))
+      return(fileout)
    invisible(NULL)
 }

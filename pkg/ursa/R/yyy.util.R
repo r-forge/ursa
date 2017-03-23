@@ -8,7 +8,7 @@
       message <- paste(message,":",sep="")
    mytext <- sprintf("*** %s: %s %.2f(%.2f) seconds ***"
                    # ,as.character(Sys.time())
-                    ,basename(strsplit(commandArgs(FALSE)[4],"=")[[1]][2])
+                    ,.argv0()
                     ,message,(proc.time()-startTime)[3]
                     ,(proc.time()-deltaTime)[3])
    if (reset)
@@ -114,7 +114,10 @@
       list1 <- paste(list1,ext,sep=".")
    }
    options(ursaTempFileCount=tcount+n)
-   paste0("___",list1)
+   res <- paste0("___",list1)
+  # if (!.isRscript())
+  #    res <- file.path(getOption("ursaTempDir"),res)
+   res
 }
 '.args2list' <- function() {
    args <- commandArgs(TRUE)
@@ -336,8 +339,16 @@
       session_grid(ret)
    ret
 }
-'.isRscript' <- function() {
-   ret <- !is.na(strsplit(commandArgs(FALSE)[4],"=")[[1]][2])
-  # print(c(isRscript=ret))
-   ret
+'.isRscript' <- function() .lgrep("^--file=",commandArgs(FALSE))>0
+'.argv0path' <- function() {
+   arglist <- commandArgs(FALSE)
+   a <- .grep("^--file=",arglist,value=TRUE,ignore.case=FALSE)
+   if (length(a))
+      return(strsplit(a,"=")[[1]][2])
+   ind <- .grep("^-f$",arglist,ignore.case=FALSE)
+   if (!length(ind))
+      return("")
+   arglist[ind+1L]
 }
+'.argv0' <- function() basename(.argv0path())
+'.argv0dir' <- function() dirname(.argv0path())

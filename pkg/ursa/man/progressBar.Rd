@@ -8,8 +8,7 @@ Progress bar
 Informative progress bars with dispaying elapsed and remained time.
 }
 \usage{
-ursaProgressBar(kind = c("tk", "txt"),
-                title = basename(strsplit(commandArgs(FALSE)[4],"=")[[1]][2]),
+ursaProgressBar(kind = c("tk", "txt"),title = .argv0(),
                 label = "", min = 0, max = 1, initial = min, width = NA, style = 1)
 
 setUrsaProgressBar(pb, value, title = NULL, label = NULL)

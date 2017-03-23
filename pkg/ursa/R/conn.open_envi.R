@@ -12,7 +12,7 @@
    wname <- fname
    fname <- envi_list(wname,exact=TRUE)
    if ((length(fname)!=1)&&(dirname(wname)=="."))
-      fname <- envi_list(path=Sys.getenv("R_RMAP_TEMPLATE")
+      fname <- envi_list(path=getOption("ursaTemplate") # Sys.getenv("R_RMAP_TEMPLATE")
                         ,pattern=basename(wname),exact=TRUE,full.names=TRUE)
    if (length(fname)!=1)
    {

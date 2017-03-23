@@ -15,7 +15,7 @@ regrid(x, ...)
 .regrid(grid = NULL, mul = NA, res = NA, resx = NA, resy = NA, bbox = NA,
         expand = NA, minx = NA, miny = NA, maxx = NA, maxy = NA, cut = NA,
         proj4 = NA, border = 0, zero = c("keep", "node", "center"), raster = FALSE,
-        tolerance = 1e-11, verbose = FALSE, ...)
+        tolerance = 1e-10, verbose = FALSE, ...)
 
 }
 %- maybe also 'usage' for other objects documented here.

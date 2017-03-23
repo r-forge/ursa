@@ -5,7 +5,8 @@
       ref <- getOption("ursaSessionGrid")
       if ((is.null(ref))||(!.is.grid(ref)))
       {
-         fname <- system.file("template","default.hdr",package="ursa")
+        # fname <- system.file("template","default.hdr",package="ursa")
+         fname <- file.path(getOption("ursaTemplate"),"default.hdr")
          if (file.exists(fname))
             ref <- .read.hdr(fname)$grid
          else
@@ -49,3 +50,28 @@
 #}
 'session_proj4' <- function() session_grid()$proj4
 'session_cellsize' <- function() with(session_grid(),sqrt(resx*resy))
+'session_pngviewer' <- function(allow=NA) {
+   opV <- getOption("ursaAllowPngViewer")
+   if ((is.na(allow))||(!is.logical(allow))) {
+      if (is.logical(opV))
+         return(opV)
+      allow <- .isRscript()
+   }
+   options(ursaAllowPngViewer=allow)
+  # invisible(getOption("ursaAllowPngViewer"))
+   invisible(allow)
+}
+'session_tempdir' <- function(dst=character()) {
+   opD <- getOption("ursaTempDir")
+   if ((is.character(dst))&&(length(dst))) {
+      if ((file.exists(dst))&&(file.info(dst)$isdir)) {
+         options(ursaTempDir=dst)
+         return(invisible(dst))
+      }
+   }
+   if (length(opD))
+      return(opD)
+   dst <- ifelse(.isRscript(),getwd(),tempdir())
+   options(ursaTempDir=dst)
+   return(dst)
+}

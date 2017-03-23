@@ -126,7 +126,8 @@
       if (all(ll[,2]<65))
          return(NULL)
    }
-   fpath <- Sys.getenv("R_RMAP_TEMPLATE")
+  # fpath <- Sys.getenv("R_RMAP_TEMPLATE")
+   fpath <- getOption("ursaTemplate")
   # if (!nchar(fpath))
   #    fpath <- system.file("template",package="ursa")
    if (!is.na(detail)) {

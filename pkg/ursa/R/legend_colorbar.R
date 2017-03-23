@@ -242,7 +242,7 @@
             rm(at2)
          } else {
             if (!isManual) {
-               val <- reclass(ct) ## 20160128 'reclass(obj)' -> 'reclass(ct)'
+               val <- reclass(ct) ## 20160128 reclass(obj) -> reclass(ct)
                if (is.ursa(val))
                   val <- sort(c(na.omit(c(val$value))))
                for (mycol in seq(labels,11*(labels-1)+1,by=2))

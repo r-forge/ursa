@@ -10,4 +10,7 @@ invisible({
    print(session_grid(NULL))
    a <- ursa_new(value=3)
    print(session_grid(a))
+
+   print(session_pngviewer())
+
 })

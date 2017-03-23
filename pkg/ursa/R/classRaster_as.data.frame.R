@@ -97,3 +97,8 @@
       return(res)
    dplyr::as_data_frame(res)
 }
+'.as.data.table.ursaRaster' <- function(obj,band=FALSE,id=FALSE
+                                                    ,na.rm=TRUE,all.na=FALSE) {
+   print("HERE data.table")
+   NULL
+}
