@@ -1,5 +1,5 @@
 \name{ursaConnection}
-\alias{ursaConnection-class}
+\alias{class-ursaConnection}
 \alias{print.ursaConnection}
 \alias{seek.ursaConnection}
 \title{

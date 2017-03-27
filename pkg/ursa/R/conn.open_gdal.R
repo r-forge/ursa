@@ -5,12 +5,12 @@
    requireNamespace("rgdal")
    if (verbose)
       .elapsedTime("rgdal has been loaded")
-   op <- options(warn=0-!verbose)
-   a <- rgdal::GDALinfo(fname,returnStats=FALSE,returnRAT=FALSE
-                ,returnColorTable=TRUE,returnCategoryNames=TRUE)
-   options(op)
-   if (verbose)
-      str(a)
+   opW <- options(warn=0-!verbose) ## to prevent 'GeoTransform values not available'
+   a <- try(rgdal::GDALinfo(fname,returnStats=FALSE,returnRAT=FALSE
+                ,returnColorTable=TRUE,returnCategoryNames=TRUE),silent=TRUE)
+   options(opW)
+   if (inherits(a,"try-error"))
+      return(NULL)
    a1 <- as.numeric(a)
    g1 <- regrid()
    g1$rows <- as.integer(a1[1])

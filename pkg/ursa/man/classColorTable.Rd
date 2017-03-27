@@ -1,6 +1,5 @@
 \name{colortable}
-%%~ \alias{colortable}
-%%~ \alias{colortable<-}
+\alias{class-ursaColorTable}
 \alias{ursa_colortable}
 \alias{ursa_colortable<-}
 \alias{print.ursaColorTable}

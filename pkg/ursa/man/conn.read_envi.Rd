@@ -22,7 +22,7 @@ Character. Filename for ENVI .hdr Labelled Raster file.
          \item{\code{(subset)*}}{\emph{Name can be omitted.} Integer or character. If integer, then indices of bands, either positive or negative. Positive indices are for included bands, negative indices for omitted bands. If character, then either sequence of band names or regex string. By default (\code{subset=NULL}), function reads all bands.}
          \item{\code{(ref)*}}{\emph{Name can be omitted.} \code{ursaRaster} or \code{ursaGrid} object. Reference grid for raster image resizing. By default (\code{ref=NULL}) there is no resizing.}
          \item{\code{(nodata|ignorevalue)}}{Numeric. Value, which is ignored. By default (\code{nodata=NaN}) igrore value is taken from ENVI metadata (*.hdr or *.aux.xml).}
-         \item{\code{reset(Grid)*}}{Logical. If \code{TRUE}, then \link[ursa:session_grid]{session grid} is ignored, and new session grid is assigned from input file. If \code{FALSE}, then input file is nested in the session grid.}
+         \item{\code{reset(Grid)*}}{Logical. If \code{TRUE}, then \link[ursa:session]{session grid} is ignored, and new session grid is assigned from input file. If \code{FALSE}, then input file is nested in the session grid.}
          \item{\code{verb(ose)*}}{Logical. Value \code{TRUE} may provide some additional information on console. Default is \code{FALSE}.}
       }
    }

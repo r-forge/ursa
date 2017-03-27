@@ -6,6 +6,8 @@
 Get and set properties of raster image.
 }
 \description{
+For package description see.
+
 \code{ursa} is a wrapper to initialize object of class \code{ursaRaster}, to get and to set properties for this object.
 }
 \usage{

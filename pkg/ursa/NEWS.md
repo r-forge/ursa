@@ -1,3 +1,12 @@
+# version 3.7-1
+
+* Public wrapper 'glance()' for non-public '.glance()':
+     quick-look of GIS raster and vector data
+
+# version 3.6-3
+
+* Documentation for 'ursaProgressBar'
+
 # version 3.6-2
 
 * Added argument "..." to function 'read_gdal'.

@@ -11,12 +11,15 @@
       return(fname)
    paste0(fname,".shp")
 }
-'.shp.read' <- function(fname,reproject=TRUE,encoding="1251",verbose=0L,...)
+'.shp.read' <- function(fname,reproject=TRUE,encoding="1251",resetGrid=FALSE
+                       ,verbose=0L,...)
 {
   ## b <- sf::st_read("gde-1-1-15.shp",quiet=TRUE)
   ## b <- sf::st_transform(b,ursa_proj(a))
   # print(fname)
    requireNamespace("rgdal")
+   if (resetGrid)
+      reproject <- FALSE
   # require(methods)
    if (.lgrep("\\.zip$",basename(fname)))
       fname <- .gsub("\\.zip$","",fname)
@@ -50,6 +53,8 @@
       if (verbose>1)
          .elapsedTime("spTransform:finish")
    }
+   if (resetGrid)
+      session_grid(NULL)
    res
 }
 '.shp.write' <- function(obj,fname,compress=FALSE,zip=NULL)

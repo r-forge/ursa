@@ -1,4 +1,4 @@
-'.rasterize' <- function(fname,crs,attr=".+",len=640,res=NA,nodata=-9999
+'.rasterize' <- function(dsn,grid,attr=".+",len=640,res=NA,nodata=-9999
                         ,expand=1.05,border=0,lat0=NA,lon0=NA,internalCall=FALSE
                         ,gdalopt="",ogropt="",where=""
                         ,strings=FALSE,resetProj=FALSE
@@ -8,10 +8,12 @@
                         ,feature=c("overlay","group","separate"),ID=FALSE
                         ,paint=5,verbose=FALSE,...) {
    requireNamespace("foreign") ## 'foreign' is in R-core
+   str(dsn)
+   fname <- dsn
    if ((FALSE)&&(verbose))
       str(list(fname=fname,internalCall=internalCall,resetProj=resetProj
               ,proj=match.arg(proj),feature=match.arg(feature)
-              ,crs=!missing(crs)))
+              ,grid=!missing(grid)))
    if (!internalCall) {
       fpath <- dirname(fname)
       list1 <- .dir(path=fpath
@@ -59,7 +61,7 @@
    fname0 <- fname
    proj <- match.arg(proj)
    feature <- match.arg(feature)
-   g0 <- getOption("ursaSessionGrid")
+   g2 <- getOption("ursaSessionGrid")
    if (!(proj %in% c("auto","internal")))
       resetProj <- TRUE
    keepProj <- getOption("ursaRasterizeProj")
@@ -68,15 +70,17 @@
    if ((proj=="internal")&&(!is.na(keepProj))) {
      # proj <- "auto"
      # resetProj <- FALSE
-      g0 <- NULL
+      g2 <- NULL
    }
    if (resetProj)
-      crs <- NULL
-   else if ((missing(crs))&&(!is.null(g0)))
-      crs <- g0
-   else if (missing(crs))
-      crs <- NULL
-  # str(list(crs=crs))
+      g0 <- NULL
+   else if ((missing(grid))&&(!is.null(g2)))
+      g0 <- g2
+   else if (missing(grid))
+      g0 <- NULL
+   else
+      g0 <- grid
+  # str(list(g0=g0))
    if (!.lgrep("\\.shp$",fname))
       fname <- paste0(fname,".shp")
    ##~ if (.lgrep("\\s",fname))
@@ -90,7 +94,7 @@
    info <- system(cmd,intern=TRUE)
    tname <- .maketmp(ext="shp")
    rname <- .maketmp()
-   if ((is.null(crs))||(is.numeric(lon0))||(is.numeric(lat0))) {
+   if ((is.null(g0))||(is.numeric(lon0))||(is.numeric(lat0))) {
       proj4 <- system(paste("gdalsrsinfo","-o proj4",fname),intern=TRUE)
       proj4 <- .gsub("'","",proj4)
       if (!length(proj4))
@@ -267,7 +271,7 @@
             message(cmd)
          system(cmd)
          rel <- as.list(match.call())
-         rel[["fname"]] <- tname
+         rel[["dsn"]] <- tname
          rel$internalCall <- TRUE
          rel$lon0 <- NULL
          rel$lat0 <- NULL
@@ -398,46 +402,46 @@
                            ,urlonly=!TRUE,filename = "___ggmapTemp"
                            ,color=mcolor)
          basemap <- as.ursa(m)
-         crs <- ursa_grid(basemap)
+         g0 <- ursa_grid(basemap)
          lon_0 <- as.numeric(.gsub("^.*\\+lon_0=(\\S+)\\s.+$","\\1",proj4))
          radius <- as.numeric(.gsub("^.*\\+a=(\\S+)\\s.+$","\\1",proj4))
          B <- radius*pi
          shift <- B*lon_0/180
-        # print(crs)
-         crs$minx <- crs$minx-shift
-         crs$maxx <- crs$maxx-shift
-         crs$proj4 <- proj4
-         if (crs$minx<(-2*B)) {
-            crs$minx <- crs$minx+2*B
-            crs$maxx <- crs$maxx+2*B
+        # print(g0)
+         g0$minx <- g0$minx-shift
+         g0$maxx <- g0$maxx-shift
+         g0$proj4 <- proj4
+         if (g0$minx<(-2*B)) {
+            g0$minx <- g0$minx+2*B
+            g0$maxx <- g0$maxx+2*B
          }
-         else if (crs$minx>2*B) {
-            crs$minx <- crs$minx-2*B
-            crs$maxx <- crs$maxx-2*B
+         else if (g0$minx>2*B) {
+            g0$minx <- g0$minx-2*B
+            g0$maxx <- g0$maxx-2*B
          }
-         if (crs$maxx<(-2*B)) {
-            crs$minx <- crs$maxx+2*B
-            crs$maxx <- crs$maxx+2*B
+         if (g0$maxx<(-2*B)) {
+            g0$minx <- g0$maxx+2*B
+            g0$maxx <- g0$maxx+2*B
          }
-         else if (crs$maxx>2*B) {
-            crs$minx <- crs$minx-2*B
-            crs$minx <- crs$minx-2*B
+         else if (g0$maxx>2*B) {
+            g0$minx <- g0$minx-2*B
+            g0$minx <- g0$minx-2*B
          }
-        # print(crs)
-         ursa_grid(basemap) <- crs
-         session_grid(crs)
+        # print(g0)
+         ursa_grid(basemap) <- g0
+         session_grid(g0)
         # print(session_grid(basemap))
         # q()
         # display(basemap,scale=1,coast=FALSE,pointsize=12)
         # q()
-         if (crs$minx>crs$maxx) {
-            if ((crs$minx<0)&&(bbox[1]>0))
+         if (g0$minx>g0$maxx) {
+            if ((g0$minx<0)&&(bbox[1]>0))
                bbox[1] <- bbox[1]-2*B
-            else if ((crs$minx>0)&&(bbox[1]<0))
+            else if ((g0$minx>0)&&(bbox[1]<0))
                bbox[1] <- bbox[1]+2*B
-            if ((crs$maxx<0)&&(bbox[3]>0))
+            if ((g0$maxx<0)&&(bbox[3]>0))
                bbox[3] <- bbox[3]-2*B
-            else if ((crs$maxx>0)&&(bbox[3]<0))
+            else if ((g0$maxx>0)&&(bbox[3]<0))
                bbox[3] <- bbox[3]+2*B
          }
         # print(bbox)
@@ -470,32 +474,32 @@
          g1 <- .grid.skeleton()
          g1$resx <- g1$resy <- res
          g1$proj4 <- proj4
-         crs <- regrid(g1,bbox=bbox,border=border)
+         g0 <- regrid(g1,bbox=bbox,border=border)
       }
       if ((.lgrep("\\+proj=zzzmerc",proj4))&&(keepProj!="google")) {
          B <- 20037508
-         if ((crs$maxx>B)||(crs$minx<(-B))) {
-            x <- seq(crs,"x")
+         if ((g0$maxx>B)||(g0$minx<(-B))) {
+            x <- seq(g0,"x")
             ind <- which(x>=(-B+res/2) & x<=(B-res/2))
-            crs$columns <- length(ind)
-            crs$minx <- head(x[ind],1)-res/2
-            crs$maxx <- tail(x[ind],1)+res/2
+            g0$columns <- length(ind)
+            g0$minx <- head(x[ind],1)-res/2
+            g0$maxx <- tail(x[ind],1)+res/2
          }
          B <- 20037508 #-15*111*1e3
-         if ((crs$maxy>B)||(crs$miny<(-B))) {
-            y <- seq(crs,"y")
+         if ((g0$maxy>B)||(g0$miny<(-B))) {
+            y <- seq(g0,"y")
             ind <- which(y>=(-B+res/2) & y<=(B-res/2))
-            crs$rows <- length(ind)
-            crs$miny <- head(y[ind],1)-res/2
-            crs$maxy <- tail(y[ind],1)+res/2
+            g0$rows <- length(ind)
+            g0$miny <- head(y[ind],1)-res/2
+            g0$maxy <- tail(y[ind],1)+res/2
          }
       }
       tname <- fname
    }
    else {
-      if (is.null(crs))
-         crs <- session_grid()
-      cmd <- with(crs,paste("ogr2ogr",ifelse(verbose,"","-q"),ogropt
+      if (is.null(g0))
+         g0 <- session_grid()
+      cmd <- with(g0,paste("ogr2ogr",ifelse(verbose,"","-q"),ogropt
                            ,"-t_srs",dQuote(proj4)
                            ,"-where",dQuote(where)
                            ,"-overwrite",tname,fname))
@@ -509,10 +513,10 @@
       geom[.lgrep(a,geom)] <- a
   # tname <- fname
    lname <- .gsub("\\.shp","",basename(tname))
-   session_grid(crs)
+   session_grid(g0)
    nodata2 <- nrow(da)+1
    if (feature=="overlay") {
-      cmd <- with(crs,paste("gdal_rasterize",ifelse(verbose,"","-q")
+      cmd <- with(g0,paste("gdal_rasterize",ifelse(verbose,"","-q")
                            ,gdalopt
                            ,"-a plfeatid"
                            ,"-tr",resx,resy
@@ -536,7 +540,7 @@
       ref <- ursa_new(nband=nrow(da),ignorevalue=nodata2)
       pb <- ursaProgressBar(min=0,max=nrow(da))
       for (i in seq(nrow(da))) {
-         cmd <- with(crs,paste("gdal_rasterize",ifelse(verbose,"","-q")
+         cmd <- with(g0,paste("gdal_rasterize",ifelse(verbose,"","-q")
                               ,gdalopt
                               ,"-burn",i
                               ,"-where",dQuote(paste0("plfeatid=",sQuote(i)))
@@ -641,22 +645,27 @@
    options(ursaRasterizeProj=NULL)
    res
 }
-'.cmd.rasterize' <- function() {
-   a <- .args2list()
-   ind <- .grep("proj",names(a))
-   isGoogle <- length(ind)>0 && a[[ind]]=="google"
-   b <- do.call(".rasterize",a)
+'.cmd.rasterize' <- function(...) {
+   arg1 <- list(...)
+   if (!length(arg1)) {
+      arg1 <- .args2list()
+      session_pngviewer(TRUE)
+   }
+   ind <- .grep("^proj",names(arg1))
+   isGoogle <- length(ind)>0 && arg1[[ind]]=="google"
+  # arg1$verbose <- !FALSE
+   b <- do.call(".rasterize",arg1)
    .elapsedTime("rasterization done")
-  # saveRDS(b,"res1.rds")
-  # b2 <- if (.is.ursa_stack(b)) b[[1]] else b
-  # write_envi(b2,"res1")
    if (!TRUE)
       b <- b[c(length(b)-1,length(b))]
    session_grid(b)
-   a$verbose <- FALSE
+   ##~ arg2 <- as.list(args(".rasterize"))
+   ##~ arg2[[1]] <- quote(b)
+   ##~ names(arg2)[1] <- ""
+   arg3 <- list(quote(b),...)
+   arg3$verbose <- FALSE
    if (!isGoogle) {
-      a[[1]] <- quote(b)
-      do.call("display",a)
+      do.call("display",arg3)
       return(NULL)
    }
    lat <- with(session_grid(),.project(cbind(c(0,0),c(miny,maxy)),proj4,inv=TRUE)[,2])
@@ -691,7 +700,7 @@
    unit <- names(b)
    for (i in seq(n))
      # .compose_legend(ct[[i]],las=las)
-      do.call("legend_colorbar",c(list(ct[[i]]),las=las,units=unit[i],a[-1]))
+      do.call("legend_colorbar",c(list(ct[[i]]),las=las,units=unit[i],arg1[-1]))
    compose_close()
    NULL
 }

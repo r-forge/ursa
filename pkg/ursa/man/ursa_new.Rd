@@ -5,7 +5,7 @@
 Create raster image in memory
 }
 \description{
-\code{ursa_new} creates object of class \code{ursaRaster} in memory using \link[ursa:session_grid]{session grid parameters} or properties of input object (\code{\link[base]{matrix}} or \code{\link[base]{array}}). By option, \link[ursa:classRaster_names]{band names} and \link[ursa:ignorevalue]{ignore values} are specified.
+\code{ursa_new} creates object of class \code{ursaRaster} in memory using \link[ursa:session]{session grid parameters} or properties of input object (\code{\link[base]{matrix}} or \code{\link[base]{array}}). By option, \link[ursa:classRaster_names]{band names} and \link[ursa:ignorevalue]{ignore values} are specified.
 }
 \usage{
 ursa_new(...)
@@ -22,7 +22,7 @@ ursa_new(...)
          \item{\code{colortable}}{Object of class \code{\link[ursa:classColorTable]{ursaColorTable}}. Color table for raster. Default is \code{NULL}: color table is absent}
          \item{\code{permute}}{Logical. Should dimensions of input matrix be changed. Default is \code{FALSE}.}
          \item{\code{flip}}{Logical. Vertical flip for input matrix. Default is \code{FALSE}: no flip.}
-         \item{\code{crs}}{Character or object of class \code{ursaGrid}. The reference grid for raster's cells. Default is \code{NULL}: the grid is defined ether from matrix/array structure or from \link[ursa:session_grid]{sessional parameters}.}
+         \item{\code{crs}}{Character or object of class \code{ursaGrid}. The reference grid for raster's cells. Default is \code{NULL}: the grid is defined ether from matrix/array structure or from \link[ursa:session]{sessional parameters}.}
          \item{\code{verb(ose)*}}{Logical. Value \code{TRUE} may provide some additional information on console. Default is \code{FALSE}.}
       }
    }

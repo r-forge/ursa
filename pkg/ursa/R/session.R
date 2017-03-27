@@ -57,9 +57,12 @@
          return(opV)
       allow <- .isRscript()
    }
-   options(ursaAllowPngViewer=allow)
+   opA <- options(ursaAllowPngViewer=allow)[[1]]
+   if (is.null(opV))
+      opA <- allow
   # invisible(getOption("ursaAllowPngViewer"))
-   invisible(allow)
+  # invisible(allow) ## RC
+   invisible(opA)
 }
 'session_tempdir' <- function(dst=character()) {
    opD <- getOption("ursaTempDir")

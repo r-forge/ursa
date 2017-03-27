@@ -1,5 +1,5 @@
 \name{ursaGrid}
-\alias{ursaGrid-class}
+\alias{class-ursaGrid}
 \alias{str.ursaGrid}
 \alias{print.ursaGrid}
 \alias{dim.ursaGrid}

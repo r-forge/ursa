@@ -23,10 +23,10 @@ Numeric of length 1. Minimal value for raster image. Default is \code{0}.
 Numeric of length 1. Maximal value for raster image. Default is \code{255}.
 }
   \item{mul}{
-Positive numeric. The scaling of the existing \link[ursa:session_grid]{session grid}. Value \code{1} means the actual pixel size. Value \code{<1} decreases image size by increasing cell size. Value \code{>1} decreases image size by increasing cell size. Default is \code{1}.
+Positive numeric. The scaling of the existing \link[ursa:session]{session grid}. Value \code{1} means the actual pixel size. Value \code{<1} decreases image size by increasing cell size. Value \code{>1} decreases image size by increasing cell size. Default is \code{1}.
 }
   \item{elements}{
-Positive integer. Maximal dimension of matrix, which is proportional to \link[ursa:session_grid]{session grid}. If \code{elements} has small value then the resulting image is smooth, like low-resolution image. The \code{elements} has big value, then the resulting image is like white noise.
+Positive integer. Maximal dimension of matrix, which is proportional to \link[ursa:session]{session grid}. If \code{elements} has small value then the resulting image is smooth, like low-resolution image. The \code{elements} has big value, then the resulting image is like white noise.
 }
   \item{bandname}{
 Character vector or \code{NULL}. Band names for created raster image. If \code{NULL}, then band names are generated autimatically. Default is \code{NULL}.

@@ -1,30 +1,83 @@
-'.glance' <- function(dsn,layer=".*",crs,attr=".+",len=640,expand=1.05
+'glance' <- function(...) {
+   arglist <- list(...)
+   if (!length(arglist)) {
+      viewer <- session_pngviewer(TRUE)
+      on.exit(session_pngviewer(viewer))
+      arglist <- .args2list()
+   }
+   if (!is.character(arglist[[1]])) {
+      a <- do.call(".glance",arglist)
+      return(invisible(a))
+   }
+   if (!nchar(arglist[[1]])) {
+      return(invisible(10L))
+   }
+  # patlist <- ".+\\.(hdr|gz|bz2|xz|bin|bingz|envi|envigz|img|dat)$"
+   if (envi_exists(arglist[[1]])) {
+      do.call("display",arglist)
+   }
+   else {
+      b <- open_gdal(arglist[[1]])
+      if (!is.null(b)) {
+         close(b)
+         do.call("display",arglist)
+      }
+      else if (requireNamespace("sf",quietly=TRUE)) {
+         do.call(".glance",arglist)
+      }
+      else {
+         warning("Cannot complete without suggested package 'sf'.")
+         return(invisible(1L))
+      }
+   }
+   invisible(0L)
+}
+'.glance' <- function(dsn,layer=".*",grid=NULL,attr=".+",len=640,expand=1.05
                         ,border=15,lat0=NA,lon0=NA,resetProj=FALSE
-                        ,proj=c("auto","stere","laea","merc","internal"
+                        ,proj=c("auto","stere","laea","merc"#,"internal"
                                ,"google","longlat")
                         ,feature=c("auto","attribute","geometry")
-                        ,verbose=TRUE,...) {
+                        ,basemap=c("after","before"),saturation=NA,alpha=NA
+                        ,verbose=FALSE,...) {
   # feature <- "geometry"
    proj <- match.arg(proj)
+   basemap <- match.arg(basemap)
+   after <- basemap %in% "after"
+   before <- basemap %in% "before"
    feature <- match.arg(feature)
    if (!requireNamespace("sf")) {
-      res <- .rasterize(fname=dsn,crs=crs,attr=attr,len=len,res=NA,nodata=-9999
-                        ,expand=expand,border=border,lat0=lat0,lon0=lon0
-                        ,internalCall=FALSE,gdalopt="",ogropt="",where=""
-                        ,strings=FALSE,resetProj=resetProj
-                        ,proj=proj,feature="overlay",ID=FALSE,paint=5
-                        ,verbose=FALSE)
+      isGDAL <- nchar(Sys.which("gdal_rasterize"))>0
+      if (!isGDAL) {
+         warning("Unable to find GDAL utilities required for rasterization.")
+         return(23L)
+      }
+      g0 <- if (missing(grid)) NULL else grid
+     # arg1 <- str(as.list(match.call()))
+      res <- do.call(".cmd.rasterize",as.list(match.call()[-1]))
       return(res)
+      ##~ res <- .cmd.rasterize(fname=dsn,crs=g0,attr=attr,len=len,res=NA
+                           ##~ ,nodata=-9999,expand=expand,border=border
+                           ##~ ,lat0=lat0,lon0=lon0
+                           ##~ ,internalCall=FALSE,gdalopt="",ogropt="",where=""
+                           ##~ ,strings=FALSE,resetProj=resetProj
+                           ##~ ,proj=proj,feature="overlay",ID=FALSE,paint=5
+                           ##~ ,verbose=FALSE)
    }
    cpg <- NULL
    if (!((is.character(dsn))&&(length(dsn)==1))) {
-      if (inherits(dsn,"SpatialPointsDataFrame")) {
-         a <- sf::st_as_sfc(dsn);rm(dsn)
+      if (inherits(dsn,"Spatial")) { ## "SpatialPointsDataFrame"
+         if (!("package:methods" %in% search()))
+            stop(paste("Please, load required package 'methods'."
+                      ,"Unable complete coercion using requireNamespace() only."))
+         a <- sf::st_as_sf(dsn);rm(dsn)
       }
       else if (inherits(dsn,"sf")) {
          a <- dsn;rm(dsn)
       }
       else if (is.array(dsn)) {
+         return(display(dsn,...))
+      }
+      else if (is.ursa(dsn)) {
          return(display(dsn,...))
       }
       else {
@@ -51,12 +104,14 @@
       }
       opW <- options(warn=0)
       lname <- sf::st_layers(dsn)$name
-      if (length(lname)>1) {
+      if (!is.character(layer))
+         layer <- lname[layer[1]]
+      else
          layer <- .grep(layer,lname,value=TRUE)
-         if (length(layer)>1) {
-            print(paste("Select only one layer:",paste(paste0(seq(layer),")"),sQuote(layer),collapse=", ")),quote=FALSE)
-            return(30L)
-         }
+      if (length(layer)>1) {
+         print(paste("Select only one layer:",paste(paste0(seq(layer),")")
+                                    ,sQuote(layer),collapse=", ")),quote=FALSE)
+         return(30L)
       }
       a <- sf::st_read(dsn,layer=layer,quiet=TRUE)
       options(opW)
@@ -93,20 +148,22 @@
    if (("POLYGON" %in% geoType)&&("MULTIPOLYGON" %in% geoType))
       a <- sf::st_cast(a,"MULTIPOLYGON")
    sf_geom <- sf::st_geometry(a)
-   g0 <- getOption("ursaSessionGrid")
+   g2 <- getOption("ursaSessionGrid")
    if (!(proj %in% c("auto","internal")))
       resetProj <- TRUE
   # if ((proj=="internal")&&(!is.na(keepProj))) {
-  #    g0 <- NULL
+  #    g2 <- NULL
   # }
    if (resetProj)
-      crs <- NULL
-   else if ((missing(crs))&&(!is.null(g0)))
-      crs <- g0
-   else if (missing(crs))
-      crs <- NULL
-   if ((is.null(crs))||(is.numeric(lon0))||(is.numeric(lat0))) {
-  # if ((resetProj)||(is.ursa(crs,"grid"))||(is.numeric(lon0))||(is.numeric(lat0))) {
+      g0 <- NULL
+   else if ((missing(grid))&&(!is.null(g2)))
+      g0 <- g2
+   else if (missing(grid))
+      g0 <- NULL
+   else
+      g0 <- grid
+   if ((is.null(g0))||(is.numeric(lon0))||(is.numeric(lat0))) {
+  # if ((resetProj)||(is.ursa(g0,"grid"))||(is.numeric(lon0))||(is.numeric(lat0))) {
       proj4 <- sf::st_crs(a)$proj4string
       if ((proj4=="")&&(!(proj %in% c("auto","internal")))) {
          resetProj <- TRUE
@@ -240,18 +297,18 @@
    }
    else if (is.ursa(a,"grid")) {
       if (is.character(t_srs))
-         a <- sf::st_transform(a,ursa_proj(crs))
+         a <- sf::st_transform(a,ursa_proj(g0))
    }
    sf_geom <- sf::st_geometry(a)
    bbox <- sf::st_bbox(a)
    if ((bbox["xmin"]==bbox["xmax"])||(bbox["ymin"]==bbox["ymax"]))
       bbox <- bbox+100*c(-1,-1,1,1)
+   proj4 <- sf::st_crs(a)$proj4string
    if (TRUE) {
       .sc <- ifelse(.lgrep("\\+proj=(zzzlonglat|zzzmerc)",proj4)>0,0,expand-1)
       bbox[c(1,3)] <- mean(bbox[c(1,3)])+c(-1,1)*expand*diff(bbox[c(1,3)])/2
       bbox[c(2,4)] <- mean(bbox[c(2,4)])+c(-1,1)*expand*diff(bbox[c(2,4)])/2
    }
-   proj4 <- sf::st_crs(a)$proj4string
    isGoogle <- proj %in% c("google") & requireNamespace("ggmap")
    if (isGoogle) {
       xy <-cbind(bbox[c(1,3)],bbox[c(2,4)])
@@ -306,41 +363,41 @@
                         ,urlonly=!TRUE,filename = "___ggmapTemp"
                         ,color=mcolor)
       basemap <- as.ursa(m)
-      crs <- ursa_grid(basemap)
+      g0 <- ursa_grid(basemap)
       lon_0 <- as.numeric(.gsub("^.*\\+lon_0=(\\S+)\\s.+$","\\1",proj4))
       radius <- as.numeric(.gsub("^.*\\+a=(\\S+)\\s.+$","\\1",proj4))
       B <- radius*pi
       shift <- B*lon_0/180
-     # print(crs)
-      crs$minx <- crs$minx-shift
-      crs$maxx <- crs$maxx-shift
-      crs$proj4 <- proj4
-      if (crs$minx<(-2*B)) {
-         crs$minx <- crs$minx+2*B
-         crs$maxx <- crs$maxx+2*B
+     # print(g0)
+      g0$minx <- g0$minx-shift
+      g0$maxx <- g0$maxx-shift
+      g0$proj4 <- proj4
+      if (g0$minx<(-2*B)) {
+         g0$minx <- g0$minx+2*B
+         g0$maxx <- g0$maxx+2*B
       }
-      else if (crs$minx>2*B) {
-         crs$minx <- crs$minx-2*B
-         crs$maxx <- crs$maxx-2*B
+      else if (g0$minx>2*B) {
+         g0$minx <- g0$minx-2*B
+         g0$maxx <- g0$maxx-2*B
       }
-      if (crs$maxx<(-2*B)) {
-         crs$minx <- crs$maxx+2*B
-         crs$maxx <- crs$maxx+2*B
+      if (g0$maxx<(-2*B)) {
+         g0$minx <- g0$maxx+2*B
+         g0$maxx <- g0$maxx+2*B
       }
-      else if (crs$maxx>2*B) {
-         crs$minx <- crs$minx-2*B
-         crs$minx <- crs$minx-2*B
+      else if (g0$maxx>2*B) {
+         g0$minx <- g0$minx-2*B
+         g0$minx <- g0$minx-2*B
       }
-     # print(crs)
-      ursa_grid(basemap) <- crs
-      if (crs$minx>crs$maxx) {
-         if ((crs$minx<0)&&(bbox[1]>0))
+     # print(g0)
+      ursa_grid(basemap) <- g0
+      if (g0$minx>g0$maxx) {
+         if ((g0$minx<0)&&(bbox[1]>0))
             bbox[1] <- bbox[1]-2*B
-         else if ((crs$minx>0)&&(bbox[1]<0))
+         else if ((g0$minx>0)&&(bbox[1]<0))
             bbox[1] <- bbox[1]+2*B
-         if ((crs$maxx<0)&&(bbox[3]>0))
+         if ((g0$maxx<0)&&(bbox[3]>0))
             bbox[3] <- bbox[3]-2*B
-         else if ((crs$maxx>0)&&(bbox[3]<0))
+         else if ((g0$maxx>0)&&(bbox[3]<0))
             bbox[3] <- bbox[3]+2*B
       }
    }
@@ -351,10 +408,10 @@
       g1 <- ursa_grid()
       g1$resx <- g1$resy <- res
       g1$proj4 <- proj4
-      crs <- regrid(g1,bbox=unname(bbox[c("xmin","ymin","xmax","ymax")]),border=border)
+      g0 <- regrid(g1,bbox=unname(bbox[c("xmin","ymin","xmax","ymax")]),border=border)
       basemap <- NULL
    }
-   session_grid(crs)
+   session_grid(g0)
   # print(session_grid())
    geoType <- unique(as.character(sf::st_geometry_type(a)))
    if ((FALSE)&&(.lgrep("POLYGON",geoType))) {
@@ -374,7 +431,10 @@
   # print(unname(ct$colortable[ct$ind]))
    if (feature=="attribute") {
       ct <- vector("list",length(dname))
-      alpha <- ifelse(isGoogle,0.75,1)
+      if ((isGoogle)&&(is.na(saturation)))
+         saturation <- ifelse(before,0.5,0.35)
+      if (is.na(alpha))
+         alpha <- ifelse(isGoogle,ifelse(before,0.75,1),1)
       cpg <- "1251"
       for (i in seq_along(dname)) {
         # print(i)
@@ -397,13 +457,15 @@
       compose_open(res,scale=ifelse(isGoogle,1,NA),...)
       gline <- compose_gridline(...)
       cline <- compose_coastline(...)
+      print(before)
       pb <- ursaProgressBar(min=0,max=length(res))
       for (i in seq_along(res)) {
          if (isGoogle)
             panel_new(fill="transparent",...)
          else
             panel_new(...) #fill=ifelse(isGoogle,"transparent","chessboard"))
-         panel_plot(basemap,alpha=0.5)
+         if (before)
+            panel_plot(basemap,alpha=saturation)
         # if ((!length(ct))||(all(is.na(ct[[i]]$index)))) {
          if (!length(ct)) {
             panel_plot(sf_geom)
@@ -433,6 +495,8 @@
                panel_plot(sf_geom,lwd=2,col=col)
             }
          }
+         if (after)
+            panel_plot(basemap,alpha=saturation)
          panel_coastline(cline)
          panel_gridline(gline)
          panel_scalebar(pos=ifelse(isGoogle,"topleft","bottomleft"),...)
@@ -440,7 +504,15 @@
       }
       close(pb)
       if (length(ct)) {
-         ct <- lapply(ct,function(x) x$colortable)
+         ct <- lapply(ct,function(x) {
+            if ((TRUE)&&(isGoogle)&&(after)) {
+               alpha2 <- 0.65
+               ct2 <- x$colortable
+               ct2[] <- paste0(substr(ct2,1,7),toupper(as.hexmode(round(alpha2*255))))
+               x$colortable <- ct2
+            }
+            x$colortable
+         })
          names(ct) <- dname
          compose_legend(ct,las=2,trim=2L)
       }

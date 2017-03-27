@@ -1,0 +1,15 @@
+Loading required namespace: rgdal
+Loading required namespace: ggmap
+Loading required namespace: proj4
+Loading required namespace: tcltk
+Use 'session_pngviewer(TRUE)' to open 'C:\TEMP\Rtmp6bpHbM/___tmp01_51ab.png' 
+by external software.
+Rscript --vanilla -e ursa::glance() "C:/Software/Rtools/library/rgdal/vectors/scot_BNG.shp" proj="merc" attr="(lon|lat)"
+[1] "C:\\TEMP\\Rtmp6bpHbM\\file277c50514b0a.bat"
+Loading required namespace: rgdal
+Loading required namespace: ggmap
+Loading required namespace: proj4
+Loading required namespace: tcltk
+> proc.time()
+   user  system elapsed 
+   3.67    0.79   11.51 

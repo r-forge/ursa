@@ -116,3 +116,4 @@
       ##~ return(utils::setWinProgressBar(pb,value,label=label))
    utils::setTxtProgressBar(pb,value,title=title,label=label)
 }
+'close.ursaProgressBar' <- function(con,...) close(con,...)

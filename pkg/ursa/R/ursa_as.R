@@ -199,9 +199,15 @@
          return(res)
       }
    }
+   ind <- inherits(obj,c("bitmap","rgba"),which=TRUE) ## package 'magick'
+   ind <- ind[ind>0]
+   if (length(ind)>=2) {
+      res <- ursa_new(as.integer(obj),flip=TRUE,permute=TRUE)
+      return(res)
+   }
   # isMatrix <- is.matrix
   # if ((is.matrix(obj))||(is.array(obj)))
-   isArray <- !is.null(dim)
+   isArray <- !is.null(dim(obj)) ## 20170327 replaced 'isArray <- !is.null(dim)'
    if ((!isArray)&&(is.numeric(obj))) {
      # print("NOT-ARRAY")
       res <- ursa_new(obj,...)

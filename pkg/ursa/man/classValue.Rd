@@ -1,4 +1,7 @@
 \name{ursaValue}
+\alias{class-ursaValue}
+\alias{class-ursaNumeric}
+\alias{class-ursaCategory}
 \alias{print.ursaCategory}
 \alias{print.ursaNumeric}
 \alias{ursa_value}

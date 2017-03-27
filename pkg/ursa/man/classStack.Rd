@@ -1,4 +1,5 @@
 \name{ursaStack}
+\alias{class-ursaStack}
 \alias{ursa_stack}
 \alias{ursa_brick}
 \alias{ursa_apply}

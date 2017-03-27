@@ -1,7 +1,8 @@
 'ursa_new' <- function(...)
 {
    arglist <- list(...)
-   value <- .getPrm(arglist,name="(^$|^value)",class=list("numeric","matrix","array")
+   value <- .getPrm(arglist,name="(^$|^value)"
+                   ,class=list("numeric","matrix","array")
                    ,coerce=FALSE,default=NA,verbose=FALSE)
    nd <- length(dim(value))
    isMatrix <- if (nd==2) TRUE else FALSE
@@ -51,6 +52,13 @@
          }
          dima <- c(dima,1L)
         # dim(value) <- dima ## added 20170129
+      }
+      else if (length(dima)==3) {
+         if (permute) {
+            ind <- c(2,1,3)
+            value <- aperm(value,ind)
+            dima <- dim(value)
+         }
       }
       if (!((sp==dima[1])||(sp==dima[2]))) {
          if ((grid$columns!=dima[1])||(grid$rows!=dima[2]))

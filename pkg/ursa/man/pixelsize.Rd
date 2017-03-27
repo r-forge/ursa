@@ -19,7 +19,7 @@ Logical. Value \code{TRUE} may provide some additional information on console. D
 }
 }
 \details{
-\code{pixelsize()} is applied to coordinate reference system (grid) of \code{ursaRaster} object or to \link[ursa:classGrid]{raster grid} directly. If argument \code{obj} is \link[base:missing]{missed}, then \link[ursa:session_grid]{session grid} is used.
+\code{pixelsize()} is applied to coordinate reference system (grid) of \code{ursaRaster} object or to \link[ursa:classGrid]{raster grid} directly. If argument \code{obj} is \link[base:missing]{missed}, then \link[ursa:session]{session grid} is used.
 
 Currently, only \emph{Stereographic} (\code{"+stere"} in PROJ.4 notation), \emph{Mercator} (\code{"+merc"}), and \emph{Lambert Azimuthal Equal Area} (\code{"+laea"}) classes of map projections are implemented, though the last one (LAEA) has no distortion in area.
 }

@@ -1,6 +1,8 @@
 'ursa_read' <- function(fname,verbose=FALSE) .read_gdal(fname=fname,verbose=verbose)
 'read_gdal' <- function(fname,resetGrid=TRUE,band=NULL,verbose=FALSE,...) { ## ,...
    obj <- open_gdal(fname,verbose=verbose)
+   if (is.null(obj))
+      return(NULL)
    res <- if (!is.null(band)) obj[band] else obj[]
    close(obj)
    if (resetGrid)

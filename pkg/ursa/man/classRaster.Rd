@@ -1,6 +1,5 @@
 \name{ursaRaster}
-\alias{ursaRaster}
-\alias{ursaRaster-class}
+\alias{class-ursaRaster}
 \alias{is.ursa}
 \alias{is_ursa}
 \alias{print.ursaRaster}

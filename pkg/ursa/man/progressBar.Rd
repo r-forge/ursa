@@ -1,6 +1,7 @@
 \name{ursaProgressBar}
 \alias{ursaProgressBar}
 \alias{setUrsaProgressBar}
+\alias{close.ursaProgressBar}
 \title{
 Progress bar
 }
@@ -13,39 +14,46 @@ ursaProgressBar(kind = c("tk", "txt"),title = .argv0(),
 
 setUrsaProgressBar(pb, value, title = NULL, label = NULL)
 
+\method{close}{ursaProgressBar}(con, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{kind}{
-Character. Type or progress bar. 
+Character. Type or progress bar. Valid values are \code{"tk"} to display progress bar in tcl/tk window and \code{"txt"} to display progress bar in terminal mode. Default is \code{"tk"}.
 }
-  \item{title}{
-%%     ~~Describe \code{title} here~~
+\item{style}{
+   See description for the same argument in \code{\link[utils:txtProgressBar]{txtProgressBar}}.
 }
-  \item{label}{
-%%     ~~Describe \code{label} here~~
+\item{width}{
+   See description for the same argument in \code{\link[tcltk:tkProgressBar]{tkProgressBar}}.
 }
-  \item{min}{
-%%     ~~Describe \code{min} here~~
+\item{title, label, min, max, initial, value, pb, con, \dots}{
+   See description for the same arguments in \code{\link[tcltk:tkProgressBar]{tkProgressBar}} and \code{\link[utils:txtProgressBar]{txtProgressBar}}.
 }
-  \item{max}{
-%%     ~~Describe \code{max} here~~
-}
-  \item{initial}{
-%%     ~~Describe \code{initial} here~~
-}
-  \item{width}{
-%%     ~~Describe \code{width} here~~
-}
-  \item{style}{
-%%     ~~Describe \code{style} here~~
-}
-  \item{pb}{
-%%     ~~Describe \code{pb} here~~
-}
-  \item{value}{
-%%     ~~Describe \code{value} here~~
-}
+%%~ \item{label}{
+%%~    See description for the same argument in \code{\link[tcltk:tkProgressBar]{tkProgressBar}} and \code{\link[utils:txtProgressBar]{txtProgressBar}}.
+%%~ }
+%%~ \item{min}{
+%%~    See description for the same argument in \code{\link[tcltk:tkProgressBar]{tkProgressBar}} and \code{\link[utils:txtProgressBar]{txtProgressBar}}.
+%%~ }
+%%~ \item{max}{
+%%~    See description for the same argument in \code{\link[tcltk:tkProgressBar]{tkProgressBar}} and \code{\link[utils:txtProgressBar]{txtProgressBar}}.
+%%~ }
+%%~ \item{initial}{
+%%~    See description for the same argument in \code{\link[tcltk:tkProgressBar]{tkProgressBar}} and \code{\link[utils:txtProgressBar]{txtProgressBar}}.
+%%~ }
+%%~ \item{width}{
+%%~    See description for the same argument in \code{\link[tcltk:tkProgressBar]{tkProgressBar}} and \code{\link[utils:txtProgressBar]{txtProgressBar}}.
+%%~ }
+%%~ \item{pb}{
+%%~    See description for the same argument in \code{\link[tcltk:tkProgressBar]{tkProgressBar}} and \code{\link[utils:txtProgressBar]{txtProgressBar}}.
+%%~ }
+%%~ \item{value}{
+%%~    See description for the same argument in \code{\link[tcltk:tkProgressBar]{tkProgressBar}} and \code{\link[utils:txtProgressBar]{txtProgressBar}}.
+%%~ }
+%%~ \item{\dots}{
+%%~    See description for the same argument in \code{\link[tcltk:tkProgressBar]{tkProgressBar}} and \code{\link[utils:txtProgressBar]{txtProgressBar}}.
+%%~ }
 }
 \details{
 Wrapper to one of
