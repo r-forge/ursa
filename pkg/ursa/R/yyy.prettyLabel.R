@@ -73,7 +73,7 @@
    res <- as.numeric(value)
    if (!anyNA(res))
       return(res)
-   patt <- "(<=|<|=|>|\\(|\\[|;|\\]|\\))" ## <= < = > >= [ ] ( ) ;
+   patt <- "(<=|<|=|>|\\(|\\[|;|,|\\]|\\))" ## <= < = > >= [ ] ( ) ; ,
    if (.lgrep(patt,value)>0) {
       ivalue <- .gsub(patt," ",value)
       l1 <- length(ivalue)

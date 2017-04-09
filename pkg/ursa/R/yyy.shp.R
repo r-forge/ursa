@@ -76,7 +76,7 @@
          if (file.remove(.shp.file(fname)))
             break
          if (first) {
-            cat(paste("Waiting for permitted writting",sQuote(basename(fname))))
+            cat(paste("Waiting for permitted writting",.sQuote(basename(fname))))
             first <- FALSE
          }
          cat(".")
@@ -104,7 +104,7 @@
       if (file.remove(z))
          break
       if (first) {
-         cat(paste("Waiting for deleting",sQuote(z)))
+         cat(paste("Waiting for deleting",.sQuote(z)))
          first <- FALSE
       }
       cat(".")
@@ -128,7 +128,7 @@
       a <- utils::unzip(z,exdir=fpath,junkpaths=TRUE)
       on.exit(file.remove(a))
    }
-   info <- system(paste("ogrinfo",dQuote(fname)),intern=TRUE)
+   info <- system(paste("ogrinfo",.dQuote(fname)),intern=TRUE)
    patt <- paste0(".+",lname," \\((.+)\\)")
    res <- .gsub(patt,"\\1",.grep(patt,info,value=TRUE))
    if (verbose)

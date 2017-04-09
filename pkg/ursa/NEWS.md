@@ -1,3 +1,18 @@
+# version 3.7-2
+
+* Introduce geocode to 'glance'. There is no relation between data and geocoded place.
+
+* Introduce tiles to 'glance'. Now static maps and tiles for basemap in "+proj=merc"
+
+* Dismiss from dQuote() and sQuote(), which put non-symmetrical quotes in Rgui;
+   GDAL does't understad it.
+
+* 'inst/glance' contains mock-up to create vector/raster file associantion with glance()
+
+* 'glance' can work without package 'sf'; however "package:methods" shoulb be in "search()"
+
+* Rename 'panel_gridline' to 'panel_graticule'.
+
 # version 3.7-1
 
 * Public wrapper 'glance()' for non-public '.glance()':

@@ -1,7 +1,7 @@
 'panel_plot' <- function(obj,...)
 {
-  # if (.skipPlot(TRUE))
-  #    return(NULL)
+   if (.skipPlot(TRUE))
+      return(NULL)
    if ((is.character(obj))&&(.lgrep("\\.shp(\\.zip)*$",obj)))
    {
       op <- options(warn=0)
@@ -34,8 +34,8 @@
       if (inherits(ret,"try-error")) {
          opW <- options(warn=1)
          warning(paste("Unable to call 'plot' method for class"
-                      ,sQuote(class(obj))
-                      ,"\nTry to use 'plot(...)' instead of 'panel_plot(...)' in your code."))
+                      ,.sQuote(class(obj))
+                      ,"\nIt seems that package 'methods' is required."))
          options(opW)
          ret <- NULL
       }
@@ -92,6 +92,7 @@
   # fun <- if (nchar(pkg)) paste0(pkg,"::","plot") else "plot"
   # if (nchar(pkg))
   #    requireNamespace(pkg)
+  # require(methods)
    plot(obj,...)
   # do.call("plot",list(obj,arglist)) ## ,add=TRUE 
   # plot(obj,...) ## ,add=TRUE 

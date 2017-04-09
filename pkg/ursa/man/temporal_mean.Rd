@@ -55,7 +55,7 @@ Nikita Platonov \email{platonov@sevin.ru}
 }
 
 \seealso{
-\code{\link[caTools:runmean]{caTools::runmean}} (clickable correctly if package \pkg{caTools} is installed)
+\code{\link[caTools:runmean]{caTools::runmean}} (click if package \pkg{caTools} is installed)
 }
 \examples{
 session_grid(NULL)
@@ -65,13 +65,16 @@ m <- 3 # sample size
 k <- median(seq(n))+seq(m)-(m \%/\% 2)-1 ## sample subset
 s <- 5 # window size
 a <- round(ursa_dummy(n,min=-60,max=60,elements=15,mul=1/8))
+
+\dontrun{
 if (requireNamespace("caTools")) {
    b1 <- as.ursa(t(apply(as.matrix(a),1,caTools::runmean,k=s,endrule="mean")))
    b2 <- temporal_mean(a,s)
    print(b1[k])
    print(b2[k])
    print(c('identical?'=all.equal(ursa_value(b1),ursa_value(b2))))
-}
+}}
+
 a[a<(-40)] <- NA
 va <- as.matrix(a) # or 'ursa_value(a)'
 b3 <- temporal_mean(a,s,cover=3/4,verbose=TRUE)

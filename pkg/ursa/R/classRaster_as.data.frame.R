@@ -17,7 +17,8 @@
    g1 <- ursa_grid(obj)
    x <- with(g1,seq(minx,maxx,by=resx)[-1]-resx/2)
    y <- rev(with(g1,seq(miny,maxy,by=resy)[-1]-resy/2))
-   xy <- expand.grid(x=x,y=y,KEEP.OUT.ATTRS=FALSE,stringsAsFactors=FALSE)
+  # xy <- expand.grid(x=x,y=y,KEEP.OUT.ATTRS=FALSE,stringsAsFactors=FALSE)
+   xy <- data.frame(x=rep(x,times=length(y)),y=rep(y,each=length(x)))
    bname <- bandname(obj)
    if (!is.na(obj$con$posZ[1]))
       indZ <- obj$con$posZ
@@ -89,16 +90,16 @@
    res
 }
 # 'as_data_frame' <- function(obj) UseMethod("as_data_frame",obj)
-'.as_data_frame.ursaRaster' <- function(obj,band=FALSE,id=FALSE
-                                                    ,na.rm=TRUE,all.na=FALSE)
-{
-   res <- as.data.frame(obj,band=band,id=id,na.rm=na.rm,all.na=all.na)
-   if (!requireNamespace("dplyr",quietly=TRUE))
-      return(res)
-   dplyr::as_data_frame(res)
-}
-'.as.data.table.ursaRaster' <- function(obj,band=FALSE,id=FALSE
-                                                    ,na.rm=TRUE,all.na=FALSE) {
-   print("HERE data.table")
-   NULL
-}
+##~ '.as_data_frame.ursaRaster' <- function(obj,band=FALSE,id=FALSE
+                                                    ##~ ,na.rm=TRUE,all.na=FALSE)
+##~ {
+   ##~ res <- as.data.frame(obj,band=band,id=id,na.rm=na.rm,all.na=all.na)
+   ##~ if (!requireNamespace("dplyr",quietly=TRUE))
+      ##~ return(res)
+   ##~ dplyr::as_data_frame(res)
+##~ }
+##~ '.as.data.table.ursaRaster' <- function(obj,band=FALSE,id=FALSE
+                                                    ##~ ,na.rm=TRUE,all.na=FALSE) {
+   ##~ print("HERE data.table")
+   ##~ NULL
+##~ }

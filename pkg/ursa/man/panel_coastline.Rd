@@ -120,7 +120,7 @@ for (i in 1:4) {
    panel_coastline(coast=3,col="#0000003F",fill="#0000003F")
    panel_coastline(coast=2,col="black",fill="black",density=20
                    ,angle=c(-45,45),lwd=0.25,detail="l")
-  # panel_gridline(decor=4)
+  # panel_graticule(decor=4)
    panel_annotation(text=as.character(i))
    if (i==1)
       panel_annotation(pos=c(1,1),text="default")

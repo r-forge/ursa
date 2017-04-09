@@ -1,12 +1,15 @@
-##~ '.panel_gridline' <- function(gridline=TRUE,col="grey70",lon=NULL,lat=NULL
+##~ '.panel_graticule' <- function(gridline=TRUE,col="grey70",lon=NULL,lat=NULL
                               ##~ ,lwd=1,lty=2,margin=rep(FALSE,4),trim=FALSE
                               ##~ ,cex=0.75,...) {
    ##~ NULL
 ##~ }
-'compose_gridline' <- function(...) {
+'compose_graticule' <- function(...) {
    arglist <- list(...)
-   kwd <- "grid(line)*"
-   gridline <- .getPrm(arglist,name=paste0("^(",kwd,"|decor)$"),default=TRUE)
+  # kwd <- "grid(line)*"
+   kwd <- "(graticule|grid(line)*)"
+  # gridline <- .getPrm(arglist,name=paste0("^(",kwd,"|decor)$"),default=TRUE)
+   gridline <- .getPrm(arglist,name=paste0("^(",.gsub("(^\\(|\\)$)","",kwd),"|decor)$")
+                      ,default=TRUE)
    if (!any(gridline)) {
       res <- list(gridline=NULL,margin=NULL)
       class(res) <- "ursaGridLine"
@@ -39,11 +42,11 @@
    if (verbose)
       str(list(col=col,lon=lon,lat=lat,col=col,lwd=lwd,lty=lty,panel=panel
               ,marginalia=marginalia,trim=trim,cex=cex))
-   .compose_gridline(panel=panel,col=col,lon=lon,lat=lat,lwd=lwd,lty=lty
+   .compose_graticule(panel=panel,col=col,lon=lon,lat=lat,lwd=lwd,lty=lty
                     ,marginalia=marginalia,trim=trim,language=language,cex=cex
                     ,verbose=verbose)
 }
-'.compose_gridline' <- function(panel=0L,col="grey70",lon=NA,lat=NA
+'.compose_graticule' <- function(panel=0L,col="grey70",lon=NA,lat=NA
                               ,lwd=0.5,lty=2,marginalia=rep(FALSE,4),trim=FALSE
                               ,language=NA,cex=0.75,verbose=FALSE) {
    if (is.na(language)) {
@@ -761,11 +764,11 @@
    class(res) <- "ursaGridLine"
    res
 }
-'panel_gridline' <- function(...) {
+'panel_graticule' <- function(...) {
    if (.skipPlot())
       return(NULL)
    arglist <- list(...)
-   kwd <- "grid(line)*"
+   kwd <- "(graticule|grid(line)*)"
    figure <- getOption("ursaPngFigure")
    gridline <- .getPrm(arglist,name=kwd,class=list("integer","logical")
                       ,default=TRUE)
@@ -780,7 +783,7 @@
       return(NULL)
    }
    if (is.null(obj))
-      obj <- compose_gridline(...)
+      obj <- compose_graticule(...)
    if (is.null(obj$gridline))
       return(NULL)
    if ((!is.null(attr(g1$seqx,"units"))&&(!is.null(attr(g1$seqy,"units"))))) {
@@ -808,9 +811,9 @@
       marginalia <- FALSE
    }
    marginalia <- rep(marginalia,length=4)
-   .panel_gridline(obj,marginalia=marginalia,verbose=verbose)
+   .panel_graticule(obj,marginalia=marginalia,verbose=verbose)
 }
-'.panel_gridline' <- function(obj,marginalia=rep(TRUE,4),verbose=FALSE) {
+'.panel_graticule' <- function(obj,marginalia=rep(TRUE,4),verbose=FALSE) {
    with(obj,{
       if (verbose)
          str(list(col=col,lwd=lwd,lty=lty))

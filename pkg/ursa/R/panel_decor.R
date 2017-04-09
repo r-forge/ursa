@@ -5,7 +5,7 @@
    if (!length(ind))
       arglist$decor <- TRUE
    do.call("panel_coastline",arglist)
-   do.call("panel_gridline",arglist)
+   do.call("panel_graticule",arglist)
    do.call("panel_scalebar",arglist)
    do.call("panel_annotation",arglist)
    options(opR)

@@ -101,7 +101,7 @@
    y <- as.ursa(NA,bandname=bandname(x),nodata=nodata) ## ursa_new
    if (isCT)
       y$colortable <- x$colortable
-   y$value <- .C("resampl4",x=x$value,nodata=as.numeric(nodata)
+   y$value <- .Cursa("resampl4",x=x$value,nodata=as.numeric(nodata)
                 ,dim1=as.integer(dimx),dim2=as.integer(dimy)
                 ,lim1=as.numeric(with(g1,c(minx,miny,maxx,maxy)))
                 ,lim2=as.numeric(with(g2,c(minx,miny,maxx,maxy)))
@@ -150,6 +150,7 @@
    y
 }
 '.regrid' <- function(grid=NULL,mul=NA,res=NA,resx=NA,resy=NA
+                             ,setbound=NA,columns=NA,rows=NA,dim=NA
                              ,bbox=NA,expand=NA
                              ,minx=NA,miny=NA,maxx=NA,maxy=NA,cut=NA
                              ,proj4=NA,border=0,zero=c("keep","node","center")
@@ -191,6 +192,36 @@
       print(y)
    }
    step1 <- TRUE
+   dima <- length(dim)
+   if (length(dim)==2) {
+      rows <- dim[1]
+      columns <- dim[2]
+   }
+   if (!is.na(setbound)[1]) {
+      setbound <- rep(setbound,length=4)
+      g$minx <- setbound[1]
+      g$miny <- setbound[2]
+      g$maxx <- setbound[3]
+      g$maxy <- setbound[4]
+      toDefine <- FALSE
+      if ((is.na(g$columns))&&(!is.na(columns))) {
+         g$columns <- as.integer(round(columns))
+         if (!toDefine)
+            toDefine <- TRUE
+      }
+      if ((is.na(g$rows))&&(!is.na(rows))) {
+         g$rows <- as.integer(round(rows))
+         if (!toDefine)
+            toDefine <- TRUE
+      }
+      if (toDefine) {
+         g$resx <- with(g,(maxx-minx)/columns)
+         g$resy <- with(g,(maxy-miny)/rows)
+      }
+   }
+   ##~ if (verbose) {
+      ##~ print(g)
+   ##~ }
    if (!is.na(cut[1])) {
       if (length(cut)==1)
          cut <- cut*c(-1,-1,1,1)

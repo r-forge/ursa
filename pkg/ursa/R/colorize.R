@@ -25,6 +25,20 @@
    col <- NULL ## plug
    palname <- NULL ## plug
    keepColors <- ncolor
+   dropIndex <- FALSE
+   if (missing(obj)) {
+      v <- 0
+      if (length(name))
+         v <- length(name)
+      else if (length(value))
+         v <- length(value)
+      else if (length(breakvalue))
+         v <- length(breakvalue)+1L
+      else if ((is.character(pal))&&(length(pal)))
+         v <- length(pal)
+      obj <- seq_along(v)
+      dropIndex <- TRUE
+   }
    isList <-  .is.ursa_stack(obj)
    if (isList) { ## recursive!!!
       rel <- as.list(match.call())
@@ -78,6 +92,8 @@
             rel[["stretch"]] <- s
          img <- do.call(fun,rel[-1])
          session_grid(g1)
+         if (dropIndex)
+            return(img$colortable)
          return(list(index=c(img$value)+1L,colortable=img$colortable))
       }
       return(list(index=NA,colortable=NA))
@@ -107,11 +123,13 @@
       }
       else {
          if (length(cname)==length(ct)) { ## categoral
-            rel$value <- as.numeric(cname)
+           # rel$value <- as.numeric(cname) ## 20170401 removed
+            rel$value <- seq_along(as.numeric(cname))-1L ## 20170401 added
             rel$breakvalue <- NULL
          }
          else { ## interval
-            rel$breakvalue <- as.numeric(cname)
+           # rel$breakvalue <- as.numeric(cname) ## 20170401 removed
+            rel$value <- seq_along(as.numeric(cname))-1L ## 20170401 added
             rel$value <- NULL
          }
         # rel$obj <- if (TRUE) quote(reclass(obj)) else reclass(obj)
@@ -119,12 +137,11 @@
       ursa_colortable(obj) <- character(0)
      # rel$obj <- if (!TRUE) quote(.extract(obj)) else .extract(obj)
       rel$obj <- quote(obj)
-      if (!FALSE) {## simple but not quick 
+      if (TRUE) {## simple but not quick 
          if (.is.category(obj)) { ##  attr(obj$value,"category")
             rel$value <- seq(length(ct))-1L
             rel$stretch <- ".onetoone"
          }
-        # str(rel)
          res <- do.call(as.character(rel[1]),rel[-1])
          names(res$colortable) <- names(ct)
       }

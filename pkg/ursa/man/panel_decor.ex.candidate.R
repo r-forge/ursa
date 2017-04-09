@@ -20,7 +20,7 @@ invisible({
       panel_decor(coast=5,grid=5,coast.col="darkblue"
                  ,coast.fill="lightyellow",grid.lty=1,grid.col="salmon4")
       if (i==6) {
-         panel_gridline()
+         panel_graticule()
          panel_coastline(fill="#FFFF7F8F")
       }
       panel_annotation(text=c("default","only coastline","only gridline"

@@ -7,12 +7,14 @@ invisible({
    k <- median(seq(n))+seq(m)-(m %/% 2)-1 ## sample subset
    s <- 5 # window size
    a <- round(ursa_dummy(n,min=-60,max=60,elements=15,mul=1/8))
-   if (requireNamespace("caTools")) {
-      b1 <- as.ursa(t(apply(as.matrix(a),1,caTools::runmean,k=s,endrule="mean")))
-      b2 <- temporal_mean(a,s)
-      print(b1[k])
-      print(b2[k])
-      print(c('identical?'=all.equal(ursa_value(b1),ursa_value(b2))))
+   if (dontrun <- FALSE) {
+      if (requireNamespace("caTools")) {
+         b1 <- as.ursa(t(apply(as.matrix(a),1,caTools::runmean,k=s,endrule="mean")))
+         b2 <- temporal_mean(a,s)
+         print(b1[k])
+         print(b2[k])
+         print(c('identical?'=all.equal(ursa_value(b1),ursa_value(b2))))
+      }
    }
    a[a<(-40)] <- NA
    va <- as.matrix(a) # or 'ursa_value(a)'

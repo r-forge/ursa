@@ -9,7 +9,7 @@ invisible({
       for (i in 1:4) {
          panel_new()
          panel_coastline()
-         panel_gridline(decor=TRUE,trim=i %in% c(2:4))
+         panel_graticule(decor=TRUE,trim=i %in% c(2:4))
          panel_annotation(text=as.character(i))
          panel_scalebar(scalebar=i==3)
       }
@@ -22,14 +22,14 @@ invisible({
          panel_new()
          panel_coastline()
          if (i==1)
-            panel_gridline()
+            panel_graticule()
          else if (i==2)
-            panel_gridline(decor=TRUE,lon=seq(0,360,by=20)[-1],lat=seq(-90,90,by=5))
+            panel_graticule(decor=TRUE,lon=seq(0,360,by=20)[-1],lat=seq(-90,90,by=5))
          else if (i==3)
-            panel_gridline(decor=TRUE,lon=seq(0,360,by=10)[-1],lat=seq(-90,90,by=2.5)
+            panel_graticule(decor=TRUE,lon=seq(0,360,by=10)[-1],lat=seq(-90,90,by=2.5)
                            ,trim=TRUE)
          else if (i==4)
-            panel_gridline(gridline=FALSE)
+            panel_graticule(gridline=FALSE)
          panel_scalebar(scalebar=1)
          panel_annotation(text=as.character(i))
       }

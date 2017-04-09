@@ -5,7 +5,8 @@
    arglist <- list(...)
    img <- .getPrm(arglist,name="",default=NULL
                  ,class=list(c("list","ursaRaster"),"ursaRaster"))
-   if (is.null(img)) { ## was 'missing'
+   isList <- .is.ursa_stack(img)
+   if ((is.null(img))||((!isList)&&(ursa_blank(img)))) { ## was 'missing'
       panel_new(...)
       panel_decor(...)
       return(NULL)
@@ -16,7 +17,6 @@
    verbose <- .getPrm(arglist,name="verb",kwd="plot",default=NA) ## FALSE?
   # if ((!is.na(verbose))&&(verbose))
   #    str(list(annotation=annotation,verbose=verbose))
-   isList <- .is.ursa_stack(img)
   # isBox <- getOption("ursaPngBox")
   # skip <- getOption("ursaPngSkip")
    np <- getOption("ursaPngLayout")$image
@@ -62,7 +62,7 @@
       names(ct) <- units
    else
       names(ct) <- rep("",length(ct))
-   ll <- do.call("compose_gridline",arglist)
+   ll <- do.call("compose_graticule",arglist)
    coast <- do.call("compose_coastline",arglist)
    for (j in seq(ng))
    {
@@ -108,11 +108,11 @@
          }
          if (FALSE) {
             do.call("panel_coastline",arglist)
-            do.call("panel_gridline",arglist)
+            do.call("panel_graticule",arglist)
          }
          else {
             panel_coastline(coast)
-            panel_gridline(ll)
+            panel_graticule(ll)
          }
          do.call("panel_annotation",arglist) ## only through 'do.call'
          do.call("panel_scalebar",arglist) ## panel_scalebar(...)

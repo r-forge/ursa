@@ -60,7 +60,7 @@
             metafile <- paste0(con$fname,".aux.xml")
             added3 <- rep("",length(bname))
                for (i in seq_along(bname))
-                  added3[i] <- paste0("    <MDI key=",dQuote(paste0("Band_",i))
+                  added3[i] <- paste0("    <MDI key=",.dQuote(paste0("Band_",i))
                                     ,">",bname[i],"</MDI>")
             added2 <- c("  <Metadata>",added3,"  </Metadata>")
             added1 <- c("<PAMDataset>",added2,"</PAMDataset>")

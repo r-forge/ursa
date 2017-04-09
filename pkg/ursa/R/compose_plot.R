@@ -12,5 +12,5 @@
       myname <- ""
    arglist <- arglist[nchar(myname)>0]
    do.call("compose_legend",c(list(ct),arglist))
-   NULL
+   invisible(NULL)
 }

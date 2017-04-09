@@ -34,7 +34,7 @@
            file.copy(list1,listTmp,overwrite=TRUE)
       }
       else {
-         cmd <- paste("ogr2ogr","-f",dQuote("ESRI Shapefile")
+         cmd <- paste("ogr2ogr","-f",.dQuote("ESRI Shapefile")
                      ,paste0(sname,".shp"),fname)
          if (verbose)
             message(cmd)
@@ -84,10 +84,10 @@
    if (!.lgrep("\\.shp$",fname))
       fname <- paste0(fname,".shp")
    ##~ if (.lgrep("\\s",fname))
-   fname <- dQuote(fname)
+   fname <- .dQuote(fname)
    lname <- .gsub("\\.shp","",basename(fname0))
-   cmd <- paste("ogrinfo",fname,"-so -geom=NO"#,"-where",dQuote(where)
-               ,"-sql",dQuote(paste("select * FROM",dQuote(dQuote(lname)))))
+   cmd <- paste("ogrinfo",fname,"-so -geom=NO"#,"-where",.dQuote(where)
+               ,"-sql",.dQuote(paste("select * FROM",.dQuote(.dQuote(lname)))))
    ##~ cmd <- paste("ogrinfo",fname,"-geom=NO")
    if (verbose)
       message(cmd)
@@ -137,7 +137,7 @@
          }
          Fout <- paste0(gsub("\\.shp$","",fname0),".out")
         # cmd <- c("ogrinfo",ogropt,"-al",fname)
-         cmd <- c("ogrinfo","-al","-where",dQuote(where),fname)
+         cmd <- c("ogrinfo","-al","-where",.dQuote(where),fname)
          if (verbose)
             message(paste(cmd,collapse=" "))
          system2(cmd[1],cmd[-1],stdout=Fout)
@@ -264,8 +264,8 @@
                      ,"--config OGR_ENABLE_PARTIAL_REPROJECTION YES"
                      ,ogropt
                      ,"-skipfailures"
-                     ,"-where",dQuote(where)
-                     ,"-t_srs",dQuote(t_srs)
+                     ,"-where",.dQuote(where)
+                     ,"-t_srs",.dQuote(t_srs)
                      ,"-overwrite",tname,fname)
          if (verbose)
             message(cmd)
@@ -457,7 +457,7 @@
             segments(bbox[3],bbox[4],bbox[3],bbox[2],col="orange",lwd=10)
             segments(bbox[3],bbox[2],bbox[1],bbox[2],col="orange",lwd=10)
             panel_points(cxy[1],cxy[2])
-            panel_gridline(decor=TRUE)
+            panel_graticule(decor=TRUE)
             panel_scalebar(position="top")
             compose_close()
             q()
@@ -500,8 +500,8 @@
       if (is.null(g0))
          g0 <- session_grid()
       cmd <- with(g0,paste("ogr2ogr",ifelse(verbose,"","-q"),ogropt
-                           ,"-t_srs",dQuote(proj4)
-                           ,"-where",dQuote(where)
+                           ,"-t_srs",.dQuote(proj4)
+                           ,"-where",.dQuote(where)
                            ,"-overwrite",tname,fname))
       if (verbose)
          message(cmd)
@@ -543,7 +543,7 @@
          cmd <- with(g0,paste("gdal_rasterize",ifelse(verbose,"","-q")
                               ,gdalopt
                               ,"-burn",i
-                              ,"-where",dQuote(paste0("plfeatid=",sQuote(i)))
+                              ,"-where",.dQuote(paste0("plfeatid=",.sQuote(i)))
                               ,"-tr",resx,resy
                               ,"-te",minx,miny,maxx,maxy
                               ,"-a_nodata",nodata2,"-init",nodata2
@@ -678,14 +678,14 @@
   # options(ursaPngAuto=TRUE)
    compose_open(cl,scale=1,pointsize=12)
    bl <- compose_coastline(coast=coast)
-   ll <- compose_gridline(decor=TRUE)
+   ll <- compose_graticule(decor=TRUE)
    ct <- vector("list",n)
    for (i in seq(n)) {
       panel_new()#col="white")
       panel_raster(b[[n+1]],alpha=0.75)
       ct[[i]] <- panel_raster(b[[i]],alpha=0.75)
       panel_coastline(bl)
-      panel_gridline(ll)
+      panel_graticule(ll)
       if (max(sc)/min(sc)>1.2) {
          if (length(unique(sign(lat)))>1) {
             panel_scalebar(pos="center")

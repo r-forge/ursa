@@ -6,6 +6,6 @@
 }
 '.zzz.zzzregrid.default' <- function(obj,...) {
    print(methods("regrid"))
-   print(paste("'regrid' is not implemented for",paste(sQuote(class(obj)),collapse=", ")))
+   print(paste("'regrid' is not implemented for",paste(.sQuote(class(obj)),collapse=", ")))
    NULL
 }

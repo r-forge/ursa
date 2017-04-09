@@ -1,6 +1,6 @@
 '.rename.files.and.classes' <- function() {
    require(plutil)
-   if (!FALSE) { ## rename files
+   if (FALSE) { ## rename files
       src <- "classImage"
       dst <- "classRaster"
       a <- filelist(paste0("^",src,".+\\.R$"))
@@ -11,10 +11,10 @@
       }
    }
    if (!FALSE) {
-      src <- "ursaCRS"
-      dst <- "ursaSessionGrid"
+      src <- "_gridline"
+      dst <- "_graticule"
       ind <- as.character(c(1,2,3,4,5))
-      toWrite <- FALSE
+      toWrite <- !FALSE
       dpath1 <- c('1'="C:/platt/R/ursa-package/ursa/R"
                  ,'2'="C:/platt/R/ursa-package/ursa/man"
                  ,'3'="C:/platt/R")

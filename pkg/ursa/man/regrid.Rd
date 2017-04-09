@@ -12,10 +12,11 @@ General function to change parameters of cells under the same geographical proje
 regrid(x, ...)
 
 ## non-public
-.regrid(grid = NULL, mul = NA, res = NA, resx = NA, resy = NA, bbox = NA,
-        expand = NA, minx = NA, miny = NA, maxx = NA, maxy = NA, cut = NA,
-        proj4 = NA, border = 0, zero = c("keep", "node", "center"), raster = FALSE,
-        tolerance = 1e-10, verbose = FALSE, ...)
+.regrid(grid = NULL, mul = NA, res = NA, resx = NA, resy = NA, setbound = NA,
+        columns = NA, rows = NA, dim = NA, bbox = NA, expand = NA,
+        minx = NA, miny = NA, maxx = NA, maxy = NA, cut = NA, proj4 = NA, border = 0,
+        zero = c("keep", "node", "center"), raster = FALSE, tolerance = 1e-10,
+        verbose = FALSE, ...)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -50,8 +51,20 @@ Positive \code{numeric} of length 1. New grid size by horizontal axis.
   \item{resy}{
 Positive \code{numeric} of length 1. New grid size by vertical axis.
 }
+  \item{setbound}{
+\code{numeric} of length 4. Change units of spatial extension and define new spatial extension (boundary box) in the notation \code{c(minx,miny,maxx,maxy)}. 
+}
+  \item{columns}{
+Positive \code{integer} of length 1. Number of columns/samples in the case of definition of new spatial extension (\code{setbound} is non-\code{NA}).
+}
+  \item{rows}{
+Positive \code{integer} of length 1. Number of rows/lines in the case of definition of new spatial extension (\code{setbound} is non-\code{NA}).
+}
+  \item{dim}{
+Positive \code{integer} of length 2. Dimenstion of raste image in the notation \code{c(rows, columns)} (or, \code{c(lines, samples)}) in the case of definition of new spatial extension (\code{setbound} is non-\code{NA}).
+}
   \item{bbox}{
-\code{numeric} of length 4. New spatial extension (boundary box) in the notation \code{c(minx,miny,maxx,maxy)}
+\code{numeric} of length 4. New spatial extension (boundary box) in the notation \code{c(minx,miny,maxx,maxy)} in the same units of existing spatial extension.
 %~ \code{c(left=minx,bottom=miny,right=maxx,top=maxy)}
 }
   \item{minx}{

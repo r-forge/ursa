@@ -1,4 +1,4 @@
-## 'caTools::read_envi'
+## 'caTools::read.ENVI'
 ##~ '.read_envi' <- function(fname,subset=NULL,nodata=NaN
                        ##~ ,ref=NULL,resetGrid=FALSE,...)
 'read_envi' <- function(fname,...)

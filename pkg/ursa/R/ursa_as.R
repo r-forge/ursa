@@ -10,7 +10,6 @@
       return(allocate(obj,...))
    if (inherits(obj,c("SpatialGridDataFrame"))) {
       requireNamespace("sp")
-     # str(obj)
       cs <- sp::getGridTopology(obj)@cellsize
       bb <- c(bbox(obj))
       pr <- sp::proj4string(obj)
@@ -258,10 +257,9 @@
          arglist <- list(...)
          fname <- tempfile()
         # download.file(obj,fname,...)
-         ind <- .grep("(method|mode|cache|extra)",names(arglist))
+         ind <- .grep("(method|mode|cache|extra|quiet)",names(arglist))
          args2 <- c(url=obj,destfile=fname,arglist[ind])
          do.call("download.file",args2)
-         on.exit(try(file.remove(fname)))
          return(read_gdal(fname,...))
       }
    }

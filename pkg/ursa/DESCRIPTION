@@ -1,12 +1,13 @@
 Package: ursa
 Type: Package
 Title: Non-Interactive GIS Tools for Raster Processing and Visualization
-Version: 3.7-1
+Version: 3.7-2
 Author: Nikita Platonov
 Maintainer: Nikita Platonov <platonov@sevin.ru>
 Description: S3 classes and methods for manipulation with raster GIS data: reading/writing, processing, multi-panel visualization.
 License: GPL (>= 2)
-Imports: utils, graphics, grDevices, stats, tcltk, png, rgdal
-Suggests: proj4, methods, sp, sf (>= 0.3-0), ggmap, raster, dplyr, foreign, locfit, caTools
+Depends: R (>= 3.0.0)
+Imports: utils, graphics, grDevices, stats, methods, tcltk, png, sp, rgdal
+Suggests: proj4, sf (>= 0.4-0), raster, ggmap, foreign, locfit
 ByteCompile: yes
 NeedsCompilation: yes

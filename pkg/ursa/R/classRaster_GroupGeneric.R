@@ -38,18 +38,29 @@
 }
 'Ops.ursaRaster' <- function(e1,e2=NULL)
 {
+   verbose <- FALSE
    if (is.ursa(e1)) {
      # e1 <- discolor(e1) ## removed 20160805
-      if (.is.category(e1)) ## added 20161214 # attr(e1$value,"category")
+      if (.is.category(e1)) {## added 20161214 # attr(e1$value,"category")
+         ct1 <- ursa(e1,"colortable")
+         cl1 <- ursa(e1,"category")
          e1 <- discolor(e1)
         # e1 <- .extract(e1)
+      }
+   }
+   else {
+      cl1 <- ""
    }
    if (is.ursa(e2)) {
     # e2 <- discolor(e2) ## removed 20160805
-      if (.is.category(e2)) ## added 20161214 # attr(e2$value,"category")
+      if (.is.category(e2)) {## added 20161214 # attr(e2$value,"category")
+         ct2 <- ursa(e1,"category")
          e2 <- discolor(e2)
         # e2 <- .extract(e2)
+      }
    }
+   else
+      cl2 <- ""
    if (nargs()==11L)
    {
       e2 <- e1
@@ -83,17 +94,34 @@
       if (is.matrix(e2))
          dim(e2) <- c(prod(dim(e2)),1)
    }
+   if ((is.character(e2))&&(is.ursa(e1))) {
+      if (.lgrep(e2,names(e1)))
+         e2 <- e1[e2]
+      else {
+         ind <- .grep(e2,cl1)
+         if (length(ind) == 1)
+            e2 <- ind-1L
+         else {
+            e1$value[!(e1$value %in% (ind-1L))] <- NA
+            e1$value[!is.na(e1$value)] <- 1L
+           # ursa(e1,"colortable") <- ct1
+            return(e1)
+           # message(paste("multiple categories are detected:"
+           #              ,paste(.sQuote(ct1[ind]),collapse=", ")))
+           # stop("conditions with multiple values are not implemented")
+         }
+      }
+   }
+   if ((is.character(e1))&&(is.ursa(e2))) {
+      e1 <- e2[e1]
+   }
    isImage1 <- is.ursa(e1)
    isImage2 <- is.ursa(e2)
-   if ((is.character(e2))&&(is.ursa(e1)))
-      e2 <- e1[e2]
-   if ((is.character(e1))&&(is.ursa(e2)))
-      e1 <- e2[e1]
    isArray1 <- is.array(e1)
    isArray2 <- is.array(e2)
    isNumeric1 <- is.numeric(e1)
    isNumeric2 <- is.numeric(e2)
-   if (FALSE)
+   if (verbose)
       print(c(isImage1=isImage1,isImage2=isImage2
              ,isArray1=isArray1,isArray2=isArray2
              ,isNumeric1=isNumeric1,isNumeric2=isNumeric2))
@@ -107,11 +135,13 @@
          else stop("e2: unsupported type")
    n3 <- if ((n1>=n2)&&((n2==1)||(n1==n2))) n1 
          else if ((n2>1)&&(n1==1)) n2 
-         else {message("unpredictive");max(n1,n2)}
+         else {message(paste0("n1=",n1," n2=",n2,": unpredictive"));max(n1,n2)}
    varName <- if ((isImage1)&&(!isImage2)) "e1"
               else if ((!isImage1)&&(isImage2)) "e2"
               else if ((isImage1)&&(isImage2)) if (n3==n1) "e1" else "e2"
               else stop("What else?")
+   if (verbose)
+      print(data.frame(n1=n1,n2=n2,n3=n3,varName=varName))
    isNew <- n3!=dim(get(varName)$value)[2]
    if (isNew)
    {

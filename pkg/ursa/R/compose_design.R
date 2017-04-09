@@ -11,7 +11,7 @@
    ratio <- .getPrm(arglist,name="ratio",default=(16+0.05)/(9+0.05))
    verbose <- .getPrm(arglist,name="verb(ose)*",default=FALSE)
    .compose_design(obj=obj,layout=layout,byrow=byrow,skip=skip,legend=legend
-                  ,side=side,ratio=ratio)
+                  ,side=side,ratio=ratio,verbose=verbose)
 }
 '.compose_design' <- function(obj=NULL,layout=NA,byrow=TRUE,skip=NULL,legend=NA
                              ,side=NA,ratio=(16+1)/(9+1),verbose=FALSE) {

@@ -24,8 +24,9 @@
             obj <- read_gdal(fname,...)
             try(file.remove(fname))
          }
-         else
+         else {
             obj <- if (envi_exists(obj)) read_envi(obj,...) else read_gdal(obj,...)
+         }
       }
    }
    if ((!isStack)&&(!.try(obj <- as.ursa(obj))))

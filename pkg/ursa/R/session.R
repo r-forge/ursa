@@ -27,11 +27,11 @@
       options(ursaSessionGrid=obj$grid)
       return(invisible(obj$grid))
    }
-  # if ((!envi_exists(obj))&&(nchar(Sys.getenv("R_IDRISI")))&&(exists("read.idr"))) {
-  #    g1 <- read.idr(obj)$grid
-  #    options(ursaSessionGrid=g1)
-  #    return(invisible(g1))
-  # }
+   if ((!envi_exists(obj))&&(nchar(Sys.getenv("R_IDRISI")))&&(exists("read.idr"))) {
+      g1 <- do.call("read.idr",list((obj)))$grid
+      options(ursaSessionGrid=g1)
+      return(invisible(g1))
+   }
    if (is.character(obj)) {
       a <- open_envi(obj,resetGrid=TRUE,decompress=FALSE)
       g1 <- a$grid

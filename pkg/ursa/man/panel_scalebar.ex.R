@@ -19,7 +19,7 @@ invisible({
       compose_plot(a,gridline=FALSE,scalebar=TRUE,scalebar.x=1,units=expression(km^2))
       compose_close(bpp=8)
    }
-   if (TRUE) { # example no.4 -- length distortion in the Transverse Mercator projection
+   if (requireNamespace("ggmap")) { # example no.4 -- length distortion in the Transverse Mercator projection
      # \dontrun{
      # m2 <- ggmap::get_openstreetmap(bbox=c(left=42,bottom=70,right=70,top=82)
      #                               ,format="png",messaging=TRUE
@@ -31,7 +31,7 @@ invisible({
       compose_open(res,legend=NULL,scale=1,pointsize=12)
       panel_new()
       panel_raster(res)
-      panel_gridline(decor=TRUE)
+      panel_graticule(decor=TRUE)
       for (p in c("bottom","center","top"))
          panel_scalebar(pos=p,w=100)
       compose_close()#}

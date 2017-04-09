@@ -1,9 +1,13 @@
+## http://leaflet-extras.github.io/leaflet-providers/preview/index.html
 'glance' <- function(...) {
    arglist <- list(...)
    if (!length(arglist)) {
       viewer <- session_pngviewer(TRUE)
       on.exit(session_pngviewer(viewer))
       arglist <- .args2list()
+   }
+   if (!length(arglist)) {
+      return(display())
    }
    if (!is.character(arglist[[1]])) {
       a <- do.call(".glance",arglist)
@@ -12,46 +16,84 @@
    if (!nchar(arglist[[1]])) {
       return(invisible(10L))
    }
-  # patlist <- ".+\\.(hdr|gz|bz2|xz|bin|bingz|envi|envigz|img|dat)$"
-   if (envi_exists(arglist[[1]])) {
-      do.call("display",arglist)
-   }
-   else {
-      b <- open_gdal(arglist[[1]])
-      if (!is.null(b)) {
-         close(b)
-         do.call("display",arglist)
+  # if (.lgrep("\\.rds$",basename(arglist[[1]]))) {
+  #    arglist[[1]] <- readRDS(arglist[[1]])
+  #   # return(do.call(".glance",arglist))
+  # }
+   if (is.character(arglist[[1]])) {
+      if (envi_exists(arglist[[1]])) {
+         return(do.call("display",arglist))
       }
-      else if (requireNamespace("sf",quietly=TRUE)) {
-         do.call(".glance",arglist)
-      }
+      else if (.lgrep("\\.(tif|tiff|img|png|bmp|dat)$",arglist[[1]]))
+         return(do.call("display",arglist))
+      else if (.lgrep("\\.(gpkg|tab|json|geojson|mif|sqlite|shp|shp\\.zip)$"
+                     ,arglist[[1]]))
+         return(do.call(".glance",arglist))
       else {
-         warning("Cannot complete without suggested package 'sf'.")
-         return(invisible(1L))
+         b <- open_gdal(arglist[[1]])
+         if (!is.null(b)) {
+            close(b)
+            do.call("display",arglist)
+         }
+         else if (.lgrep("\\.rds$",basename(arglist[[1]]))) {
+            obj <- readRDS(arglist[[1]])
+            print(class(obj))
+            print(inherits(obj,"Spatial"))
+            if ((inherits(obj,"Spatial"))||
+                (.lgrep("Spatial(Points|Lines|Polygons)DataFrame",class(obj)))) {
+               arglist[[1]] <- quote(obj) ## 'GADM' distributes 'rds'
+               return(do.call(".glance",arglist))
+            }
+            if (inherits(obj,"may nbe GDAL???")) { ## not good idea
+               arglist[[1]] <- quote(obj)
+               return(do.call("display",arglist))
+            }
+         }
+        # else if (requireNamespace("sf",quietly=TRUE)) {
+        #    do.call(".glance",arglist)
+        # }
+         else {
+           # message("Cannot complete without suggested package 'sf'.")
+            do.call(".glance",arglist)
+            return(invisible(1L))
+         }
       }
    }
    invisible(0L)
 }
-'.glance' <- function(dsn,layer=".*",grid=NULL,attr=".+",len=640,expand=1.05
+'.glance' <- function(dsn,layer=".*",grid=NULL,attr=".+",size=NA,expand=1.05
                         ,border=15,lat0=NA,lon0=NA,resetProj=FALSE
-                        ,proj=c("auto","stere","laea","merc"#,"internal"
-                               ,"google","longlat")
-                        ,feature=c("auto","attribute","geometry")
-                        ,basemap=c("after","before"),saturation=NA,alpha=NA
+                        ##~ ,proj=c("auto","stere","laea","merc","longlat"#,"internal"
+                               ##~ ,"google","osm","cycle","transport","mapsurfer"
+                               ##~ ,"sputnik")
+                        ,style="auto"
+                        ,feature=c("auto","attribute","geometry"),alpha=NA
+                        ,basemap.order=c("after","before"),basemap.alpha=NA
+                        ,engine=c("native","sp","sf")
+                        ,geocode=c("google","nominatim")
                         ,verbose=FALSE,...) {
   # feature <- "geometry"
-   proj <- match.arg(proj)
-   basemap <- match.arg(basemap)
-   after <- basemap %in% "after"
-   before <- basemap %in% "before"
+   projClass <- c("longlat","stere","laea","merc")
+   projPatt <- paste0("(",paste(projClass,collapse="|"),")")
+   staticMap <- c("openstreetmap","google","sputnik")
+   tilePatt <- paste0("(",paste0(unique(c(staticMap,.untile())),collapse="|"),")")
+  # proj <- match.arg(proj)
+   basemap.order <- match.arg(basemap.order)
+   geocode <- match.arg(geocode)
+   after <- basemap.order %in% "after"
+   before <- basemap.order %in% "before"
    feature <- match.arg(feature)
-   if (!requireNamespace("sf")) {
+   engine <- match.arg(engine)
+   geocodeStatus <- FALSE
+   len <- if ((is.na(size)[1])||(!is.numeric(size))) 640L else max(size)
+   if ((FALSE)&&(!requireNamespace("sf",quietly=TRUE))) {
       isGDAL <- nchar(Sys.which("gdal_rasterize"))>0
       if (!isGDAL) {
-         warning("Unable to find GDAL utilities required for rasterization.")
+         warning(paste("Failure to rasterize using to GDAL utilities"
+                      ,"(not found in environmental variable PATH)"))
          return(23L)
       }
-      g0 <- if (missing(grid)) NULL else grid
+      g0 <- if (is.null(grid)) NULL else grid
      # arg1 <- str(as.list(match.call()))
       res <- do.call(".cmd.rasterize",as.list(match.call()[-1]))
       return(res)
@@ -63,13 +105,31 @@
                            ##~ ,proj=proj,feature="overlay",ID=FALSE,paint=5
                            ##~ ,verbose=FALSE)
    }
+   toUnloadMethods <- FALSE
    cpg <- NULL
+   if (engine=="sp")
+      isSF <- FALSE
+   else
+      isSF <- requireNamespace("sf",quietly=TRUE)
+   isSP <- !isSF
+   isNative <- engine=="native"
    if (!((is.character(dsn))&&(length(dsn)==1))) {
-      if (inherits(dsn,"Spatial")) { ## "SpatialPointsDataFrame"
-         if (!("package:methods" %in% search()))
-            stop(paste("Please, load required package 'methods'."
-                      ,"Unable complete coercion using requireNamespace() only."))
-         a <- sf::st_as_sf(dsn);rm(dsn)
+      if (inherits(dsn,paste0("Spatial",c("Points","Lines","Polygons")
+                             ,"DataFrame"))) {
+         if ((!toUnloadMethods)&&(!("package:methods" %in% search()))) {
+            opW <- options(warn=1)
+            warning("Package 'methods' is required for S4 object coercion.")
+            options(opW)
+            toUnloadMethods <- TRUE
+         }
+         if ((isSF)&&(!isNative))
+            a <- sf::st_as_sf(dsn)
+         else {
+            isSP <- TRUE
+            isSF <- !isSP
+            asp <- dsn
+         }
+         rm(dsn)
       }
       else if (inherits(dsn,"sf")) {
          a <- dsn;rm(dsn)
@@ -80,12 +140,23 @@
       else if (is.ursa(dsn)) {
          return(display(dsn,...))
       }
-      else {
+      else if (isSF) {
          a <- try(sf::st_as_sfc(dsn))
+         if (inherits(a,"try-error")) {
+            print(class(dsn))
+            return(31L)
+         }
       }
-      if (inherits(a,"try-error")) {
-         print(class(dsn))
-         return(31L)
+      else {
+         asp <- try(methods::as(dsn,"Spatial"))
+         if (inherits(asp,"try-error")) {
+            print(class(dsn))
+            return(32L)
+         }
+         else {
+            isSP <- TRUE
+            isSF <- !isSP
+         }
       }
    }
    else {
@@ -95,6 +166,100 @@
             ziplist <- unzip(aname);on.exit(file.remove(ziplist))
             dsn <- .grep("\\.shp$",ziplist,value=TRUE)
          }
+         else if (geocode=="nominatim") {
+            src <- paste0("http://nominatim.openstreetmap.org/search.php?q="
+                         ,dsn,"&format=xml&bounded=0")
+            dst <- tempfile()
+            download.file(src,dst,quiet=!verbose)
+            xmlstring <- scan(dst,character(),quiet=!verbose)
+            file.remove(dst)
+           # print(xmlstring,quote=FALSE)
+            ind <- grep("geotext",xmlstring)
+            if (length(ind)) {
+               geotext <- xmlstring[ind]
+               print(geotext)
+            }
+            ind <- grep("boundingbox",xmlstring)
+            if (length(ind)) {
+               bounding <- xmlstring[ind][1]
+               bounding <- .gsub(".*\"(.+)\".*","\\1",bounding)
+               bounding <- lapply(bounding,function(p){
+                  as.numeric(unlist(strsplit(p,split=",")))
+               })
+               bounding <- do.call(rbind,bounding)
+               ##~ print(bounding)
+               lon <- .grep("lon=",xmlstring,value=TRUE)
+               lon <- as.numeric(.gsub(".*\'(.+)\'.*","\\1",lon))
+               lat <- .grep("lat=",xmlstring,value=TRUE)
+               lat <- as.numeric(.gsub(".*\'(.+)\'.*","\\1",lat))
+               ##~ print(lon)
+               ##~ print(lat)
+               da <- data.frame(lon=range(bounding[,c(3,4)])
+                               ,lat=range(bounding[,c(1,2)]))#,z=1:2)
+               if (isSF) {
+                  a <- sf::st_as_sf(da,coords=c("lon","lat"),crs=4326)
+               }
+               if (isSP) {
+                  asp <- da
+                  sp::coordinates(asp) <- ~lon+lat
+                  sp::proj4string(asp) <- "+init=epsg:4326"
+               }
+               if (style=="auto")
+                  style <- "openstreetmap static color"
+               basemap.alpha <- 1
+               alpha <- 0
+               geocodeStatus <- TRUE
+            }
+            else
+               NULL
+         }
+         else if (geocode=="google") { ## google
+            src <- paste0("https://maps.googleapis.com/maps/api/geocode/xml?"
+                         ,"address=",dsn)
+            dst <- tempfile()
+            download.file(URLencode(src),dst,quiet=!verbose)
+            xmlstring <- scan(dst,character(),quiet=!verbose)
+            file.remove(dst) 
+            glat <- grep("<lat>",xmlstring,value=TRUE)
+            glon <- grep("<lng>",xmlstring,value=TRUE)
+            glat <- as.numeric(.gsub("<lat>(.+)</lat>","\\1",glat))
+            glon <- as.numeric(.gsub("<lng>(.+)</lng>","\\1",glon))
+            if ((length(glon))&&(length(glat))) {
+              # print(glon)
+              # print(glat)
+              # glon <- sort(unique(glon))
+              # glat <- sort(unique(glat))
+               glon <- range(glon)
+               glat <- range(glat)
+               dlon <- abs(diff(glon))
+               dlat <- abs(diff(glat))
+              # print(dlon)
+              # print(dlat)
+               if ((dlon<0.01)&&(dlat<0.01)) {
+                  sc <- abs(1/cos(mean(glat)))
+                 # print(sc)
+                  mul <- 1 # 3
+                  glon <- mean(glon)+mul*abs(diff(glon))*sc*c(-1,1)/2
+                  glat <- mean(glat)+mul*abs(diff(glat))*c(-1,1)/2
+               }
+               da <- data.frame(lon=range(glon),lat=range(glat))
+              # print(da)
+               if (isSF) {
+                  a <- sf::st_as_sf(da,coords=c("lon","lat"),crs=4326)
+               }
+               if (isSP) {
+                  asp <- da
+                  sp::coordinates(asp) <- ~lon+lat
+                  sp::proj4string(asp) <- "+init=epsg:4326"
+               }
+              # expand <- 10000
+               if (style=="auto")
+                  style <- "google static color"
+               basemap.alpha <- 1
+               alpha <- 0
+               geocodeStatus <- TRUE
+            }
+         }
       }
       else {
          if (isZip <- .lgrep("\\.zip$",dsn)>0) {
@@ -102,19 +267,29 @@
             dsn <- .grep("\\.shp$",ziplist,value=TRUE)
          }
       }
-      opW <- options(warn=0)
-      lname <- sf::st_layers(dsn)$name
-      if (!is.character(layer))
-         layer <- lname[layer[1]]
-      else
-         layer <- .grep(layer,lname,value=TRUE)
-      if (length(layer)>1) {
-         print(paste("Select only one layer:",paste(paste0(seq(layer),")")
-                                    ,sQuote(layer),collapse=", ")),quote=FALSE)
-         return(30L)
+      if ((!geocodeStatus)||(file.exists(dsn))) {
+         opW <- options(warn=0)
+         if (isSF)
+            lname <- sf::st_layers(dsn)$name
+         else {
+            lname <- rgdal::ogrListLayers(dsn)
+         }
+         if (!is.character(layer))
+            layer <- lname[layer[1]]
+         else
+            layer <- .grep(layer,lname,value=TRUE)
+         if (length(layer)>1) {
+            print(paste("Select only one layer:",paste(paste0(seq(layer),")")
+                                       ,.sQuote(layer),collapse=", ")),quote=FALSE)
+            return(30L)
+         }
+         if (isSF)
+            a <- sf::st_read(dsn,layer=layer,quiet=TRUE)
+         else {
+            asp <- rgdal::readOGR(dsn,layer,verbose=FALSE)
+         }
+         options(opW)
       }
-      a <- sf::st_read(dsn,layer=layer,quiet=TRUE)
-      options(opW)
       if (.lgrep("\\.shp$",dsn)) {
          cpgname <- .gsub("\\.shp$",".cpg",dsn)
          if (file.exists(cpgname)) {
@@ -124,7 +299,15 @@
          }
       }
    }
-   dname <- names(sf::st_agr(a))
+   if (verbose)
+      print(c(sp=isSP,sf=isSF))
+   if (isSF)
+      dname <- names(sf::st_agr(a))
+   if (isSP) {
+      dname <- try(colnames(asp@data))
+      if (inherits(dname,"try-error"))
+         dname <- character()
+   }
    dname <- .grep(attr,dname,value=TRUE)
   # str(dname);q()
    if (!length(dname)) {
@@ -136,35 +319,101 @@
      # lc <- Sys.getlocale("LC_CTYPE")
      # Sys.setlocale("LC_CTYPE","Russian")
       for (i in seq_along(dname)) {
-         da <- a[,dname[i],drop=TRUE][,,drop=TRUE]
-         if (is.character(da))
+         if (isSF)
+            da <- a[,dname[i],drop=TRUE][,,drop=TRUE]
+         if (isSP) {
+            da <- asp@data[,dname[i]]
+         }
+         if (is.character(da)) {
             Encoding(da) <- "UTF-8"
-         a[,dname[i]] <- da
+           ## if inherits(da,"POSIXlt") then 'da' is a list with 9 items
+            if (isSF)
+               a[,dname[i]] <- da
+            if (isSP)
+               asp@data[,dname[i]] <- da
+         }
       }
      # Sys.setlocale("LC_CTYPE",lc)
      # str(a)
    }
-   geoType <- unique(as.character(sf::st_geometry_type(a)))
-   if (("POLYGON" %in% geoType)&&("MULTIPOLYGON" %in% geoType))
-      a <- sf::st_cast(a,"MULTIPOLYGON")
-   sf_geom <- sf::st_geometry(a)
+   if (isSF)
+      geoType <- unique(as.character(sf::st_geometry_type(a)))
+   if (isSP)
+      geoType <- switch(class(sp::geometry(asp))
+                       ,SpatialPolygons="POLYGON"
+                       ,SpatialPoints="POINT"
+                       ,SpatialLines="LINE")
+   if (("POLYGON" %in% geoType)&&("MULTIPOLYGON" %in% geoType)) {
+      if (isSF)
+         a <- sf::st_cast(a,"MULTIPOLYGON")
+      if (isSP) {
+         stop("POLYGON to MULTIPOLYGON for 'Spatial' is not implemented")
+      }
+   }
+   if (isSF)
+      sf_geom <- sf::st_geometry(a)
+   if (isSP) {
+      asp_geom <- switch(geoType,POLYGON=sp::geometry(asp)@polygons
+                                  ,LINE=sp::geometry(asp)@lines
+                                 ,POINT=sp::geometry(asp))
+   }
    g2 <- getOption("ursaSessionGrid")
-   if (!(proj %in% c("auto","internal")))
+   if (!.lgrep("auto",style))
       resetProj <- TRUE
   # if ((proj=="internal")&&(!is.na(keepProj))) {
   #    g2 <- NULL
   # }
    if (resetProj)
       g0 <- NULL
-   else if ((missing(grid))&&(!is.null(g2)))
+   else if ((is.null(grid))&&(!is.null(g2)))
       g0 <- g2
    else if (missing(grid))
       g0 <- NULL
    else
       g0 <- grid
+  # style <- "merc"
+   if (!.lgrep(projPatt,style))
+      proj <- "auto"
+   else
+      proj <- .gsub2(projPatt,"\\1",style)
+   if (!.lgrep(tilePatt,style))
+      art <- "none"
+   else {
+      art <- .gsub2(tilePatt,"\\1",style)
+      proj <- "merc"
+   }
+   isStatic <- .lgrep("static",style)>0
+   mlen <- switch(art,google=640,openstreetmap=960,sputnik=511)
+   if (isStatic) {
+      len[len>mlen] <- mlen
+   }
+  # canTile <- .lgrep(art,eval(as.list(args(".untile"))$server))>0
+   canTile <- .lgrep(art,.untile())>0
+   isTile <- .lgrep("tile",style)>0 & canTile
+   if ((!isStatic)&&(!isTile)) {
+      if (art %in% staticMap)
+         isStatic <- TRUE
+      else if (canTile)
+         isTile <- TRUE
+      else
+         art <- "none"
+   }
+   isColor <- .lgrep("colo(u)*r",style)>0
+   isWeb <- .lgrep(tilePatt,art)
+   if (verbose)
+      print(data.frame(proj=proj,art=art,color=isColor,static=isStatic
+                      ,canTile=canTile,tile=isTile,web=isWeb))
+  # isOSM <- proj %in% "osm"
+  # isGoogle <- proj %in% "google"
+  # http://static-api.maps.sputnik.ru/v1/?width=400&height=400&z=6&clng=179&clat=70
+  #                                &apikey=5032f91e8da6431d8605-f9c0c9a00357
+  # isWeb <- isOSM | isGoogle | tryTile
    if ((is.null(g0))||(is.numeric(lon0))||(is.numeric(lat0))) {
   # if ((resetProj)||(is.ursa(g0,"grid"))||(is.numeric(lon0))||(is.numeric(lat0))) {
-      proj4 <- sf::st_crs(a)$proj4string
+      if (isSF)
+         proj4 <- sf::st_crs(a)$proj4string
+      if (isSP)
+         proj4 <- sp::proj4string(asp)
       if ((proj4=="")&&(!(proj %in% c("auto","internal")))) {
          resetProj <- TRUE
          proj4 <- "auto"
@@ -188,23 +437,44 @@
             B <- as.numeric(major)*pi
       }
       if (is.numeric(lon0) | is.numeric(lat0) | resetProj) {
-         a2 <- sf::st_transform(a,4326)
-         sf_geom2 <- sf::st_geometry(a2)
-         xy <- lapply(sf_geom2,function(z) {
-            if (!is.list(z)) {
-               if (is.null(dim(z))) {
-                  d <- ifelse(inherits(z,"XYZ"),3,2)
-                  dim(z) <- c(length(z)/d,d)
+         if (isSF) {
+            a2 <- sf::st_transform(a,4326)
+            sf_geom2 <- sf::st_geometry(a2)
+            xy <- lapply(sf_geom2,function(z) {
+               if (!is.list(z)) {
+                  if (is.null(dim(z))) {
+                     d <- ifelse(inherits(z,"XYZ"),3,2)
+                     dim(z) <- c(length(z)/d,d)
+                  }
+                  z <- list(z)
                }
-               z <- list(z)
-            }
-            xy2 <- lapply(z,function(z2) {
-               if (!is.list(z2))
-                  z2 <- list(z2)
-               unlist(t(z2[[1]])[1:2,])
+               xy2 <- lapply(z,function(z2) {
+                  if (!is.list(z2))
+                     z2 <- list(z2)
+                  unlist(t(z2[[1]])[1:2,])
+               })
             })
-         })
-         xy <- matrix(c(unlist(xy)),ncol=2,byrow=TRUE)
+            rm(a2,sf_geom2)
+         }
+         if (isSP) {
+            asp2 <- sp::spTransform(asp,"+init=epsg:4326")
+            if (geoType=="POINT") {
+               xy <- sp::coordinates(asp2)
+            }
+            else {
+               asp2_geom <- switch(geoType,POLYGON=sp::geometry(asp2)@polygons
+                                            ,LINE=sp::geometry(asp2)@lines
+                                           ,POINT=sp::geometry(asp2))
+               xy <- lapply(asp2_geom,function(z) {
+                  gz <- switch(geoType
+                              ,POLYGON=z@Polygons,LINE=z@Lines,POINT=z@Points)
+                  lapply(gz,function(z3) t(sp::coordinates(z3)))
+               })
+               rm(asp2,asp2_geom)
+            }
+         }
+         if (is.list(xy))
+            xy <- matrix(c(unlist(xy)),ncol=2,byrow=TRUE)
          if (verbose)
             print(summary(xy))
          lon2 <- xy[,1]
@@ -269,7 +539,7 @@
                           ,paste0("+lon_0=",lon_0)
                           ,"+k=1","+x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs")
          }
-         else if (proj %in% c("merc","google"))
+         else if (proj=="merc")
             t_srs <- paste("","+proj=merc +a=6378137 +b=6378137"
                           ,"+lat_ts=0.0",paste0("+lon_0=",lon_0)
                           ,"+x_0=0.0 +y_0=0 +k=1.0"
@@ -289,132 +559,443 @@
          else
             t_srs <- NULL
          if (is.character(t_srs)) {
-            a <- sf::st_transform(a,t_srs)
+            if (isSF)
+               a <- sf::st_transform(a,t_srs)
+            if (isSP)
+               asp <- sp::spTransform(asp,t_srs)
          }
         # xy <- .project(xy,t_srs)
         # print(summary(xy))
       }
    }
-   else if (is.ursa(a,"grid")) {
-      if (is.character(t_srs))
+  # else if (((isSF)&&(is.ursa(a,"grid")))||((isSP)&&(is.ursa(asp,"grid")))) {
+   else if (is.ursa(g0,"grid")) {
+      if (isSF)
          a <- sf::st_transform(a,ursa_proj(g0))
+      if (isSP) {
+         asp <- sp::spTransform(asp,ursa_proj(g0)) ## not testsed
+      }
    }
-   sf_geom <- sf::st_geometry(a)
-   bbox <- sf::st_bbox(a)
+   if (isSF) {
+      sf_geom <- sf::st_geometry(a)
+      bbox <- c(sf::st_bbox(a))
+      proj4 <- sf::st_crs(a)$proj4string
+   }
+   if (isSP) {
+      asp_geom <- switch(geoType,POLYGON=sp::geometry(asp)@polygons
+                                  ,LINE=sp::geometry(asp)@lines
+                                 ,POINT=sp::geometry(asp))
+      bbox <- c(sp::bbox(asp))
+      names(bbox) <- c("xmin","ymin","xmax","ymax")
+      proj4 <- sp::proj4string(asp)
+   }
    if ((bbox["xmin"]==bbox["xmax"])||(bbox["ymin"]==bbox["ymax"]))
       bbox <- bbox+100*c(-1,-1,1,1)
-   proj4 <- sf::st_crs(a)$proj4string
-   if (TRUE) {
+   if (!FALSE) {
       .sc <- ifelse(.lgrep("\\+proj=(zzzlonglat|zzzmerc)",proj4)>0,0,expand-1)
       bbox[c(1,3)] <- mean(bbox[c(1,3)])+c(-1,1)*expand*diff(bbox[c(1,3)])/2
       bbox[c(2,4)] <- mean(bbox[c(2,4)])+c(-1,1)*expand*diff(bbox[c(2,4)])/2
    }
-   isGoogle <- proj %in% c("google") & requireNamespace("ggmap")
-   if (isGoogle) {
-      xy <-cbind(bbox[c(1,3)],bbox[c(2,4)])
-      ll <- .project(xy,proj4,inv=TRUE)
-      if ((xy[2,1]>0)&(ll[2,1])<0)
-         ll[2,1] <- 360-ll[2,1]
-     # r <- c(min(ll[,1]),min(ll[,2]),max(ll[,1]),max(ll[,2]))
-      cxy <- colMeans(xy)
-      center <- .project(cxy,proj4,inv=TRUE)
-     # print(center)
-      nc <- bbox[3]-bbox[1]
-      nr <- bbox[4]-bbox[2]
-      s <- 640
-      if (nc>nr) {
-         size <- c(s,round(s*nr/nc))
-         sc <- 1
-      }
-      else {
-         size <- c(round(s*nc/nr),s)
-         sc <- nc/nr
-      }
-      dx <- ((bbox[3]-bbox[1])/6378137)*(180/pi)/sc
-      for (zoom in 1:21) {
-        # print(data.frame(zoom=zoom,google=360/2^(zoom-1),me=dx))
-         if (360/2^(zoom-1)<dx*1.1)
+   if (isWeb) {
+      res <- max(c(bbox["xmax"]-bbox["xmin"]),(bbox["ymax"]-bbox["ymin"]))/len
+      s <- 2*6378137*pi/(2^(1:21+8))
+      zoom <- which.min(abs(s-res))
+      for (i in c(zoom,zoom-1)) {
+         if (i<1)
+            break
+         res <- s[i]
+         g1 <- ursa_grid()
+         g1$resx <- g1$resy <- res
+         g1$proj4 <- proj4
+         g0 <- regrid(g1,bbox=unname(bbox[c("xmin","ymin","xmax","ymax")])
+                     ,border=border)
+        # if (isTile)
+        #    break
+         if ((isWeb)&&((g0$columns<=len)&&(g0$rows<=len))) # isS
             break
       }
-      arglist <- list(...)
-      myname <- names(arglist)
-      mlang <- "en-EN"
-      if (length(ind <- .grep("language",myname)))
-         mlang <- arglist[[ind]]
-      mtype <- "terrain"
-      if (length(ind <- .grep("maptype",myname)))
-         mtype <- arglist[[ind]]
-      mcolor <- ifelse(mtype=="terrain","bw","color")
-      if (length(ind <- .grep("color",myname)))
-         mcolor <- arglist[[ind]]
-      mscale <- 1
-      if (length(ind <- .grep("scale",myname)))
-         mscale <- arglist[[ind]]
-      if (!(mscale %in% c(1,2)))
-         mscale <- 1
-      mzoom <- zoom
-      if (length(ind <- .grep("zoom",myname)))
-         mzoom <- arglist[[ind]]
-      m <- ggmap::get_googlemap(center=center+c(0,0),zoom=mzoom,size=size
-                        ,scale=mscale # ifelse(expand>1.5,1,1)
-                        ,maptype=mtype
-                        ,language=mlang
-                        ,sensor=FALSE
-                        ,urlonly=!TRUE,filename = "___ggmapTemp"
-                        ,color=mcolor)
-      basemap <- as.ursa(m)
-      g0 <- ursa_grid(basemap)
-      lon_0 <- as.numeric(.gsub("^.*\\+lon_0=(\\S+)\\s.+$","\\1",proj4))
-      radius <- as.numeric(.gsub("^.*\\+a=(\\S+)\\s.+$","\\1",proj4))
-      B <- radius*pi
-      shift <- B*lon_0/180
-     # print(g0)
-      g0$minx <- g0$minx-shift
-      g0$maxx <- g0$maxx-shift
-      g0$proj4 <- proj4
-      if (g0$minx<(-2*B)) {
-         g0$minx <- g0$minx+2*B
-         g0$maxx <- g0$maxx+2*B
+      zoom <- i
+      pattZoom <- "(zoom=(\\d+))"
+      if (.lgrep(pattZoom,style))
+         zman <- as.integer(.gsub2(pattZoom,"\\2",style))
+      else
+         zman <- zoom
+      if (zman!=zoom) {
+         if (verbose)
+            print(c(zoomAuto=zoom,zoomManual=zman))
+         m <- 2^(zoom-zman)
+         g0 <- regrid(g0,mul=1/m,expand=m)
       }
-      else if (g0$minx>2*B) {
-         g0$minx <- g0$minx-2*B
-         g0$maxx <- g0$maxx-2*B
+      if (geocodeStatus) {
+         if (is.na(size))
+            size <- c(len,len)
+         else if (is.character(size)) {
+            size <- as.integer(unlist(strsplit(
+                         .gsub("(\\d+)\\D+(\\d+)","\\1 \\2",size),split="\\s")))
+         }
+         else
+            size <- rep(size,lentgh=2)
+         x0 <- (g0$minx+g0$maxx)/2
+         y0 <- (g0$miny+g0$maxy)/2
+         minx <- x0-g0$resx*size[1]/2
+         maxx <- x0+g0$resx*size[1]/2
+         miny <- y0-g0$resy*size[2]/2
+         maxy <- y0+g0$resy*size[2]/2
+         g0 <- regrid(g0,minx=minx,maxx=maxx,miny=miny,maxy=maxy)
+         print(g0)
       }
-      if (g0$maxx<(-2*B)) {
-         g0$minx <- g0$maxx+2*B
-         g0$maxx <- g0$maxx+2*B
+      B <- 6378137*pi*(0.95+1*0.05)
+      if (g0$maxy>(+B))
+         g0 <- regrid(g0,maxy=+B)
+      if (g0$miny<(-B))
+         g0 <- regrid(g0,miny=-B)
+     # xy <-cbind(bbox[c(1,3)],bbox[c(2,4)])
+      ##~ ll <- .project(xy,proj4,inv=TRUE)
+      ##~ if ((xy[2,1]>0)&(ll[2,1])<0)
+         ##~ ll[2,1] <- 360-ll[2,1]
+     # r <- c(min(ll[,1]),min(ll[,2]),max(ll[,1]),max(ll[,2]))
+     # cxy <- colMeans(xy)
+      cxy <- with(g0,c(minx+maxx,miny+maxy)/2)
+      center <- c(.project(cxy,proj4,inv=TRUE))
+      bound <- .project(with(g0,rbind(c(minx,miny),c(maxx,maxy))),g0$proj4
+                        ,inv=TRUE)
+      xr <- with(g0,seq(minx,maxx,len=32))
+      yr <- rep(with(g0,(miny+maxy)/2),length(xr))
+      lr <- .project(cbind(xr,yr),g0$proj4,inv=TRUE)[,1]
+      cross180 <- length(which(diff(lr)<0))
+      if (isTile) {
+        # proj <- c("cycle","mapsurfer","sputnik")[2]
+         if (FALSE) {
+            t1 <- .deg2num(lon=bound[1,1],lat=bound[1,2],zoom=zoom)
+            t2 <- .deg2num(lon=bound[2,1],lat=bound[2,2],zoom=zoom)
+            if (test <- FALSE) {
+               zoom <- 3
+               t1 <- c(7,4)
+               t2 <- c(0,2)
+            }
+            if (t1[1]>t2[1]) {
+               h <- unique(c(seq(t1[1],2^zoom-1,by=1),seq(0,t2[1],by=1)))
+            }
+            else
+               h <- seq(t1[1],t2[1],by=1)
+            v <- seq(t2[2],t1[2],by=1)
+            n <- 2^zoom
+            lon <- (c(t1[1],t2[1])+c(0,1))/n*360-180
+            lat <- rev(atan(sinh(pi*(1-2*(c(t2[2],t1[2])+c(0,1))/n)))*180/pi)
+            if ((lon[1]==-180)||(lon[2]==180)) {
+               lon[1] <- lon_0-180
+               lon[2] <- lon_0+180
+            }
+            bound2 <- .project(rbind(c(lon[1],lat[1]),c(lon[2],lat[2])),g0$proj4)
+         }
+         else {
+            if (TRUE) {# (!("ursa" %in% loadedNamespaces())) {
+               B0 <- 6378137
+               B <- B0*pi
+               dz <- 2^zoom
+               res <- 2*pi*B0/dz
+               dx0 <- lon_0*pi/180*B0
+               minx <- g0$minx+dx0
+               maxx <- g0$maxx+dx0
+               epsg3857 <- paste("","+proj=merc +a=6378137 +b=6378137"
+                                ,"+lat_ts=0.0 +lon_0=0.0"
+                                ,"+x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null"
+                                ,"+wktext  +no_defs")
+               g1 <- regrid(g0,setbound=c(minx,g0$miny,maxx,g0$maxy),proj=epsg3857)
+               g1 <- regrid(g1,res=2*pi*B0/dz)
+              # g1a <- regrid(g1,res=c(g0$resx,g0$resy))
+               g1 <- regrid(g1,minx=g1$minx-dx0,maxx=g1$maxx-dx0,res=c(g0$resx,g0$resy))
+              # print(g1)
+               sx <- sort(c(c(minx,maxx)
+                           ,seq(-B*3,+B*3,by=2*B)))
+               sx <- sx[sx>=minx & sx<=maxx]
+               dx <- diff(sx)
+               dr <- 3+2*zoom
+               yr <- with(g0,seq(maxy,miny,len=dr))
+               t0 <- NULL
+               h <- NULL
+               for (j in seq_along(dx)) {
+                  tX <- NULL
+                  xr <- seq(sx[j]+1e-6,sx[j+1]-1e-6,len=dr)
+                  gr <- .project(expand.grid(x=xr,y=yr),g0$proj4,inv=TRUE)
+                  gr[,1] <- gr[,1]-lon_0
+                 # print(unique(gr[,1]))
+                 # print(unique(gr[,2]))
+                  for (i in seq(nrow(gr))) {
+                     tX <- rbind(tX,.deg2num(lon=gr[i,1],lat=gr[i,2],zoom=zoom))
+                  }
+                  ind <- which(tX[,1]<0)
+                  if (length(ind))
+                     tX[ind,1] <- dz+tX[ind,1]
+                  ind <- which(tX[,1]>=dz)
+                  if (length(ind))
+                     tX[ind,1] <- tX[ind,1]-dz
+                  tX <- unique(tX)
+                 # print(tX)
+                  hX <- unique(tX[,1])
+                  lon <- (c(head(hX,1),tail(hX,1))+c(0,1))/dz*360-180
+                 # print(lon)
+                  t0 <- rbind(t0,tX)
+                  h <- c(h,hX)
+                  if (j==1)
+                     v <- unique(tX[,2])
+               }
+               if (verbose) {
+                  colnames(t0) <- c("x","y")
+                  print(cbind(t0,z=zoom))
+               }
+            }
+            else { # old code
+               t0 <- NULL
+               dr <- 3+2*zoom
+               xr <- with(g0,seq(minx,maxx,len=dr))
+               yr <- with(g0,seq(maxy,miny,len=dr))
+               gr <- .project(expand.grid(x=xr,y=yr),g0$proj4,inv=TRUE)
+               for (i in seq(nrow(gr))) {
+                  t0 <- rbind(t0,.deg2num(lon=gr[i,1],lat=gr[i,2],zoom=zoom))
+               }
+               t0 <- unique(t0)
+               if (verbose) {
+                  colnames(t0) <- c("x","y")
+                  print(cbind(t0,z=zoom))
+               }
+               h <- unique(t0[,1])
+               v <- unique(t0[,2])
+            }
+           # print(h)
+           # n <- 2^zoom
+           # lon <- (c(head(h,1),tail(h,1))+c(0,1))/n*360-180
+           # lat <- rev(atan(sinh(pi*(1-2*(c(head(v,1),tail(v,1))+c(0,1))/n)))*180/pi)
+           # if ((lon[1]==-180)||(lon[2]==180)) {
+           #    lon[1] <- lon_0-180
+           #    lon[2] <- lon_0+180
+           # }
+           # bound2 <- .project(rbind(c(lon[1],lat[1]),c(lon[2],lat[2])),g0$proj4)
+           # print(bound2)
+           # g1 <- regrid(g0,bbox=bound2[c(1,3,2,4)])
+         }
+         if (FALSE) {
+            proj <- "mapsurfer"
+            img2 <- .untile(server=art,ursa=TRUE)
+            session_grid(img2)
+            display(img2,scale=1)
+            q()
+         }
+        # g1 <- regrid(g0,bbox=bound2[c(1,3,2,4)])
+        # print(g1)
+        # q()
+        # h <- h[h>=0 & h<=2^(zoom-1)]
+        # v <- v[v>=0 & v<=2^(zoom-1)]
+         tgr <- expand.grid(z=zoom,y=v,x=h)
+         igr <- expand.grid(y=seq_along(v)-1,x=seq_along(h)-1)
+         img <- array(0,dim=c(256*length(v),256*length(h),3))
+        # print(tgr)
+        # print(igr)
+         for (i in seq(nrow(tgr))) {
+            img2 <- .untile(z=zoom,x=tgr[i,"x"],y=tgr[i,"y"],server=art
+                           ,verbose=verbose)
+            img[igr[i,"y"]*256+seq(256),igr[i,"x"]*256+seq(256),] <- img2[,,1:3]
+         }
+        # .elapsedTime("A")
+         basemap <- 255*as.ursa(img,aperm=TRUE,flip=TRUE)
+        # .elapsedTime("B")
+        # print(ursa(basemap,"grid"))
+        # print(g1)
+        # q()
+        # session_grid(basemap)
+        # str(basemap)
+        # print(g1)
+         ursa(basemap,"grid") <- g1
+         basemap <- as.integer(regrid(basemap,g0,resample=FALSE))
+        # display_rgb(basemap)
+        # q()
       }
-      else if (g0$maxx>2*B) {
-         g0$minx <- g0$minx-2*B
-         g0$minx <- g0$minx-2*B
+      else { ## staticmap
+         php <- switch(art
+            ,sputnik=paste0("http://static-api.maps.sputnik.ru/v1/"
+                           ,"?width={w}&height={h}&z={z}&clng={lon}&clat={lat}")
+            ,google=paste0("http://maps.googleapis.com/maps/api/staticmap"
+                          ,"?center={lat},{lon}&zoom={z}&size={w}x{h}")
+            ,openstreetmap=paste0("http://staticmap.openstreetmap.de/staticmap.php"
+                                 ,"?center={lat},{lon}&zoom={z}&size={w}x{h}")
+            )
+        # php <- switch(art,google="http://maps.googleapis.com/maps/api/staticmap"
+        #        ,openstreetmap="http://staticmap.openstreetmap.de/staticmap.php")
+         isOSM <- .lgrep("openstreetmap",art)
+         isGoogle <- .lgrep("google",art)
+         adv <- paste(.grep("=",unlist(strsplit(style,split="\\s+")),value=TRUE)
+                     ,collapse="&")
+         if ((isOSM)&&(cross180)) {
+            if (TRUE) { ## new code
+               B0 <- 6378137
+               B <- B0*pi
+               minx <- g0$minx+lon_0*pi/180*B0
+               maxx <- g0$maxx+lon_0*pi/180*B0
+               sx <- sort(c(c(minx,maxx)
+                           ,seq(-B*3,+B*3,by=2*B)))
+               sx <- sx[sx>=minx & sx<=maxx]
+               dx <- diff(sx)
+               mx <- sx[-1]-dx/2
+               print(sx)
+               print(round(mx))
+               lon2 <- 180*mx/B
+               lon2[lon2<(-180)] <- lon2[lon2<(-180)]+360
+               lon2[lon2>(+180)] <- lon2[lon2>(+180)]-360
+               print(g0$columns)
+               print(g0$columns*dx/sum(dx))
+               col2 <- ceiling(g0$columns*dx/sum(dx))
+               if (sum(col2)!=g0$columns)
+                  col2[cross180+1] <- g0$columns-sum(col2[seq(cross180)])
+               print(col2)
+               img <- array(0,dim=c(g0$rows,g0$columns,3))
+               for (i in seq(cross180+1)) {
+                  src <- php
+                  src <- .gsub("{w}",col2[i],src)
+                  src <- .gsub("{h}",g0$rows,src)
+                  src <- .gsub("{lon}",round(lon2[i],11),src)
+                  src <- .gsub("{lat}",round(center[2],11),src)
+                  src <- .gsub("{z}",zoom,src)
+                  if (nchar(adv)) {
+                    #    src <- paste0(src,"&",adv)
+                     s1 <- .args2list(.gsub("&"," ",src))
+                     s2 <- .args2list(.gsub("&"," ",adv))
+                     ind <- match(names(s2),names(s1))
+                     ind1 <- which(!is.na(ind))
+                     if (length(ind1))
+                        s1[na.omit(ind)] <- s2[ind1]
+                     ind2 <- which(is.na(ind))
+                     if (length(ind2))
+                        s1 <- c(s1,s2[ind2])
+                     src <- unlist(s1)
+                     src <- .gsub("^=","",paste(names(src),src,sep="=",collapse="&"))
+                  }
+                  fname <- tempfile()
+                  download.file(src,fname,mode="wb",quiet=!verbose)
+                  j <- if (i==1) 0 else sum(col2[seq(i-1)])
+                  img[,j+seq(col2[i]),] <- png::readPNG(fname)
+                  file.remove(fname)
+               }
+               basemap <- 255*as.ursa(img,aperm=TRUE,flip=TRUE)
+            }
+            else { ## old code
+               bound <- abs(bound[,1]+c(-1,1)*180)
+               lon2 <- c(-1,1)*(bound/2-180)
+               print(lon2)
+              # col2 <- round(g0$columns*bound/sum(bound))
+               col2 <- g0$columns*bound/sum(bound)
+               col2[1] <- ceiling(col2[1])
+               col2[2] <- g0$columns-col2[1]
+              # xSplit <- with(g0,minx+(maxx-minx)*col2[1]/columns)
+              # g01 <- with(g0,regrid(g0,bbox=c(minx,miny,xSplit,maxy),verbose=TRUE))
+              # g02 <- with(g0,regrid(g0,bbox=c(xSplit,miny,maxx,maxy)))
+               src1 <- php
+               src1 <- .gsub("{w}",col2[1],src1)
+               src1 <- .gsub("{h}",g0$rows,src1)
+               src1 <- .gsub("{lon}",round(lon2[1],11),src1)
+               src1 <- .gsub("{lat}",round(center[2],11),src1)
+               src1 <- .gsub("{z}",zoom,src1)
+               src2 <- php
+               src2 <- .gsub("{w}",col2[2],src2)
+               src2 <- .gsub("{h}",g0$rows,src2)
+               src2 <- .gsub("{lon}",round(lon2[2],11),src2)
+               src2 <- .gsub("{lat}",round(center[2],11),src2)
+               src2 <- .gsub("{z}",zoom,src2)
+               ##~ src <- paste0(php,"?"
+                            ##~ ,"&center=",round(center[2],11),",",round(lon2,11)
+                            ##~ ,"&zoom=",zoom
+                            ##~ ,"&size=",col2,"x",g0$rows
+                            ##~ ,"&maptype=",mtype
+                            ##~ ,"&scale=",mscale
+                            ##~ ,"&language=",mlanguage
+                            ##~ ,"&format=",mpng
+                            ##~ )
+               fname <- c(tempfile(),tempfile())
+               download.file(src1,fname[1],mode="wb",quiet=!verbose)
+               download.file(src2,fname[2],mode="wb",quiet=!verbose)
+               img1 <- png::readPNG(fname[1])
+               img2 <- png::readPNG(fname[2])
+               file.remove(fname)
+               dim1 <- dim(img1)
+               dim2 <- dim(img2)
+               img <- array(0,dim=c(dim1[1],dim1[2]+dim2[2],dim1[3]))
+               img[,seq(dim1[2]),] <- img1
+               img[,dim1[2]+seq(dim2[2]),] <- img2
+               basemap <- 255*as.ursa(img,aperm=TRUE,flip=TRUE)
+            }
+         }
+         else {
+            center <- round(center,11)
+            src <- php
+            src <- .gsub("{w}",g0$columns,src)
+            src <- .gsub("{h}",g0$rows,src)
+            src <- .gsub("{lon}",center[1],src)
+            src <- .gsub("{lat}",center[2],src)
+            src <- .gsub("{z}",zoom,src)
+            ##~ src <- paste0(php,"?"
+                         ##~ ,"&center=",center[2],",",center[1],"&zoom=",zoom
+                         ##~ ,"&size=",g0$columns,"x",g0$rows
+                         ##~ ,"&maptype=",mtype
+                         ##~ ,"&scale=",mscale
+                         ##~ ,"&language=",mlanguage
+                         ##~ ,"&format=",mpng
+                         ##~ )
+            if (nchar(adv)) {
+              #    src <- paste0(src,"&",adv)
+               s1 <- .args2list(.gsub("&"," ",src))
+               s2 <- .args2list(.gsub("&"," ",adv))
+               ind <- match(names(s2),names(s1))
+               ind1 <- which(!is.na(ind))
+               if (length(ind1))
+                  s1[na.omit(ind)] <- s2[ind1]
+               ind2 <- which(is.na(ind))
+               if (length(ind2))
+                  s1 <- c(s1,s2[ind2])
+               src <- unlist(s1)
+               src <- .gsub("^=","",paste(names(src),src,sep="=",collapse="&"))
+            }
+            fname <- tempfile()
+            download.file(src,fname,mode="wb",quiet=!verbose)
+            basemap <- 255*as.ursa(png::readPNG(fname),aperm=TRUE,flip=TRUE)
+            file.remove(fname)
+         }
+         mul <- unique(c(ursa_ncol(basemap)/ursa_ncol(g0)
+                        ,ursa_nrow(basemap)/ursa_nrow(g0)))
+         if (length(mul)==1)
+            g0 <- regrid(g0,mul=mul)
+         ursa(basemap,"grid") <- g0
       }
-     # print(g0)
-      ursa_grid(basemap) <- g0
-      if (g0$minx>g0$maxx) {
-         if ((g0$minx<0)&&(bbox[1]>0))
-            bbox[1] <- bbox[1]-2*B
-         else if ((g0$minx>0)&&(bbox[1]<0))
-            bbox[1] <- bbox[1]+2*B
-         if ((g0$maxx<0)&&(bbox[3]>0))
-            bbox[3] <- bbox[3]-2*B
-         else if ((g0$maxx>0)&&(bbox[3]<0))
-            bbox[3] <- bbox[3]+2*B
+      if (!isColor) {
+         basemap <- as.integer(round(sum(basemap*c(0.30,0.59,0.11))))
+         basemap <- colorize(basemap,minvalue=0,maxvalue=255,pal=c("black","white"))
+      }
+      if (FALSE) {
+         print(basemap)
+         session_grid(g0)
+         display_rgb(basemap,scale=1,coast=FALSE)
+         return(60L)
       }
    }
    else {
-      res <- max(c(bbox["xmax"]-bbox["xmin"]),(bbox["ymax"]-bbox["ymin"]))/len
-      p <- pretty(res)
-      res <- p[which.min(abs(res-p))]
-      g1 <- ursa_grid()
-      g1$resx <- g1$resy <- res
-      g1$proj4 <- proj4
-      g0 <- regrid(g1,bbox=unname(bbox[c("xmin","ymin","xmax","ymax")]),border=border)
+      if (is.null(g0)) {
+         res <- max(c(bbox["xmax"]-bbox["xmin"]),(bbox["ymax"]-bbox["ymin"]))/len
+         p <- pretty(res)
+         res <- p[which.min(abs(res-p))]
+         g1 <- ursa_grid()
+         g1$resx <- g1$resy <- res
+         g1$proj4 <- proj4
+         g0 <- regrid(g1,bbox=unname(bbox[c("xmin","ymin","xmax","ymax")]),border=border)
+      }
       basemap <- NULL
    }
+   toCoast <- !isWeb | isWeb & .getPrm(list(...),name="coast",default=FALSE)
    session_grid(g0)
-  # print(session_grid())
-   geoType <- unique(as.character(sf::st_geometry_type(a)))
-   if ((FALSE)&&(.lgrep("POLYGON",geoType))) {
+   ##~ print(session_grid())
+   if (isSF)
+      geoType <- unique(as.character(sf::st_geometry_type(a)))
+   if (isSP) {
+     # geoType <- geoType ## no change
+   }
+   if ((FALSE)&&(.lgrep("POLYGON",geoType))&&(isSF)) {
       valid <- .try(ov <- sf::st_covers(sf_geom,sparse=!FALSE))
       if (!valid)
          isOverlap <- FALSE
@@ -429,18 +1010,31 @@
   # ct <- colorize(a[,dname[4],drop=TRUE][,1],alpha=1)
   # print(ct)
   # print(unname(ct$colortable[ct$ind]))
+   if ((!toUnloadMethods)&&(isSP)&&(!"package:methods" %in% search())) {
+     # I've read "R-exts 1.1.3.1",
+     # but sp::plot() is failed for 'requireNamespace("methods")
+     # .require("methods")
+      opW <- options(warn=-1)
+      warning("Package 'methods' is required for S4 object coercion.")
+      options(opW)
+      toUnloadMethods <- TRUE
+   }
+  # require(methods)
+   if ((isWeb)&&(is.na(basemap.alpha)))
+      basemap.alpha <- ifelse(before,0.5,0.35)
+   if (is.na(alpha))
+      alpha <- ifelse(isWeb,ifelse(before,0.75,1),1)
    if (feature=="attribute") {
       ct <- vector("list",length(dname))
-      if ((isGoogle)&&(is.na(saturation)))
-         saturation <- ifelse(before,0.5,0.35)
-      if (is.na(alpha))
-         alpha <- ifelse(isGoogle,ifelse(before,0.75,1),1)
       cpg <- "1251"
       for (i in seq_along(dname)) {
         # print(i)
         # print(dname[i])
         # str(a[,dname[i]][,1])
-         val <- a[,dname[i],drop=TRUE][,1]
+         if (isSF)
+            val <- a[,dname[i],drop=TRUE][,1]
+         if (isSP)
+            val <- asp@data[,dname[i],drop=TRUE]
          if ((is.character(cpg))&&(is.character(val)))
             val <- iconv(val,"UTF-8","1251")
         # print(all(is.na(val)))
@@ -454,21 +1048,34 @@
          res <- lapply(rep(NA,length(ct)),ursa_new)
       else
          res <- list(geometry=ursa_new())
-      compose_open(res,scale=ifelse(isGoogle,1,NA),...)
-      gline <- compose_gridline(...)
-      cline <- compose_coastline(...)
-      print(before)
+      if (isWeb) {
+         compose_open(res,scale=1,...)
+      }
+      else
+         compose_open(res,...)
+      gline <- compose_graticule(...)
+      if (toCoast)
+         cline <- compose_coastline(...)
       pb <- ursaProgressBar(min=0,max=length(res))
       for (i in seq_along(res)) {
-         if (isGoogle)
+         if (isWeb)
             panel_new(fill="transparent",...)
          else
-            panel_new(...) #fill=ifelse(isGoogle,"transparent","chessboard"))
-         if (before)
-            panel_plot(basemap,alpha=saturation)
+            panel_new(...) #fill=ifelse(isWeb,"transparent","chessboard"))
+         if (before) {
+            panel_plot(basemap,alpha=basemap.alpha)
+            if (isTile) {
+               panel_annotation(attr(.untile(),"credits")[art]
+                               ,pos="bottomright",cex=0.7,font="Arial Narrow"
+                               ,fg=sprintf("#000000%02X",round(basemap.alpha*255)))
+            }
+         }
         # if ((!length(ct))||(all(is.na(ct[[i]]$index)))) {
          if (!length(ct)) {
-            panel_plot(sf_geom)
+            if (isSF)
+               panel_plot(sf_geom)
+            if (isSP)
+               panel_plot(asp,add=TRUE)
          }
          else {
             col <- unname(ct[[i]]$colortable[ct[[i]]$ind])
@@ -482,30 +1089,58 @@
                bg.point[ind] <- "#0000002F"
                bg.polygon[ind] <- "#0000002F"
             }
-            if (.lgrep("polygon",geoType)) {
-               panel_plot(sf_geom,col=col,border=bg.polygon,lwd=0.1,lty="blank")
-               panel_plot(sf_geom,col="transparent",border=bg.polygon,lwd=0.1)
+            if (!isSP) {
+               if (.lgrep("polygon",geoType)) {
+                  panel_plot(sf_geom,col=col,border=bg.polygon,lwd=0.1,lty="blank")
+                  panel_plot(sf_geom,col="transparent",border=bg.polygon,lwd=0.1)
+               }
+               if (.lgrep("point",geoType)) {
+                  panel_plot(sf_geom
+                            ,col=bg.point,bg=col,pch=21,lwd=0.25,cex=1)
+               }
+               if (.lgrep("line",geoType)) {
+                  panel_plot(sf_geom,lwd=3,col=bg.line)
+                  panel_plot(sf_geom,lwd=2,col=col)
+               }
             }
-            if (.lgrep("point",geoType)) {
-               panel_plot(sf_geom
-                         ,col=bg.point,bg=col,pch=21,lwd=0.25,cex=1)
-            }
-            if (.lgrep("line",geoType)) {
-               panel_plot(sf_geom,lwd=3,col=bg.line)
-               panel_plot(sf_geom,lwd=2,col=col)
+            else {
+               if (.lgrep("polygon",geoType)) {
+                  panel_plot(asp,col=col,border=bg.polygon,lwd=0.1,lty="blank"
+                            ,add=TRUE)
+                  panel_plot(asp,col="transparent",border=bg.polygon,lwd=0.1
+                            ,add=TRUE)
+               }
+               if (.lgrep("point",geoType)) {
+                  panel_plot(asp,col=bg.point,bg=col,pch=21,lwd=0.25,cex=1
+                            ,add=TRUE)
+               }
+               if (.lgrep("line",geoType)) {
+                  panel_plot(asp,lwd=3,col=bg.line,add=TRUE)
+                  panel_plot(asp,lwd=2,col=col,add=TRUE)
+               }
             }
          }
-         if (after)
-            panel_plot(basemap,alpha=saturation)
-         panel_coastline(cline)
-         panel_gridline(gline)
-         panel_scalebar(pos=ifelse(isGoogle,"topleft","bottomleft"),...)
+         if (after) {
+            panel_plot(basemap,alpha=basemap.alpha)
+            if (isTile) {
+               panel_annotation(attr(.untile(),"credits")[art]
+                               ,pos="bottomright",cex=0.7,font="Arial Narrow"
+                               ,fg=sprintf("#000000%02X",round(basemap.alpha*255)))
+            }
+         }
+         if (toCoast)
+            panel_coastline(cline)
+         if (geocodeStatus)
+            panel_graticule(gline,margin=c(T,T,F,F))
+         else
+            panel_graticule(gline)
+         panel_scalebar(pos=ifelse(isWeb,"topleft","bottomleft"),...)
          setUrsaProgressBar(pb)
       }
       close(pb)
       if (length(ct)) {
          ct <- lapply(ct,function(x) {
-            if ((TRUE)&&(isGoogle)&&(after)) {
+            if ((TRUE)&&(isWeb)&&(after)) {
                alpha2 <- 0.65
                ct2 <- x$colortable
                ct2[] <- paste0(substr(ct2,1,7),toupper(as.hexmode(round(alpha2*255))))
@@ -519,10 +1154,21 @@
       compose_close(...)#res)
    }
    else if (feature=="geometry") {
-      print(geoType)
-      n <- length(sf_geom)
-      da <- a[,dname,drop=TRUE]
+     # print(geoType)
+      if (isSF)
+         n <- length(sf_geom)
+      if (isSP)
+         n <- length(asp_geom)
+      if (isSF) {
+        # da <- a[,dname,drop=TRUE][,1] ## wrong
+         da <- a[,dname,drop=TRUE]#[,dname,drop=TRUE]
+         names(da) <- dname
+      }
+      if (isSP)
+         da <- asp@data[,dname,drop=FALSE]
       da <- rbind(format(da),paste0(names(da),":"))
+     # print(format(da))
+     # print(da)
      # e <- format(t(da),justify="right")
       e <- .gsub("^\\s+","",t(da))
      # e1 <- paste(apply(e[,c(n+1,1)],1,paste,collapse=" "),collapse="\n")
@@ -532,36 +1178,81 @@
       res <- ursa_new(nband=n)
       ct <- lapply(seq(n),function(i) colorize(0L))
       compose_open(res,legend=NULL,...)
-      gline <- compose_gridline(...)
-      cline <- compose_coastline(...)
+      gline <- compose_graticule(...)
+      if (toCoast)
+         cline <- compose_coastline(...)
       pb <- ursaProgressBar(min=0,max=length(res))
+     # geoType <- "skip"
       for (i in seq_along(res)) {
-         panel_new()
+         if (isWeb)
+            panel_new(fill="transparent",...)
+         else
+            panel_new(...)
+         if (before) {
+            panel_plot(basemap,alpha=basemap.alpha)
+            if (isTile) {
+               panel_annotation(attr(.untile(),"credits")[art]
+                               ,pos="bottomright",cex=0.7,font="Arial Narrow"
+                               ,fg=sprintf("#000000%02X",round(basemap.alpha*255)))
+            }
+         }
         # panel_plot(sf_geom[[i]])
-         if (.lgrep("polygon",geoType)) {
-            panel_plot(sf_geom[[i]]
-                      ,col=unname(ct[[i]]$colortable[ct[[i]]$ind]),lwd=0.1)
+         if (!isSP) {
+            if (.lgrep("polygon",geoType)) {
+               panel_plot(sf_geom[[i]]
+                         ,col=unname(ct[[i]]$colortable[ct[[i]]$ind]),lwd=0.1)
+            }
+            if (.lgrep("point",geoType)) {
+               panel_plot(sf_geom[[i]]
+                         ,col="black",bg=unname(ct[[i]]$colortable[ct[[i]]$ind])
+                         ,pch=21,lwd=0.25,cex=1)
+            }
+            if (.lgrep("line",geoType)) {
+               panel_plot(sf_geom[[i]],lwd=3,col="#0000007F")
+               panel_plot(sf_geom[[i]],lwd=2
+                         ,col=unname(ct[[i]]$colortable[ct[[i]]$ind]))
+            }
          }
-         if (.lgrep("point",geoType)) {
-            panel_plot(sf_geom[[i]]
-                      ,col="black",bg=unname(ct[[i]]$colortable[ct[[i]]$ind])
-                      ,pch=21,lwd=0.25,cex=1)
+         else {
+            if (.lgrep("polygon",geoType)) {
+               panel_plot(asp[i,],col=unname(ct[[i]]$colortable[ct[[i]]$ind])
+                         ,lwd=0.1,add=TRUE)
+            }
+            if (.lgrep("point",geoType)) {
+               panel_plot(asp[i,]
+                         ,col="black",bg=unname(ct[[i]]$colortable[ct[[i]]$ind])
+                         ,pch=21,lwd=0.25,cex=1,add=TRUE)
+            }
+            if (.lgrep("line",geoType)) {
+               panel_plot(asp[i,],lwd=3,col="#0000007F",add=TRUE)
+               panel_plot(asp[i,],lwd=2
+                         ,col=unname(ct[[i]]$colortable[ct[[i]]$ind]),add=TRUE)
+            }
          }
-         if (.lgrep("line",geoType)) {
-            panel_plot(sf_geom[[i]],lwd=3,col="#0000007F")
-            panel_plot(sf_geom[[i]],lwd=2
-                      ,col=unname(ct[[i]]$colortable[ct[[i]]$ind]))
+         if (after) {
+            panel_plot(basemap,alpha=basemap.alpha)
+            if (isTile) {
+               panel_annotation(attr(.untile(),"credits")[art]
+                               ,pos="bottomright",cex=0.7,font="Arial Narrow"
+                               ,fg=sprintf("#000000%02X",round(basemap.alpha*255)))
+            }
          }
-         panel_coastline(cline)
-         panel_gridline(gline)
-         panel_scalebar(pos=ifelse(isGoogle,"bottom","bottomleft"))
-         e1 <- paste(apply(e[,c(n+1,i)],1,paste,collapse=" "),collapse="\n")
+         if (toCoast)
+            panel_coastline(cline)
+         panel_graticule(gline)
+         panel_scalebar(pos=ifelse(isWeb,"bottomleft","bottomleft"),...)
+         e1 <- paste(apply(e[,c(n+1,i),drop=FALSE],1,paste,collapse=" ")
+                    ,collapse="\n")
          panel_annotation(text=e1,adj=0,...) # pos="topleft")
          setUrsaProgressBar(pb)
       }
       close(pb)
       compose_close(...)
-      str(n)
+     # str(n)
+   }
+   if ((toUnloadMethods)&&("package:methods" %in% search())) {
+      print(search())
+     # detach("package:methods",unload=TRUE)
    }
    invisible(0L)
 }
@@ -569,4 +1260,78 @@
    a <- .args2list()
    do.call(".glance",a)
    NULL
+}
+## "http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames", license?
+'.deg2num' <- function(lat,lon,zoom,verbose=FALSE) {
+  lat_rad <- lat*pi/180
+  n <- 2^zoom
+  xtile <- floor((lon+180)/360*n)
+  ytile = floor((1-log(tan(lat_rad)+(1/cos(lat_rad)))/pi)/2*n)
+  if (TRUE)
+     return(c(xtile,ytile))
+  osm <- paste0("http://",letters[sample(seq(3),1)],".tile.openstreetmap.org")
+  tile <- paste0(paste(osm,zoom,xtile,ytile,sep="/"),".png")
+  message(tile)
+  fname <- "tile.png"
+  download.file(tile,fname,mode="wb",quiet=!verbose)
+  return(tile)
+}
+'.untile' <- function(z=4,x=10,y=3,server=""
+                     ,osm=c('1'="osm",'2'="cycle",'3'="transport"
+                              ,'4'="mapsurfer",'5'="sputnik",'6'="thunderforest"
+                              ,'7'="carto")
+                     ,ursa=FALSE,verbose=FALSE) {
+   s <- list()
+   s$openstreetmap <- paste0("http://",letters[sample(seq(3),1)]
+                  ,".tile.openstreetmap.org/{z}/{x}/{y}.png")
+   s$cycle <- paste0("http://",letters[sample(seq(3),1)]
+                    ,".tile.opencyclemap.org/cycle/{z}/{x}/{y}.png")
+   s$transport <- paste0("http://",letters[sample(seq(3),1)]
+                        ,".tile2.opencyclemap.org/transport/{z}/{x}/{y}.png")
+   s$mapsurfer <- "http://korona.geog.uni-heidelberg.de/tiles/roads/x={x}&y={y}&z={z}"
+   s$sputnik <- "http://tiles.maps.sputnik.ru/tiles/kmt2/{z}/{x}/{y}.png"
+   s$thunderforest <- paste0("https://",letters[sample(seq(3),1)]
+                            ,".tile.thunderforest.com/landscape/{z}/{x}/{y}.png")
+   s$carto <- "http://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
+   s$kosmosnimki <- paste0("http://",letters[sample(seq(4),1)]
+                          ,".tile.osm.kosmosnimki.ru/kosmo/{z}/{x}/{y}.png")
+   osmCr <- "\uA9 OpenStreetMap contributors"
+   credit <- rep(osmCr,length(s))
+   names(credit) <- names(s)
+   credit["openstreetmap"] <- paste0(osmCr)
+   credit["cycle"] <- paste(osmCr,"(Cycle)")
+  # credit["transport"] <- paste0("Maps \xA9 Thunderforest, Data ",osmCr)
+   credit["mapsurfer"] <- paste0(osmCr
+           ,", GIScience Research Group @ Heidelberg University")
+   credit["sputnik"] <- paste0(osmCr,", \uA9 \u0420\u043E\u0441\u0442\u0435\u043B\u0435\u043A\u043E\u043C")
+   credit["thunderforest"] <- paste0("Maps \uA9 Thunderforest, Data ",osmCr)
+   credit["carto"] <- paste(osmCr,"\uA9 CARTO")
+  # credit["kosmosnimki"] <- paste0(osmCr)
+   if (!(server %in% names(s))) {
+      ret <- names(s)
+      attr(ret,"credits") <- credit
+      return(ret)
+   }
+   tile <- .gsub("{z}",z,.gsub("{y}",y,.gsub("{x}",x,s[[server]])))
+   fname <- tempfile(fileext=".png")
+   download.file(tile,fname,mode="wb",quiet=!verbose)
+   a <- png::readPNG(fname)
+   file.remove(fname)
+   if (!ursa)
+      return(a)
+   epsg3857 <- paste("+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0"
+                    ,"+lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m"
+                    ,"+nadgrids=@null +wktext +no_defs")
+   n <- 2^z
+   lon <- (x+c(0,1))/n*360-180
+   lat <- atan(sinh(pi*(1-2*(y+c(0,1))/n)))*180/pi
+   xy <- .project(cbind(lon,rev(lat)),epsg3857)
+   dima <- dim(a)
+   g1 <- regrid(ursa_grid(),setbound=c(xy)[c(1,3,2,4)]
+               ,columns=dima[2],rows=dima[1],proj4=epsg3857)
+   b <- as.integer(255*as.ursa(a,aperm=TRUE,flip=TRUE))
+   ursa(b,"grid") <- g1
+  # session_grid(b)
+  # display(b,scale=1,coast=FALSE)
+   b
 }

@@ -34,7 +34,19 @@
       {
          args <- list(...)
          regexp <- if ("regexp" %in% names(args)) args[["regexp"]] else FALSE
-         i <- .getBand(res,i,regexp=regexp)
+         i1 <- .getBand(res,i,regexp=regexp)
+         if (is.null(i1)) {
+            ind <- .grep(i,ursa(res,"category"))
+            if (length(ind) == -10000+1) {
+               return(res[res==ind-1L])
+            }
+            else {
+               res$value[!(x$value %in% (ind-1L))] <- NA
+               return(res)
+            }
+         }
+         else
+            i <- i1
          j <- seq(dimx[1])
          missingJ <- TRUE
          missingI <- FALSE

@@ -104,6 +104,7 @@ session_grid(NULL)
 
 # example no.4 -- length distortion in the Transverse Mercator projection
 \dontrun{
+if (requireNamespace("ggmap")) {
   # m2 <- ggmap::get_openstreetmap(bbox=c(left=42,bottom=70,right=70,top=82)
   #                               ,format="png",messaging=TRUE
   #                               ,scale=34942642,filename="ggmapTempMy")
@@ -113,10 +114,11 @@ session_grid(NULL)
    compose_open(res,legend=NULL,scale=1,pointsize=12)
    panel_new()
    panel_raster(res)
-   panel_gridline(decor=TRUE)
+   panel_graticule(decor=TRUE)
    for (p in c("bottom","center","top"))
       panel_scalebar(pos=p,w=100)
-   compose_close()}
+   compose_close()
+}}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

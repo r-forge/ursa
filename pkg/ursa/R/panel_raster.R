@@ -34,6 +34,9 @@
    }
    isRGB <- nband(obj) %in% c(2,3,4) & all(band_nNA(obj)>=0) # '==0' is NA used for RGB?
    if (isRGB) {
+      if ((is.numeric(alpha))&&(alpha<1)&&(nband(obj) %in% c(1,3))) {
+         obj <- c(obj,ursa_new(round(alpha*255),bandname=paste("Band",nband(obj)+1)))
+      }
       with(ursa_grid(obj),rasterImage(as.raster(obj),minx,miny,maxx,maxy
                                       ,interpolate=interpolate))
       return(NULL)
@@ -80,11 +83,11 @@
          obj <- reclass(obj,ct) ## round(obj)?
       }
    }
-   if (isRGB) {
-      with(ursa_grid(obj),rasterImage(as.raster(obj),minx,miny,maxx,maxy
-                                      ,interpolate=interpolate))
-      return(NULL)
-   }
+   ##~ if (isRGB) {
+      ##~ with(ursa_grid(obj),rasterImage(as.raster(obj),minx,miny,maxx,maxy
+                                      ##~ ,interpolate=interpolate))
+      ##~ return(NULL)
+   ##~ }
    arglist <- list(...)
    if (!isCT) {
       if (!.is.colortable(obj)) {

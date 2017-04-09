@@ -29,7 +29,7 @@ Passed to hierarchy of plotting functions:
             \item \code{\link[ursa]{panel_raster}}
             \item \code{\link[ursa]{panel_decor}}
             \itemize{
-               \item \code{\link[ursa]{panel_gridline}}
+               \item \code{\link[ursa]{panel_graticule}}
                \item \code{\link[ursa]{panel_coastline}}
                \item \code{\link[ursa]{panel_scalebar}}
             }

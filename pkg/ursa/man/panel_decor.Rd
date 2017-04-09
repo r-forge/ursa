@@ -15,14 +15,14 @@ panel_decor(...)
   \item{\dots}{
 Passed to sequence of plotting functions:
 \itemize{
-   \item \code{\link[ursa]{panel_gridline}}. To distinguish the same agrument names in different functions it is provided to use prefix \dQuote{\code{grid.*}}, e.g., \code{grid.col="grey40"}.
+   \item \code{\link[ursa]{panel_graticule}}. To distinguish the same agrument names in different functions it is provided to use prefix \dQuote{\code{grid.*}}, e.g., \code{grid.col="grey40"}.
    \item \code{\link[ursa]{panel_coastline}}. To distinguish the same agrument names in different functions it is provided to use prefix \dQuote{\code{coast.*}}, e.g., \code{coast.col="grey60"}.
    \item \emph{(not applicable for \code{layout.grid})} \code{\link[ursa]{panel_scalebar}}. To distinguish the same agrument names in different functions it is provided to use prefix \dQuote{\code{scalebar.*}}, e.g., \code{scalebar.col="black"}.
    }
 }
 }
 \details{
-The sequence of elements is constant. To change order, use direct calling of \code{\link[ursa]{panel_gridline}}, \code{\link[ursa]{panel_coastline}}, \code{\link[ursa]{panel_scalebar}} in any sequence.
+The sequence of elements is constant. To change order, use direct calling of \code{\link[ursa]{panel_graticule}}, \code{\link[ursa]{panel_coastline}}, \code{\link[ursa]{panel_scalebar}} in any sequence.
 
 Sometimes, for rasters with \code{NA} values the followed sequence may be used: \preformatted{
 panel_coastline(col="transparent",fill="grey80")

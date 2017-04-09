@@ -191,7 +191,7 @@
    panel_new()
    panel_raster(a)
    panel_coastline()
-   panel_gridline()
+   panel_graticule()
    for (y in seq(0,1,len=5))
       panel_scalebar(x=0.5,y=y,col="black")
    compose_close()

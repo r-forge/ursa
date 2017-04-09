@@ -27,7 +27,7 @@ Passed to hierarchy of plotting functions:
          \item \code{\link[ursa]{panel_raster}}
          \item \code{\link[ursa]{panel_decor}}
             \itemize{
-               \item \code{\link[ursa]{panel_gridline}}
+               \item \code{\link[ursa]{panel_graticule}}
                \item \code{\link[ursa]{panel_coastline}}
                \item \code{\link[ursa]{panel_scalebar}}
             }
@@ -43,7 +43,7 @@ Colorbar is not plotted.
 
 By default, the created PNG has 24 bits per pixel. This is equal to parameter \code{bpp=24} (\code{\link[ursa]{compose_close}}). It is allow to specify other value, e.g., \code{display_rgb(a,bpp=8)}.
 
-By default, labels of gridlines are located in bottom and left sides of the panel with raster. This is equal to parameter \code{margin=c(TRUE,TRUE,FALSE,FALSE)} (\code{\link[ursa]{panel_gridline}}). It is allow to specify other value, e.g., \code{display_rgb(a,margin=T)}.
+By default, labels of gridlines are located in bottom and left sides of the panel with raster. This is equal to parameter \code{margin=c(TRUE,TRUE,FALSE,FALSE)} (\code{\link[ursa]{panel_graticule}}). It is allow to specify other value, e.g., \code{display_rgb(a,margin=T)}.
 
 Currently, for color compositions the argument \code{useRaster} (\code{\link[ursa]{panel_raster}}) is introduced to fix possible coordinate mismatch for Cairo-devices, but have never used.
 }

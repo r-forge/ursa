@@ -119,8 +119,13 @@
   #    res <- file.path(getOption("ursaTempDir"),res)
    res
 }
-'.args2list' <- function() {
-   args <- commandArgs(TRUE)
+'.args2list' <- function(args) {
+   isCMD <- missing(args)
+   if (isCMD)
+      args <- commandArgs(TRUE)
+   else {
+      args <- unlist(strsplit(args,split="\\s+"))
+   }
    if (!length(args))
       return(NULL)
    if (FALSE)
@@ -313,7 +318,7 @@
                   ,"-r",resample,src,dst)
    else
       cmd <- with(crs,paste("gdalwarp -overwrite -of ENVI"
-                        ,"-t_srs",dQuote(proj4),"-tr",resx,resy,"-te",minx,miny,maxx,maxy
+                        ,"-t_srs",.dQuote(proj4),"-tr",resx,resy,"-te",minx,miny,maxx,maxy
                         ,ifelse(is.na(nodata),"",paste("-srcnodata",nodata,"-dstnodata",nodata))
                         ,"-r",resample,src,dst))
    if (verbose)
@@ -352,3 +357,6 @@
 }
 '.argv0' <- function() basename(.argv0path())
 '.argv0dir' <- function() dirname(.argv0path())
+'.dQuote' <- function(ch) paste0("\"",ch,"\"")
+'.sQuote' <- function(ch) paste0("'",ch,"'")
+'.require' <- function(pkg) do.call("require",list(pkg,quietly=TRUE))

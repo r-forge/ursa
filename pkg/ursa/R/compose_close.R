@@ -40,7 +40,7 @@
          if (length(unable)) {
             opW <- options(warn=1)
             w <- paste0("Detected opened connection(s): "
-                       ,paste(dQuote(basename(con[unable,"description"]))
+                       ,paste(.dQuote(basename(con[unable,"description"]))
                              ,collapse=", ")
                        ,".")
             warning(w)
@@ -54,8 +54,8 @@
    if (!toOpen) {
       if (delafter)
          delafter <- dirname(fileout)==tempdir()
-      message(paste("Use",sQuote("session_pngviewer(TRUE)"),"to open"
-                   ,sQuote(fileout),"\nby external software."))
+      message(paste("Use",.sQuote("session_pngviewer(TRUE)")
+             ,"\nto open",.sQuote(fileout),"in external software."))
    }
    if (getOption("ursaPngFigure")==0L) ## plot layout only
    {

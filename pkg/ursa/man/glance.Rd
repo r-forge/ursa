@@ -12,16 +12,19 @@ Command line utility for spatial view of raster or vector GIS file.
 glance(...)
 
 # non-public
-.glance(dsn, layer = ".*", grid = NULL, attr = ".+", len = 640, expand = 1.05,
-        border = 15, lat0 = NA, lon0 = NA, resetProj = FALSE,
-        proj = c("auto", "stere", "laea", "merc", "google", "longlat"),
-        feature = c("auto", "attribute", "geometry"),
-        basemap = c("after","before"), saturation = NA, alpha = NA, verbose = FALSE, ...)
+.glance(dsn, layer = ".*", grid = NULL, attr = ".+", size = NA, expand = 1.05,
+        border = 15, lat0 = NA, lon0 = NA, resetProj = FALSE, style = "auto",
+        feature = c("auto", "attribute", "geometry"), alpha = NA,
+        basemap.order = c("after", "before"), basemap.alpha = NA,
+        engine = c("native", "sp", "sf"), geocode = c("google", "nominatim"),
+        verbose = FALSE, ...)
+
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{dsn}{
-Character or object of either \code{ursaRaster}, \code{Spatial}, or \code{sf} classes. If character, then data source name (interpretation varies by driver - for some drivers, dsn is a file name, but may also be a folder, or contain the name and access credentials of a database). If \code{Spatial} then package \pkg{methods} should be loaded before.
+Character or object of either \code{ursaRaster}, \code{Spatial}, or \code{sf} classes. If character, then data source name (interpretation varies by driver - for some drivers, dsn is a file name, but may also be a folder, or contain the name and access credentials of a database).
+%%~ If \code{Spatial} then package \pkg{methods} should be loaded before.
 }
   \item{layer}{
 Character or integer. If integer, then layer index. If character, then pattern (\link[base:regex]{regular expressions}) to recognize layer by name. Only one layer selection is allowed. If selected more then one layer, the error message contains indices and names of layers. Usually, datasets (e. g., "ESRI Shapefile") have only one layer. Default is \code{".*"}; interpreted as all layers.
@@ -32,8 +35,8 @@ Object of class \code{ursaGrid} or NULL. Reference CRS and boundary box for visu
   \item{attr}{
 Character. Pattern for attribute selection by name using \link[base:regex]{regular expressions}. Multiple selection is allowed. Default is \code{".+"}; all attributes.
 }
-  \item{len}{
-Integer. Width of panel for plotting in pixels. Default is \code{640}.
+  \item{size}{
+Integer of length 1 or 2 or character of length 1. Size of plotting panel in pixels. If character, then parsed to integer of length 1 or 2. Length 2 is used only for web cartography. If length 1, then \code{size} defines width of panel, and height is defined automatically. If integer, then width of panel for plotting in pixels. Default is \code{NA}; for web cartogrpaphy value of maximal size of static maps, and code{640} for other cases.
 }
   \item{expand}{
 Numeric. Multiplier for plotting panel zoom in relation to extent of plotting geometry. Default is \code{1.05}.
@@ -50,37 +53,59 @@ Numeric. Central meridian, which have vertical direction on the plot. If \code{N
   \item{resetProj}{
 Logical. Value \code{TRUE} overwrites projection of vector file. Default is \code{FALSE}.
 }
-  \item{proj}{
-Character. Projection class (\code{"stere"}, \code{"laea"}, \code{"merc"}, \code{"longlat"}) or keyword. Default is keyword \code{"auto"}; use object projection, if this projection differs from projection class \code{"+longlat"}, otherwise, projection (\code{"stere"} or \code{"merc"}) is determed internally. Keyword \code{"google"} forces to use Google Static Map for basemap; the resulted projection has class \code{"+proj=merc"}.
+  \item{style}{
+Character. Either projection class or source of web-catrogrpaphy for basemep. Specified by a sentence of words separated by spaces.
+\itemize{
+   \item Projection class \cr
+Valid values are \code{"stere"}, \code{"laea"}, \code{"merc"}, \code{"longlat"}. Default is keyword \code{"auto"}; use object projection, if this projection differs from projection class \code{"+longlat"}, otherwise, projection (\code{"stere"} or \code{"merc"}) is determed internally.
+   \item Web cartogrpaphy.
+      \itemize{
+         \item Static map\cr
+         Valid values are \code{"google"}, \code{"openstreetmap"}. Static maps have priority over tile services. however additional word \code{"static"} can be specified in the sentence, e.g., \code{"openstreetmap static"} or \code{"static google"}. Additional parameters for request to web-script can be added in the sentence in the form \code{"argument1=value1 [argument2=value2]"}, e.g., \code{style="google static maptype=terrain language=ru-RU scale=2"}.
+         \item Tile service\cr
+         Supported tile services can be returned by calling of non-public function \code{ursa:::.untile()} without arguments. Valid values are \code{"openstreetmap"}, \code{"cycle"}, \code{"transport"}, \code{"mapsurfer"}, \code{"sputnik"}, \code{"thunderforest"}, \code{"carto"}, \code{"kosmosnimki"}. Adding word \code{"tile"} forces tile services using, e.g. \code{style="tile openstreetmap"}.
+      }
+      By default, basemap is forced to greyscale. Adding word \code{"color"} to the sentence forces to use colored basemap.
+      
+      The order of words in the sentence is any.
+   }
+   Keywords \code{"google"}, \code{"openstreetmap"} force to use "Google Static Map" or "OpenStreetMap static map images" for basemap; the resulted projection has class \code{"+proj=merc"}.
 }
+%%~ }
   \item{feature}{
 Character. Appearance of visualization. If \code{"attribute"} then each panel attribute is plotted on separate panel (number of panels is equal to number of columns in attribute table). If \code{"geometry"} then each feature is plotted on separate panel (number of panels is equal to number of rows in attribute table). Default is \code{"auto"}; if intersects of features are found, then \code{"geometry"} is used, else "attribute".
 }
-   \item{basemap}{
-Character. The order of basemap layer rendering in the case of \code{proj="google"}.If \code{"before"}, then basemap is plotted before object plot. If \code{"after"}, then basemap is plotted over object. 
+   \item{basemap.order}{
+Character. The order of basemap layer rendering in the case of web-cartography basemap.If \code{"before"}, then basemap is plotted before object plot. If \code{"after"}, then basemap is plotted over object. 
 }
-   \item{saturation}{
-Character. The saturation of basemap in the case of \code{proj="google"}. Default is \code{NA}; \code{saturation=0.5} for \code{basemap="before"} and \code{saturation=0.35} for \code{basemap="after"}.
+   \item{basemap.alpha}{
+Character. The saturation of basemap in the case of web-cartography basemap. Default is \code{NA}; \code{basemap.alpha=0.5} for \code{basemap.order="before"} and \code{basemap.alpha=0.35} for \code{basemap.order="after"}.
 }
    \item{alpha}{
-Character. The opacity of plotted object. Default is \code{NA}; 0.75 for \code{basemap="before"} and \code{project="google"}, 1 - in all other cases.
+Character. The opacity of plotted object. Default is \code{NA}; 0.75 for \code{basemap.order="before"} in web-cartogrpaphy style, \code{1.00} - in all other cases.
+}
+   \item{engine}{
+Character keyword. Forcing to vector files processing by functions from package \pkg{sp} (\code{engine="sp"}) or package \pkg{sf} (\code{engine="sf"}, if \pkg{sf} is installed). Default is \code{"native"}; if \code{dsn} is \code{Spatial} object or if \pkg{sf} is not installed, then \code{"sp"} is used.
+}
+   \item{geocode}{
+Character. Keyword for geocode service. Valid values are \code{"google"}, \code{"nominatim"}. If \code{dsn} is character and file \code{dsn} not found, then trying to interpret \code{dsn} as a request to geocode service. The output is only basemap of web cartogrpaphy. Default is \code{"google"}. Is \code{style} is not specified, then "Google Static Map" is used for \code{geocode="google"}, and "OpenStreetMap static map images" for \code{geocode="nominatim"}.
 }
   \item{verbose}{
 Logical. Logical. Value \code{TRUE} may provide some additional information on console. Default is \code{FALSE}.
 }
   \item{\dots}{
 \code{glance}: Arguments, which are passed to \code{.glance} or to \code{\link[ursa:display]{display}}.
-\cr\code{.glance}: Arguments, which are passed to \code{\link[ggmap:get_googlemap]{get_googlemap}}, \code{\link[ursa:colorize]{colorize}}, \code{\link[ursa:display]{display}}, \emph{etc}.
+\cr\code{.glance}: Arguments, which are passed to static maps API, \code{\link[ursa:colorize]{colorize}}, \code{\link[ursa:display]{display}}, \emph{etc}.
 
-Keywords for \code{proj="google"} to form request to Google Static Maps:
-   \tabular{lll}{
-      \strong{Argument} \tab \strong{Default value} \tab \strong{Comment}
-      \cr \code{"maptype"} \tab \code{"terrain"} \tab Allowed values in \code{c("terrain", "satellite")}
-      \cr \code{"language"} \tab \code{"en-EN"} \tab
-      \cr \code{"color"} \tab \code{"bw"} \tab Allowed values in \code{c("bw", "color")}
-      \cr \code{"scale"} \tab \code{1} \tab valid values are in \code{c(1,2)}.
-      \cr \code{"zoom"} \tab defined from object geometry \tab
-   }
+%%~ Keywords for \code{proj="google"} or \code{proj="osm"} to form request and post-process:
+%%~    \tabular{lll}{
+%%~       \strong{Argument} \tab \strong{Default value} \tab \strong{Comment}
+%%~       \cr \code{"maptype"} \tab \code{"terrain"} \tab Allowed values in \code{c("terrain", "satellite")}
+%%~       \cr \code{"language"} \tab \code{"en-EN"} \tab
+%%~       \cr \code{"color"} \tab \code{"bw"} \tab Allowed values in \code{c("bw", "color"), not in API request.}
+%%~       \cr \code{"scale"} \tab \code{1} \tab valid values are in \code{c(1,2)}.
+%%~       \cr \code{"zoom"} \tab defined from object geometry \tab
+%%~    }
 }
 }
 \details{
@@ -114,27 +139,27 @@ Package \pkg{sf} is 'Suggested' for package \pkg{ursa}. But it is requiered for 
 \examples{
 session_grid(NULL)
 f <- system.file("vectors","scot_BNG.shp",package="rgdal")
-glance(f,proj="merc",attr="(NAME|COUNT)")
-cmd <- paste("Rscript --vanilla -e ursa::glance()",dQuote(f)
-            ,paste0("proj=",dQuote("merc"))
-            ,paste0("attr=",dQuote("(lon|lat)")))
+glance(f,style="merc",attr="(NAME|COUNT)")
+cmd <- paste("Rscript --vanilla -e ursa::glance()",paste0("\"",f,"\"")
+            ,"proj=\"merc\"","attr=\"(lon|lat)\"")
 cat(" --------- Try in command line: -----------\n")
 message(cmd)
 cat(" ----------- end of quoting ---------------\n")
-
+\dontrun{
+   system(cmd)}
 
 \dontrun{
-system(cmd)}
-
+   require(sp)
+   a <- data.frame(lat=c(70.734,71.657),lon=c(178.577,-177.38),place="Wrangel Island")
+   coordinates(a) <- ~lon+lat
+   proj4string(a) <- "+init=epsg:4326"
+   glance(a,style="google color maptype=terrain")
+   glance(a,style="openstreetmap color")
+   glance(a,style="openstreetmap color tile")}
 
 \dontrun{
+   glance("Svalbard")}
 
-require(sp)
-a <- data.frame(lat=56.74,lon=37.16,city="Dubna")
-coordinates(a) <- ~lon+lat
-proj4string(a) <- "+init=epsg:4326"
-glance(a,proj="google",color="color",basemap="before",saturation=1,expand=50)
-}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

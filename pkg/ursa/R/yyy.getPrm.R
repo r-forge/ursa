@@ -99,9 +99,9 @@
          if (length(valid)) {
             if (!any(cl %in% cl2))
                next
-            w <- paste(paste0(sQuote(name),"="
+            w <- paste(paste0(.sQuote(name),"="
                              ,ifelse(is.character(link[[i]])
-                                          ,dQuote(link[[i]]),link[[i]]),".")
+                                          ,.dQuote(link[[i]]),link[[i]]),".")
                       ,"Expected: ",paste0(paste(valid,collapse=", "),".")
                       ,"Use default:",default)
             opW <- options(warn=1)
@@ -119,7 +119,7 @@
                m2 <- TRUE
             }
             else if (nchar(myname[i])) {
-               w <- paste(paste0(sQuote(myname[i]),"=",link[[i]])
+               w <- paste(paste0(.sQuote(myname[i]),"=",link[[i]])
                          ,"is not in a list:"
                          ,paste0(paste(valid,collapse=", "),".")
                          ,"Use default:",default)
@@ -139,10 +139,10 @@
             else if (nchar(myname[i])) {
                if (is.null(default))
                   default <- match.arg(valid,valid) ## valid[1]
-               w <- paste(paste0(sQuote(myname[[i]]),"=",dQuote(link[[i]]))
+               w <- paste(paste0(.sQuote(myname[[i]]),"=",.dQuote(link[[i]]))
                          ,"is not in a list:"
-                         ,paste0(paste(dQuote(valid),collapse=", "),".")
-                         ,"Use default:",dQuote(default))
+                         ,paste0(paste(.dQuote(valid),collapse=", "),".")
+                         ,"Use default:",.dQuote(default))
                opW <- options(warn=1)
                warning(w)
                options(opW)

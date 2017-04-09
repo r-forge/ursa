@@ -28,7 +28,7 @@ Passed to either \code{\link[ursa]{display_brick}} or \code{\link[ursa]{display_
          \item \code{\link[ursa]{panel_raster}}
          \item \code{\link[ursa]{panel_decor}}
             \itemize{
-               \item \code{\link[ursa]{panel_gridline}}
+               \item \code{\link[ursa]{panel_graticule}}
                \item \code{\link[ursa]{panel_coastline}}
                \item \code{\link[ursa]{panel_scalebar}}
                \item \code{\link[ursa]{panel_annotation}}

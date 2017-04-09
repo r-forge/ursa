@@ -11,12 +11,12 @@ compose_panel(...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-   \item{\dots}{Set of argumetns, which are passed to \code{\link[ursa:panel_new]{panel_new}}, \code{\link[ursa:panel_raster]{panel_raster}}, \code{\link[ursa:panel_coastline]{panel_coastline}}, \code{\link[ursa:panel_gridline]{panel_gridline}}, \code{\link[ursa:panel_annotation]{panel_annotation}}, \code{\link[ursa:panel_scalebar]{panel_scalebar}}.
+   \item{\dots}{Set of argumetns, which are passed to \code{\link[ursa:panel_new]{panel_new}}, \code{\link[ursa:panel_raster]{panel_raster}}, \code{\link[ursa:panel_coastline]{panel_coastline}}, \code{\link[ursa:panel_graticule]{panel_graticule}}, \code{\link[ursa:panel_annotation]{panel_annotation}}, \code{\link[ursa:panel_scalebar]{panel_scalebar}}.
    }
 
 }
 \details{
-For each panel of layout the sequence of called functions is permanent:\cr\code{\link[ursa:panel_new]{panel_new}} - - > \code{\link[ursa:panel_raster]{panel_raster}} - - > \code{\link[ursa:panel_coastline]{panel_coastline}} - - > \code{\link[ursa:panel_gridline]{panel_gridline}} - - > \code{\link[ursa:panel_annotation]{panel_annotation}} - -> \code{\link[ursa:panel_scalebar]{panel_scalebar}}.
+For each panel of layout the sequence of called functions is permanent:\cr\code{\link[ursa:panel_new]{panel_new}} - - > \code{\link[ursa:panel_raster]{panel_raster}} - - > \code{\link[ursa:panel_coastline]{panel_coastline}} - - > \code{\link[ursa:panel_graticule]{panel_graticule}} - - > \code{\link[ursa:panel_annotation]{panel_annotation}} - -> \code{\link[ursa:panel_scalebar]{panel_scalebar}}.
 
 If this order is undesirable, then call these functions in the required sequence.
 }
@@ -38,7 +38,7 @@ Nikita Platonov \email{platonov@sevin.ru}
 \seealso{
 \code{\link[ursa:compose_plot]{compose_plot}}, \code{\link[ursa:compose_legend]{compose_legend}}
 
-\code{\link[ursa:panel_new]{panel_new}}, \code{\link[ursa:panel_raster]{panel_raster}}, \code{\link[ursa:panel_coastline]{panel_coastline}}, \code{\link[ursa:panel_gridline]{panel_gridline}}, \code{\link[ursa:panel_annotation]{panel_annotation}}, \code{\link[ursa:panel_scalebar]{panel_scalebar}}
+\code{\link[ursa:panel_new]{panel_new}}, \code{\link[ursa:panel_raster]{panel_raster}}, \code{\link[ursa:panel_coastline]{panel_coastline}}, \code{\link[ursa:panel_graticule]{panel_graticule}}, \code{\link[ursa:panel_annotation]{panel_annotation}}, \code{\link[ursa:panel_scalebar]{panel_scalebar}}
 }
 \examples{
 session_grid(NULL)

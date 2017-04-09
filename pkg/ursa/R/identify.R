@@ -75,6 +75,9 @@
 {
    if (!is.ursa(obj))
       return(NULL)
+   isCT <- .is.colortable(obj)
+   cl <- ursa(obj,"class")
+   isCT <- isCT & length(cl)
    n <- obj$grid$columns
    if ((!missing(ind))&&(length(ind)!=-11L))
    {
@@ -94,9 +97,17 @@
    }
    nc <- length(col)
    res <- matrix(NA,ncol=nc,nrow=nband(obj),dimnames=list(bandname(obj),ind))
-   for (i in seq(nc))
-      res[,i] <- obj[,row[i]]$value[col[i],]
+   for (i in seq(nc)) {
+      val <- obj[,row[i]]$value[col[i],]
+      if (isCT)
+         res[,i] <- cl[val+1L]
+      else
+         res[,i] <- val
+   }
   # obj$value[ind,] ## incorrect if use "open_envi" construction
+  # if (.is.colortable(obj)) {
+  #    res[] <- res[][ursa(res,"value")]
+  # }
    res
 }
 '.getIndex' <- function(obj,x,y)

@@ -25,8 +25,10 @@
    fill <- .getPrm(arglist,name="fill",kwd=kwd,default="transparent") # "#FFFFFF3F"
    language <- .getPrm(arglist,name="lan(g(uage)*)*",kwd=kwd,default=NA_character_)
    verbose <- .getPrm(arglist,name="verb(ose)*",kwd=kwd,default=FALSE)
-   .panel_scalebar(position=position,w=w,cex=cex,col=col,bg=bg,fill=fill
-                  ,language=language,verbose=verbose)
+   for (pos in position)
+      .panel_scalebar(position=pos,w=w,cex=cex,col=col,bg=bg,fill=fill
+                     ,language=language,verbose=verbose)
+   invisible(NULL)
 }
 '.panel_scalebar' <- function(position="bottomleft",w=NA,cex=0.85
                              ,col="#0000003F",bg="transparent",fill="#FFFFFF3F"

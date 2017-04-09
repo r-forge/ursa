@@ -18,11 +18,11 @@
    {
       arglist <- list(...)
       if (length(list(...))==0) {
-         warning(paste("ENVI header",sQuote(wname),"not found. Terminated."))
+         warning(paste("ENVI header",.sQuote(wname),"not found. Terminated."))
          return(NULL)
       }
       op <- options(warn=1)
-      warning(paste("ENVI header",sQuote(wname),"not found."
+      warning(paste("ENVI header",.sQuote(wname),"not found."
                    ,"Trying to interpret additional arguments for creating new."))
       on.exit(options(op))
       return(create_envi(wname,...)) ## 'return(grid)' before 2012-09-07
