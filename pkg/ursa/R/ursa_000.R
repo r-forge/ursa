@@ -41,6 +41,8 @@
       return(ursa_colortable(obj))
    if (.lgrep("(categ|class)",attr))
       return(names(ursa_colortable(obj)))
+   if (.lgrep("(nodata|ignorevalue|bg)",attr))
+      return(ignorevalue(obj))
    if (.lgrep("^table",attr))
       return(as.table(obj))
    if (.lgrep("cell",attr))
@@ -52,7 +54,6 @@
    if (.lgrep("(extent|bbox)",attr))
       return(with(ursa_grid(obj),c(xmin=minx,ymin=miny,xmax=maxx,ymax=maxy)))
    if (.lgrep("(ncol|columns|samples)",attr)) {
-      print("HERE")
       return(ursa_grid(obj)$columns)
    }
    if (.lgrep("(nrow|rows|lines)",attr))
@@ -92,5 +93,9 @@
       bandname(obj) <- value
       return(obj)
    }
-   return(NULL)
+   if (.lgrep("(nodata|ignorevalue|bg)",attr)) {
+      ignorevalue(obj) <- value
+      return(obj)
+   }
+   return(obj)
 }

@@ -13,7 +13,7 @@
    if (!is.character(fname))
       return(NULL)
   # suppressMessages(require("rgdal"))
-   requireNamespace("rgdal")
+   requireNamespace("rgdal",quietly=.isPackageInUse())
    if (verbose)
       .elapsedTime("rgdal has been loaded")
    op <- options(warn=0-!verbose)

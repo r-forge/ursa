@@ -63,7 +63,7 @@
    else {
       col <- .getPrm(arglist,name="^c",default=NA_integer_)
       row <- .getPrm(arglist,name="^r",default=NA_integer_)
-     # ind <- (lr-1L)*nc+lc
+      ind <- (row-1L)*nc+col
    }
    res <- matrix(NA,nrow=2,ncol=length(ind)
                 ,dimnames=list(c("x","y"),ind))
@@ -116,7 +116,9 @@
       return(NULL)
    if (missing(y))
    {
-      if (length(x)==2)
+      if (length(x)==1)
+         return(x)
+      else if (length(x)==2)
       {
          y <- x[2]
          x <- x[1]

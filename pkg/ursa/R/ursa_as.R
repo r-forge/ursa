@@ -9,7 +9,7 @@
    if (is.data.frame(obj))
       return(allocate(obj,...))
    if (inherits(obj,c("SpatialGridDataFrame"))) {
-      requireNamespace("sp")
+      requireNamespace("sp",quietly=.isPackageInUse())
       cs <- sp::getGridTopology(obj)@cellsize
       bb <- c(bbox(obj))
       pr <- sp::proj4string(obj)

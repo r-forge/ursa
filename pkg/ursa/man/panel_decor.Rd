@@ -55,7 +55,7 @@ a[a<30] <- NA
 compose_open()
 panel_new()
 ct <- panel_raster(a)
-panel_decor(grid.col="green4",scalebar.col="brown")
+panel_decor(graticule.col="green4",graticule.lwd=2,scalebar.col="brown")
 compose_legend(ct)
 compose_close()
 }

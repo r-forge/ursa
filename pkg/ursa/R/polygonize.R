@@ -2,8 +2,8 @@
    isList <- .is.ursa_stack(obj)
    if ((!isList)&&(!is.ursa(obj)))
       return(NULL)
-  # requireNamespace("sp")
-  # requireNamespace("methods")
+  # requireNamespace("sp",quietly=.isPackageInUse())
+  # requireNamespace("methods",quietly=.isPackageInUse())
    g1 <- if (isList) ursa_grid(obj[[1]]) else ursa_grid(obj)
    prj <- ursa_proj(g1)
    if (isList) {

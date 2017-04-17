@@ -22,7 +22,7 @@
    if (!is.null(res))
       return(res)
    bg <- sum(c(col2rgb(getOption("ursaPngBackground")))*c(0.30,0.59,0.11))
-   defcol <- ifelse(bg<128,"#FFFFFF4F","#0000004F") # grey60
+   defcol <- ifelse(bg<128,"#FFFFFF3F","#0000003F") # grey60
    col <- .getPrm(arglist,name="(col|line)",kwd=kwd,default=defcol) 
    fill <- .getPrm(arglist,name="fill",kwd=kwd,default="transparent")
    detail <- .getPrm(arglist,name="detail",kwd=kwd,default=NA_character_)
@@ -142,7 +142,8 @@
       xy <- readRDS("C:/platt/shapefile/auxiliary/thematicmapping.org/countries.rds")
    coast_xy <- cbind(lon=xy[,1],lat=xy[,2])
    ind <- .grep("^\\d+$",proj)
-   isLoaded <- .lgrep("package:rgdal",search())>0
+  # isLoaded <- .lgrep("package:rgdal",search())>0
+   isLoaded <- "rgdal" %in% loadedNamespaces()
    if (length(ind))
    {
       proj4 <- "" ## was NA
@@ -150,19 +151,19 @@
       if (!nchar(proj4))
       {
          if (!isLoaded)
-            requireNamespace("rgdal")
+            requireNamespace("rgdal",quietly=.isPackageInUse())
          proj4 <- rgdal::CRSargs(sp::CRS(sprintf("+init=epsg:%s",proj[ind])))
       }
       else if (!isLoaded) {
-         if (!requireNamespace("proj4",quietly=TRUE))
+         if (!requireNamespace("proj4",quietly=.isPackageInUse()))
             requireNamespace("rgdal")
       }
    }
    else
    {
       if (!isLoaded) {
-         if (!requireNamespace("proj4",quietly=TRUE))
-            requireNamespace("rgdal")
+         if (!requireNamespace("proj4",quietly=.isPackageInUse()))
+            requireNamespace("rgdal",quietly=.isPackageInUse())
       }
       proj4 <- paste(proj,collapse=" ")
    }
@@ -417,7 +418,7 @@
       if (verbose)
          str(list(col=col,fill=fill,shadow=shadow#,detail=detail
                  ,density=density,angle=angle,land=land,lwd=lwd,lty=lty))
-      if ((!TRUE)&&(shadow!=255)||
+      if ((TRUE)&&(shadow!=255)||
           ((!is.na(angle[1]))&&(!is.na(density[1]))))
       {
         # op <- par(usr=par()$usr-c(0,125000,0,125000))
@@ -450,6 +451,8 @@
                y <- with(g1,c(miny,maxy,maxy,miny,miny)+c(-1,1,1,-1,-1)*resy)
                coast_xy <- rbind(cbind(x,y),c(NA,NA),coast_xy)
             }
+           ## ?polypath: Hatched shading (as implemented for polygon()) is not (currently) supported.
+           ## if semi-opacity|trasparency them 'polygon' else fill is transparent
             polypath(coast_xy[,1],coast_xy[,2],border=col,col=fill
                     ,rule=c("winding","evenodd")[2],lwd=lwd) ##,density=15??
          }

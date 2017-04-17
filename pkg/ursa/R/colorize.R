@@ -486,7 +486,7 @@
             else {
                message("BREWER A -- not-reproduced ")
                stop("Unexpected branch A which is required deprecated 'RColorBrewer'")
-               ##~ requireNamespace("RColorBrewer")
+               ##~ requireNamespace("RColorBrewer",quietly=.isPackageInUse())
                ##~ if (n<maxcol) {
                   ##~ col <- colorRampPalette(sample(
                                      ##~ RColorBrewer::brewer.pal(maxcol,palname)))(n)
@@ -917,7 +917,7 @@
             else {
                if (FALSE) {
                   message("BREWER B -- fixed")
-                  ##~ requireNamespace("RColorBrewer")
+                  ##~ requireNamespace("RColorBrewer",quietly=.isPackageInUse())
                   ##~ col <- colorRampPalette(RColorBrewer::brewer.pal(maxcol,palname))(n)
                }
                else {

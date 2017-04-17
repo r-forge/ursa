@@ -4,13 +4,14 @@
                            ,label=""
                            ,min=0,max=1,initial=min,width=NA,style=1) {
    kind <- match.arg(kind)
+   if ((kind=="tk")&&(!requireNamespace("tcltk",quietly=.isPackageInUse())))
+      kind <- "txt"
    if ((!is.na(title))&&(!nchar(title)))
       title <- "'ursa' package"
    t1 <- proc.time()[3]
    names(t1) <- title
    st <- c(t1,prev=unname(t1),delta=0,min=min,max=max,current=initial)
    if (kind=="tk") {
-      requireNamespace("tcltk")
       if (is.na(width))
          width <- 360
       title <- sprintf("%s: %.0f of %.0f",title,initial,max)

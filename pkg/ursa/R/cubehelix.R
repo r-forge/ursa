@@ -79,8 +79,9 @@
       if (n==1)
          dark=0.7*light
    }
-   dark <- dark+k
-   light <- light-k
+  # k is not optimal for n=2
+   dark <- dark+3*k/2
+   light <- light-1*k/2
    lambda <- rev(seq(dark,light,length.out=n))
    if ((divergent)&&(rest>0)) {
       if (length(indZ)==1) {

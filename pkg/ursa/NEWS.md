@@ -1,3 +1,11 @@
+# version 3.7-3
+
+* Non-ascii for geocoding in 'glance'
+
+* New function 'get_earthdata' for retreiving MODIS mosaics.
+
+* Added package 'jpeg' in the category 'Imported'.
+
 # version 3.7-2
 
 * Introduce geocode to 'glance'. There is no relation between data and geocoded place.

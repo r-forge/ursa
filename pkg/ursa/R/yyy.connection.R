@@ -853,8 +853,9 @@
       lverbose <- FALSE
       if (lverbose)
          .elapsedTime("proj4 -> wkt start")
+     # (!("package:rgdal" %in% search()))) {
       if ((nchar(Sys.which("gdalsrsinfo")))&&
-          (!("package:rgdal" %in% search()))) {
+          (!("rgdal" %in% loadedNamespaces()))) {
          wktout <- paste0(.maketmp(),".wkt~")
         # shell(paste("gdalsrsinfo -o wkt",paste0("\"",proj4,"\""),"1>",wktout))
         # 20170319 dQuote() returns non-symmetrical quotes in interactive() 

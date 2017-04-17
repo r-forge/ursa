@@ -49,7 +49,7 @@
                return(do.call("display",arglist))
             }
          }
-        # else if (requireNamespace("sf",quietly=TRUE)) {
+        # else if (requireNamespace("sf",quietly=.isPackageInUse())) {
         #    do.call(".glance",arglist)
         # }
          else {
@@ -85,8 +85,18 @@
    feature <- match.arg(feature)
    engine <- match.arg(engine)
    geocodeStatus <- FALSE
-   len <- if ((is.na(size)[1])||(!is.numeric(size))) 640L else max(size)
-   if ((FALSE)&&(!requireNamespace("sf",quietly=TRUE))) {
+   len <- 640L
+   if (is.na(size[1]))
+      size <- c(len,len)
+   else if (is.character(size)) {
+      size <- as.integer(unlist(strsplit(
+                   .gsub("(\\d+)\\D+(\\d+)","\\1 \\2",size),split="\\s")))
+   }
+   else if (is.numeric(size))
+      size <- rep(size,length=2)
+   if (is.numeric(size))
+      len <- as.integer(round(max(size)))
+   if ((FALSE)&&(!requireNamespace("sf",quietly=.isPackageInUse()))) {
       isGDAL <- nchar(Sys.which("gdal_rasterize"))>0
       if (!isGDAL) {
          warning(paste("Failure to rasterize using to GDAL utilities"
@@ -110,7 +120,7 @@
    if (engine=="sp")
       isSF <- FALSE
    else
-      isSF <- requireNamespace("sf",quietly=TRUE)
+      isSF <- requireNamespace("sf",quietly=.isPackageInUse())
    isSP <- !isSF
    isNative <- engine=="native"
    if (!((is.character(dsn))&&(length(dsn)==1))) {
@@ -167,13 +177,15 @@
             dsn <- .grep("\\.shp$",ziplist,value=TRUE)
          }
          else if (geocode=="nominatim") {
+             ## curl -H Accept-Language:de 'http://nominatim.openstreetmap.org......."
             src <- paste0("http://nominatim.openstreetmap.org/search.php?q="
-                         ,dsn,"&format=xml&bounded=0")
+                         ,dsn,"&format=xml&bounded=0&accept-language=en-US,ru")
             dst <- tempfile()
-            download.file(src,dst,quiet=!verbose)
+            download.file(URLencode(URLencode(iconv(src,to="UTF-8")))
+                         ,dst,quiet=!verbose)
             xmlstring <- scan(dst,character(),quiet=!verbose)
-            file.remove(dst)
-           # print(xmlstring,quote=FALSE)
+            if (dirname(dst)==tempdir())
+               file.remove(dst)
             ind <- grep("geotext",xmlstring)
             if (length(ind)) {
                geotext <- xmlstring[ind]
@@ -181,19 +193,21 @@
             }
             ind <- grep("boundingbox",xmlstring)
             if (length(ind)) {
-               bounding <- xmlstring[ind][1]
+               bounding <- xmlstring[ind]#[1]
                bounding <- .gsub(".*\"(.+)\".*","\\1",bounding)
                bounding <- lapply(bounding,function(p){
                   as.numeric(unlist(strsplit(p,split=",")))
                })
                bounding <- do.call(rbind,bounding)
-               ##~ print(bounding)
                lon <- .grep("lon=",xmlstring,value=TRUE)
                lon <- as.numeric(.gsub(".*\'(.+)\'.*","\\1",lon))
                lat <- .grep("lat=",xmlstring,value=TRUE)
                lat <- as.numeric(.gsub(".*\'(.+)\'.*","\\1",lat))
-               ##~ print(lon)
-               ##~ print(lat)
+               importance <- .grep("importance",xmlstring,value=TRUE)
+               importance <- as.numeric(.gsub(".*\'(.+)\'.*","\\1",importance))
+               bounding <- bounding[importance==max(importance),,drop=FALSE]
+               if (verbose)
+                  print(bounding)
                da <- data.frame(lon=range(bounding[,c(3,4)])
                                ,lat=range(bounding[,c(1,2)]))#,z=1:2)
                if (isSF) {
@@ -217,7 +231,8 @@
             src <- paste0("https://maps.googleapis.com/maps/api/geocode/xml?"
                          ,"address=",dsn)
             dst <- tempfile()
-            download.file(URLencode(src),dst,quiet=!verbose)
+            download.file(URLencode(URLencode(iconv(src,to="UTF-8")))
+                         ,dst,quiet=!verbose)
             xmlstring <- scan(dst,character(),quiet=!verbose)
             file.remove(dst) 
             glat <- grep("<lat>",xmlstring,value=TRUE)
@@ -597,21 +612,21 @@
       bbox[c(2,4)] <- mean(bbox[c(2,4)])+c(-1,1)*expand*diff(bbox[c(2,4)])/2
    }
    if (isWeb) {
-      res <- max(c(bbox["xmax"]-bbox["xmin"]),(bbox["ymax"]-bbox["ymin"]))/len
+      res <- max(c((bbox["xmax"]-bbox["xmin"])/size[1]
+              ,(bbox["ymax"]-bbox["ymin"])/size[2]))
+      ##~ res <- max(c((bbox["xmax"]-bbox["xmin"])/len
+                  ##~ ,(bbox["ymax"]-bbox["ymin"]))/len)
       s <- 2*6378137*pi/(2^(1:21+8))
       zoom <- which.min(abs(s-res))
       for (i in c(zoom,zoom-1)) {
          if (i<1)
             break
          res <- s[i]
-         g1 <- ursa_grid()
-         g1$resx <- g1$resy <- res
-         g1$proj4 <- proj4
-         g0 <- regrid(g1,bbox=unname(bbox[c("xmin","ymin","xmax","ymax")])
-                     ,border=border)
+         g0 <- regrid(ursa_grid(),res=res,proj4=proj4,border=border
+                     ,setbound=unname(bbox[c("xmin","ymin","xmax","ymax")]))
         # if (isTile)
         #    break
-         if ((isWeb)&&((g0$columns<=len)&&(g0$rows<=len))) # isS
+         if ((isWeb)&&((g0$columns<=size[1])&&(g0$rows<=size[2]))) # isS
             break
       }
       zoom <- i
@@ -626,15 +641,7 @@
          m <- 2^(zoom-zman)
          g0 <- regrid(g0,mul=1/m,expand=m)
       }
-      if (geocodeStatus) {
-         if (is.na(size))
-            size <- c(len,len)
-         else if (is.character(size)) {
-            size <- as.integer(unlist(strsplit(
-                         .gsub("(\\d+)\\D+(\\d+)","\\1 \\2",size),split="\\s")))
-         }
-         else
-            size <- rep(size,lentgh=2)
+      if ((TRUE)&&(geocodeStatus)) {
          x0 <- (g0$minx+g0$maxx)/2
          y0 <- (g0$miny+g0$maxy)/2
          minx <- x0-g0$resx*size[1]/2
@@ -642,7 +649,6 @@
          miny <- y0-g0$resy*size[2]/2
          maxy <- y0+g0$resy*size[2]/2
          g0 <- regrid(g0,minx=minx,maxx=maxx,miny=miny,maxy=maxy)
-         print(g0)
       }
       B <- 6378137*pi*(0.95+1*0.05)
       if (g0$maxy>(+B))
@@ -836,17 +842,17 @@
                sx <- sx[sx>=minx & sx<=maxx]
                dx <- diff(sx)
                mx <- sx[-1]-dx/2
-               print(sx)
-               print(round(mx))
+              # print(sx)
+              # print(round(mx))
                lon2 <- 180*mx/B
                lon2[lon2<(-180)] <- lon2[lon2<(-180)]+360
                lon2[lon2>(+180)] <- lon2[lon2>(+180)]-360
-               print(g0$columns)
-               print(g0$columns*dx/sum(dx))
+              # print(g0$columns)
+              # print(g0$columns*dx/sum(dx))
                col2 <- ceiling(g0$columns*dx/sum(dx))
                if (sum(col2)!=g0$columns)
                   col2[cross180+1] <- g0$columns-sum(col2[seq(cross180)])
-               print(col2)
+              # print(col2)
                img <- array(0,dim=c(g0$rows,g0$columns,3))
                for (i in seq(cross180+1)) {
                   src <- php
@@ -928,8 +934,8 @@
             src <- php
             src <- .gsub("{w}",g0$columns,src)
             src <- .gsub("{h}",g0$rows,src)
-            src <- .gsub("{lon}",center[1],src)
-            src <- .gsub("{lat}",center[2],src)
+            src <- .gsub("{lon}",format(center[1],scientific=FALSE),src)
+            src <- .gsub("{lat}",format(center[2],scientific=FALSE),src)
             src <- .gsub("{z}",zoom,src)
             ##~ src <- paste0(php,"?"
                          ##~ ,"&center=",center[2],",",center[1],"&zoom=",zoom
@@ -1134,7 +1140,30 @@
             panel_graticule(gline,margin=c(T,T,F,F))
          else
             panel_graticule(gline)
-         panel_scalebar(pos=ifelse(isWeb,"topleft","bottomleft"),...)
+         if (proj %in% c("merc")) {
+            if ((g0$miny<0)&&(g0$maxy>0)) {
+               if ((-g0$miny)>(g0$maxy))
+                  y <- c(g0$miny,0)
+               else
+                  y <- c(0,g0$maxy)
+            }
+            else
+               y <- c(g0$miny,g0$maxy)
+            sc <- 1/cos(.project(cbind((g0$minx+g0$maxx)/2,y)
+                                ,g0$proj4,inv=TRUE)[,2]*pi/180)
+            x <- ifelse(((isWeb)&&(isStatic)&&(isGoogle)),0.5,0)
+            if (max(sc)/min(sc)>1.5) {
+               y <- (y-g0$miny)/(g0$maxy-g0$miny)
+               panel_scalebar(c(x,min(y)),...)
+               panel_scalebar(c(x,max(y)),...)
+            }
+            else if (isWeb)
+               panel_scalebar(pos=c(x,0),...)
+            else
+               panel_scalebar(pos="bottomleft",...)
+         }
+         else
+            panel_scalebar(pos="bottomleft",...)
          setUrsaProgressBar(pb)
       }
       close(pb)
@@ -1251,8 +1280,10 @@
      # str(n)
    }
    if ((toUnloadMethods)&&("package:methods" %in% search())) {
-      print(search())
-     # detach("package:methods",unload=TRUE)
+     # print(search())
+      detach("package:methods",unload=FALSE) 
+     # but namespace "methods" is not unloaded, because namespace "sp" is loaded
+     # 'as' is not found now
    }
    invisible(0L)
 }
@@ -1315,6 +1346,9 @@
    tile <- .gsub("{z}",z,.gsub("{y}",y,.gsub("{x}",x,s[[server]])))
    fname <- tempfile(fileext=".png")
    download.file(tile,fname,mode="wb",quiet=!verbose)
+  # message(tile)
+  # download.file(tile,fname,method="curl",mode="wb",quiet=FALSE
+  #              ,extra="-H Accept-Language:de")
    a <- png::readPNG(fname)
    file.remove(fname)
    if (!ursa)

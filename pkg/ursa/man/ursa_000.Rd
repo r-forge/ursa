@@ -40,6 +40,7 @@ Initializing function \code{ursa} with missing argument \code{attr} is a wrapper
 \cr\code{"(colort|ct)"} \tab Yes \tab Color table \tab \code{\link[ursa:classColorTable]{ursa_colortable}}
 \cr\code{"(categ|class)"} \tab Yes \tab Names of categories \tab \code{names(ursa_colortable(obj))}
 \cr\code{"name"} \tab Yes \tab Band names \tab \code{\link[ursa:classRaster_names]{names}}
+\cr\code{"(nodata|ignorevalue|bg)"} \tab Yes \tab Value, which is interpreted as \code{NA}. \tab \code{\link[ursa:ignorevalue]{ignorevalue}}
 \cr\code{"^table$"} \tab No \tab Frequency of unique values \tab \code{\link[ursa:classRaster_as.table]{as.table}}
 \cr\code{"cell"} \tab No \tab \emph{Squared} cell size \tab \code{with(ursa_grid(obj),sqrt(resx*resy))}
 \cr\code{"^dim$"} \tab No \tab Dimension of raster image \tab \code{\link[ursa:classRaster_dim]{dim}}

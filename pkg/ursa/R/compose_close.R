@@ -101,7 +101,7 @@
    do.call(paste0(".",kind),list(fileout,border,verbose))
    n <- 999L
    if (!(bpp %in% c(8,24))) {
-      requireNamespace("png")
+      requireNamespace("png",quietly=.isPackageInUse())
       x <- png::readPNG(fileout,native=TRUE,info=FALSE)
       if (verbose)
          .elapsedTime("uniqueColor:start")

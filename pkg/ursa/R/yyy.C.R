@@ -1,6 +1,6 @@
 '.Cursa' <- function(...) {
    arglist <- list(...)
-   if ("ursa" %in% loadedNamespaces())
+   if (.isPackageInUse())
       arglist$PACKAGE <- "ursa"
    do.call(".C",arglist)
 }

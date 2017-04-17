@@ -77,6 +77,7 @@
          val[is.na(e1$value)] <- 1L
          e1$value <- val
          class(e1$value) <- "ursaNumeric"
+         ignorevalue(e1) <- 127L
          return(e1)
       }
       if (.Generic %in% c("-"))
@@ -166,12 +167,18 @@
          e3$value[,i] <- eval(f)
       if ((TRUE)&&(.Generic %in% c(">","<",">=","<=","==","!=")))
       {
-         if (varName=="e1")
+         if (varName=="e1") {
             e1$value[,i][!e1$value[,i]] <- NA
-         else if (varName=="e2")
+            ignorevalue(e1) <- 127L
+         }
+         else if (varName=="e2") {
             e2$value[,i][!e2$value[,i]] <- NA
-         else if (varName=="e3")
+            ignorevalue(e2) <- 127L
+         }
+         else if (varName=="e3") {
             e3$value[,i][!e3$value[,i]] <- NA
+            ignorevalue(e3) <- 127L
+         }
       }
    }
    return(get(varName))

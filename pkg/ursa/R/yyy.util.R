@@ -105,7 +105,7 @@
    list1 <- vector("character",length=n)
    for (i in seq(along=list1))
    {
-      list1[i] <- sprintf("tmp%02d_%s",tcount+i,prefix)
+      list1[i] <- sprintf("ursa%02d_%s",tcount+i,prefix)
      # list1[i] <- sprintf("tmp%s_%02d",prefix,tcount+i)
    }
    if (nchar(ext))
@@ -207,9 +207,9 @@
       return(FALSE)
    getOption("ursaPngSkip")
 }
-'.dist2' <- function(df,xy,summarize=!FALSE,positive=FALSE,verbose=TRUE)
+'.dist2' <- function(src,dst,summarize=!FALSE,positive=FALSE,verbose=TRUE)
 {
-   if (identical(df,xy))
+   if (identical(src,dst))
       positive <- TRUE
    '.modal2' <- function(x,...)
    {
@@ -219,19 +219,19 @@
    }
    '.modal3' <- function(x) {
       res <- NA
-      if (requireNamespace("locfit",quietly=TRUE))
+      if (requireNamespace("locfit",quietly=.isPackageInUse()))
          try(res <- x[which.max(predict(locfit::locfit(~x),newdata=x))])
       res
    }
-   d1 <- dim(df)
-   d2 <- dim(xy)
+   d1 <- dim(src)
+   d2 <- dim(dst)
    if ((length(d1)<2)||(d1[2]<2)||(length(d2)<2)||(d2[2]<2))
       return(NULL)
-   b1 <- .Cursa("dist2dist",x1=as.numeric(xy[,"x"]),y1=as.numeric(xy[,"y"])
-                       ,x2=as.numeric(df[,"x"]),y2=as.numeric(df[,"y"])
-                       ,nxy=nrow(xy),ndf=nrow(df),positive=as.integer(positive)
+   b1 <- .Cursa("dist2dist",x1=as.numeric(dst[,"x"]),y1=as.numeric(dst[,"y"])
+                       ,x2=as.numeric(src[,"x"]),y2=as.numeric(src[,"y"])
+                       ,nxy=nrow(dst),ndf=nrow(src),positive=as.integer(positive)
                        ,verb=as.integer(verbose)
-                       ,dist=numeric(nrow(df)),ind=integer(nrow(df)))
+                       ,dist=numeric(nrow(src)),ind=integer(nrow(src)))
    b1 <- data.frame(ind=b1$ind+1L,dist=b1$dist)
    if (summarize)
    {
@@ -345,6 +345,7 @@
    ret
 }
 '.isRscript' <- function() .lgrep("^--file=",commandArgs(FALSE))>0
+'.isPackageInUse' <- function() "ursa" %in% loadedNamespaces()
 '.argv0path' <- function() {
    arglist <- commandArgs(FALSE)
    a <- .grep("^--file=",arglist,value=TRUE,ignore.case=FALSE)

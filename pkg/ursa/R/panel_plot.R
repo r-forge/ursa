@@ -5,7 +5,7 @@
    if ((is.character(obj))&&(.lgrep("\\.shp(\\.zip)*$",obj)))
    {
       op <- options(warn=0)
-      requireNamespace("rgdal")
+      requireNamespace("rgdal",quietly=.isPackageInUse())
       a <- .shp.read(obj)
      # a <- spTransform(a,session_grid()$proj4)
      # ret <- .panel_plot(a,add=TRUE,...)
@@ -91,7 +91,7 @@
   # print(class(obj))
   # fun <- if (nchar(pkg)) paste0(pkg,"::","plot") else "plot"
   # if (nchar(pkg))
-  #    requireNamespace(pkg)
+  #    requireNamespace(pkg,quietly=.isPackageInUse())
   # require(methods)
    plot(obj,...)
   # do.call("plot",list(obj,arglist)) ## ,add=TRUE 

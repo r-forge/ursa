@@ -94,7 +94,7 @@
                                                     ##~ ,na.rm=TRUE,all.na=FALSE)
 ##~ {
    ##~ res <- as.data.frame(obj,band=band,id=id,na.rm=na.rm,all.na=all.na)
-   ##~ if (!requireNamespace("dplyr",quietly=TRUE))
+   ##~ if (!requireNamespace("dplyr",quietly=.isPackageInUse()))
       ##~ return(res)
    ##~ dplyr::as_data_frame(res)
 ##~ }

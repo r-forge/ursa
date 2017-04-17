@@ -2,7 +2,7 @@
   ## 20170116 removed '...' argument
    if (!is.character(fname))
       return(NULL)
-   requireNamespace("rgdal")
+   requireNamespace("rgdal",quietly=.isPackageInUse())
    if (verbose)
       .elapsedTime("rgdal has been loaded")
    opW <- options(warn=0-!verbose) ## to prevent 'GeoTransform values not available'

@@ -1,6 +1,6 @@
 '.crop' <- function(fileout,border=5,verbose=FALSE) {
    frame <- as.integer(round(border))
-   requireNamespace("png")
+   requireNamespace("png",quietly=.isPackageInUse())
    x <- png::readPNG(fileout,native=FALSE,info=TRUE)
    dimx <- dim(x)
    b <- .Cursa("internalMargin",x=as.numeric(x),dim=as.integer(dimx)
@@ -31,7 +31,7 @@
    if (verbose)
       .elapsedTime("crop2:start")
    frame <- as.integer(round(border))
-   requireNamespace("png")
+   requireNamespace("png",quietly=.isPackageInUse())
    x <- png::readPNG(fileout,native=FALSE,info=TRUE)
    dimx <- dim(x)
    b <- .Cursa("internalMargin",x=as.numeric(x),dim=as.integer(dimx)

@@ -17,7 +17,7 @@
   ## b <- sf::st_read("gde-1-1-15.shp",quiet=TRUE)
   ## b <- sf::st_transform(b,ursa_proj(a))
   # print(fname)
-   requireNamespace("rgdal")
+   requireNamespace("rgdal",quietly=.isPackageInUse())
    if (resetGrid)
       reproject <- FALSE
   # require(methods)
@@ -59,9 +59,10 @@
 }
 '.shp.write' <- function(obj,fname,compress=FALSE,zip=NULL)
 {
-   requireNamespace("methods") ## Error: inherits(obj, "Spatial") is not TRUE
+   requireNamespace("methods",quietly=.isPackageInUse()) 
+  ## Error: inherits(obj, "Spatial") is not TRUE
   # require("methods") 
-   requireNamespace("rgdal")
+   requireNamespace("rgdal",quietly=.isPackageInUse())
   # suppressMessages(require(rgdal)) ## should be already loaded
    if (!is.null(zip))
       compress <- zip
@@ -143,7 +144,7 @@
   ## b <- sf::st_read("gde-1-1-15.shp",quiet=TRUE)
   ## b <- sf::st_transform(b,ursa_proj(a))
   # print(fname)
-   if (!requireNamespace("sf"))
+   if (!requireNamespace("sf",quietly=.isPackageInUse()))
       return(NULL)
    if (!file.exists(fname)) {
       aname <- paste0(fname,".zip")

@@ -5,10 +5,10 @@
 # 'as.Raster.ursaBrick' <- function(obj) .as.Raster(obj)
 '.as.Raster' <- function(obj) {
   # suppressMessages({
-      requireNamespace("methods")
-     # requireNamespace("rgdal")
+      requireNamespace("methods",quietly=.isPackageInUse())
+     # requireNamespace("rgdal",quietly=.isPackageInUse())
      # require("raster") ## FAILED if 'requireNamespace'
-      requireNamespace("raster")
+      requireNamespace("raster",quietly=.isPackageInUse())
   # })
    '.addColorTable<-' <- function(r,value) {
       if (!length(value))

@@ -33,6 +33,7 @@
       return(invisible(lastCT))
    }
    isRGB <- nband(obj) %in% c(2,3,4) & all(band_nNA(obj)>=0) # '==0' is NA used for RGB?
+  # print(c(isRGB=isRGB))
    if (isRGB) {
       if ((is.numeric(alpha))&&(alpha<1)&&(nband(obj) %in% c(1,3))) {
          obj <- c(obj,ursa_new(round(alpha*255),bandname=paste("Band",nband(obj)+1)))
@@ -61,7 +62,6 @@
    scale <- getOption("ursaPngScale")
    e <- band_nNA(obj)
    isRGB <- nband(obj) %in% c(2,3,4) & all(band_nNA(obj)>=0) # '==0' is NA used for RGB?
-  # print(c(isRGB=isRGB))
    toResample <- floor(1/scale)>1 & !isRGB
    if (verbose)
       str(list(isRGB=isRGB,toResample=toResample,isColorTable=isCT))

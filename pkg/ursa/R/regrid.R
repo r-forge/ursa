@@ -267,11 +267,15 @@
          g$maxy <- maxy
          minx <- miny <- maxx <- maxy <- NA
       }
+      tolx <- .Machine$double.eps*max(abs(c(g$minx,g$maxx)))
+      toly <- .Machine$double.eps*max(abs(c(g$miny,g$maxy)))
       c0 <- with(g,(maxx-minx)/resx)
       r0 <- with(g,(maxy-miny)/resy)
-      if ((!.is.integer(r0,tolerance))||(!.is.integer(c0,tolerance))) {
-         if (verbose)
+     # r0 <- with(g,((maxy-meany)-(miny-meany))/resy)
+      if ((!.is.integer(r0,toly))||(!.is.integer(c0,tolx))) {
+         if (verbose) {
             message("#1. 'bbox' is changed to integerity of matrix dimension")
+         }
          g$minx <- floor(g$minx/g$resx)*g$resx
          g$maxx <- ceiling(g$maxx/g$resx)*g$resx
          g$miny <- floor(g$miny/g$resy)*g$resy
@@ -283,9 +287,10 @@
          g$columns <- as.integer(round(c0))
          g$rows <- as.integer(round(r0))
       }
-      if ((!.is.integer(g$columns,tolerance))||(!.is.integer(g$rows,tolerance)))
+      if ((!.is.integer(g$columns,tolx))||(!.is.integer(g$rows,toly))) {
          stop(paste("#1. Unable to calculate integer dim size."
                    ,"Try to change 'tolerance'",paste0("(",tolerance,")")))
+      }
       g$columns <- as.integer(round(g$columns))
       g$rows <- as.integer(round(g$rows))
    }
@@ -324,7 +329,9 @@
    {
       c0 <- with(g,(maxx-minx)/resx)
       r0 <- with(g,(maxy-miny)/resy)
-      if ((!.is.integer(r0,tolerance))||(!.is.integer(c0,tolerance))) {
+      tolx <- .Machine$double.eps*max(abs(c(g$minx,g$maxx)))
+      toly <- .Machine$double.eps*max(abs(c(g$miny,g$maxy)))
+      if ((!.is.integer(r0,toly))||(!.is.integer(c0,tolx))) {
          if (verbose)
             message("#2. 'bbox' is changed to integerity of matrix dimension")
          g$minx <- floor(g$minx/g$resx)*g$resx
@@ -338,7 +345,8 @@
          g$columns <- as.integer(round(c0))
          g$rows <- as.integer(round(r0))
       }
-      if ((!.is.integer(g$columns,tolerance))||(!.is.integer(g$rows,tolerance))) {
+      if ((!.is.integer(g$columns,tolx))||(!.is.integer(g$rows,toly))) {
+         print(g)
          stop(paste("#2. Unable to calculate integer dim size."
                    ,"Try to change 'tolerance'",paste0("(",tolerance,")")))
       }
@@ -359,9 +367,14 @@
       g$columns <- with(g,(maxx-minx)/resx)
       g$rows <- with(g,(maxy-miny)/resy)
      # print("STEP3")
-      if ((!.is.integer(g$columns,tolerance))||(!.is.integer(g$rows,tolerance)))
+      tolx <- .Machine$double.eps*max(abs(c(g$minx,g$maxx)))
+      toly <- .Machine$double.eps*max(abs(c(g$miny,g$maxy)))
+      if ((!.is.integer(g$columns,tolx))||(!.is.integer(g$rows,toly))) {
+         if (verbose)
+            print(g,digits=15)
          stop(paste("#3. Unable to calculate integer dim size."
                    ,"Try to change 'tolerance'",paste0("(",tolerance,")")))
+      }
       g$columns <- as.integer(round(g$columns))
       g$rows <- as.integer(round(g$rows))
    }

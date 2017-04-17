@@ -508,8 +508,9 @@
       lverbose <- FALSE
       if (lverbose)
          .elapsedTime("wkt -> proj4 start")
+     # (!("package:rgdal" %in% search()))) { 
       if ((nchar(Sys.which("gdalsrsinfo")))&&
-          (!("package:rgdal" %in% search()))) {
+          (!("rgdal" %in% loadedNamespaces()))) {
          tmp <- .maketmp()
          wktin <- paste0(tmp,".prj~")
          writeLines(wkt,wktin)

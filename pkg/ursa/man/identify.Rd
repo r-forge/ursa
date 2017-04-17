@@ -32,15 +32,15 @@ Object of class \code{ursaRaster}.
       \tabular{llll}{
           \emph{Matched pattern}\code{   } \tab \emph{Function}\code{   } \tab \emph{Used name}
           
-          \cr\code{ind} \tab \code{*.*} \tab \code{ind} \tab
+          \cr\code{ind} \tab \code{*_*} \tab \code{ind} \tab
           Index (positive \code{integer}) in internal value storage.
-          \cr\code{^c} \tab \code{*.cr} \tab \code{col} \tab
+          \cr\code{^c} \tab \code{*_cr} \tab \code{col} \tab
           Integer of non-zero length. Index of column/sample Length of column and row indices should be the same for creating set of two-dimension coordinates.\cr
-          \cr\code{^r} \tab \code{*.cr} \tab \code{row} \tab
+          \cr\code{^r} \tab \code{*_cr} \tab \code{row} \tab
           Integer of non-zero length. Index of row/line. Length of column and row indices should be the same for creating set of two-dimension coordinates.
-          \cr\code{^x} \tab \code{*.xy} \tab \code{x} \tab
+          \cr\code{^x} \tab \code{*_xy} \tab \code{x} \tab
           Numeric of non-zero length. X-axis coordinate in grid of \code{obj}. The length of X-axis and Y-axis coordinates should be the same for creating set of two-dimension coordinates.
-          \cr\code{^y} \tab \code{*.xy} \tab \code{y} \tab
+          \cr\code{^y} \tab \code{*_xy} \tab \code{y} \tab
           Numeric of non-zero length. Y-axis coordinate in grid of \code{obj}. The length of X-axis and Y-axis coordinates should be the same for creating set of two-dimension coordinates.
           \cr\code{^lon} \tab \code{value_ll} \tab \code{lon}  \tab
           Longitude. The length of longitudes and latitudes should be the same for creating set of two-dimension coordinates.

@@ -7,8 +7,8 @@
                        # ,keepProj=NA
                         ,feature=c("overlay","group","separate"),ID=FALSE
                         ,paint=5,verbose=FALSE,...) {
-   requireNamespace("foreign") ## 'foreign' is in R-core
-   str(dsn)
+   requireNamespace("foreign",quietly=.isPackageInUse()) ## 'foreign' is in R-core
+  # str(dsn)
    fname <- dsn
    if ((FALSE)&&(verbose))
       str(list(fname=fname,internalCall=internalCall,resetProj=resetProj
@@ -357,7 +357,7 @@
          if ((xy[2,1]>0)&(ll[2,1])<0)
             ll[2,1] <- 360-ll[2,1]
         # r <- c(min(ll[,1]),min(ll[,2]),max(ll[,1]),max(ll[,2]))
-         requireNamespace("ggmap")
+         requireNamespace("ggmap",quietly=.isPackageInUse())
          cxy <- colMeans(xy)
          center <- .project(cxy,proj4,inv=TRUE)
         # print(center)

@@ -1,4 +1,5 @@
 invisible({
    plutil::mysource(ursa)
-   prompt(filename="zzz.new.Rd",name=c(".regrid"),forceFunction=TRUE)
+   session_grid(NULL)
+   prompt(filename="zzz.new.Rd",name=c("get_earthdata"),forceFunction=TRUE)
 })

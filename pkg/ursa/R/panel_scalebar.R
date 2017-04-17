@@ -19,19 +19,25 @@
                ,default=NA_real_)
    cex <- .getPrm(arglist,name="cex",kwd=kwd,default=0.75)
    bg <- sum(c(col2rgb(getOption("ursaPngBackground")))*c(0.30,0.59,0.11))
-   defcol <- ifelse(bg<128,"#FFFFFF3F","#0000003F") 
+   defcol <- ifelse(bg<128,"#FFFFFF2F","#0000002F") 
    col <- .getPrm(arglist,name="col",kwd=kwd,default=defcol)
    bg <- .getPrm(arglist,name="bg",kwd=kwd,default="transparent")
    fill <- .getPrm(arglist,name="fill",kwd=kwd,default="transparent") # "#FFFFFF3F"
    language <- .getPrm(arglist,name="lan(g(uage)*)*",kwd=kwd,default=NA_character_)
    verbose <- .getPrm(arglist,name="verb(ose)*",kwd=kwd,default=FALSE)
-   for (pos in position)
-      .panel_scalebar(position=pos,w=w,cex=cex,col=col,bg=bg,fill=fill
+   if (is.character(position)) {
+      for (pos in position)
+         .panel_scalebar(position=pos,w=w,cex=cex,col=col,bg=bg,fill=fill
+                        ,language=language,verbose=verbose)
+   }
+   else {
+      .panel_scalebar(position=position,w=w,cex=cex,col=col,bg=bg,fill=fill
                      ,language=language,verbose=verbose)
+   }
    invisible(NULL)
 }
 '.panel_scalebar' <- function(position="bottomleft",w=NA,cex=0.85
-                             ,col="#0000003F",bg="transparent",fill="#FFFFFF3F"
+                             ,col="#0000002F",bg="transparent",fill="#FFFFFF2F"
                              ,language=NA,verbose=FALSE) {
    if (.skipPlot(TRUE))
       return(invisible(NULL))

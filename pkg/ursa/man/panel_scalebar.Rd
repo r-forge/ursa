@@ -13,7 +13,7 @@ panel_scalebar(...)
 
 # non-public
 .panel_scalebar(position = "bottomleft", w = NA, cex = 0.85,
-                col = "#0000003F", bg = "transparent", fill = "#FFFFFF3F",
+                col = "#0000002F", bg = "transparent", fill = "#FFFFFF2F",
                 language=NA, verbose = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -39,8 +39,8 @@ panel_scalebar(...)
 %%~          \item{\code{y}}{Numeric betweein 0 and 1. Vertical coordinate of scale bar locations. It has a sence in the case of empty \code{""} value of the \code{position} argument. Default is \code{0}.}
    \item{w}{Positive numeric. The length \emph{in km} of scalebar's right segment. If \code{w=NA} then length of segment is defined automatically. Default is \code{NA}.}
    \item{cex}{Positive numeric. The relative font size for scalebar's labels. Default is \code{0.85}.}
-   \item{col}{Character. Primary fill color for scalebar box and scalebar labels. Default is \code{"#0000003F"}.}
-   \item{fill}{Character. Secondary fill color for scalebar box. Default is \verb{"#FFFFFF3F"}.}
+   \item{col}{Character. Primary fill color for scalebar box and scalebar labels. Default is \code{"#0000002F"}.}
+   \item{fill}{Character. Secondary fill color for scalebar box. Default is \verb{"#FFFFFF2F"}.}
    \item{bg}{Character. Background color for the area of scalebar box and labels. Default is \code{"transparent"}.}
    \item{language}{Character. Language for longitude and latitude captions. If \code{"ru"} then captions are in Russian else in English. Default is \code{NA}.}
    \item{verbose}{Logical. Value \code{TRUE} may provide some additional information on console. Default is \code{FALSE}.}

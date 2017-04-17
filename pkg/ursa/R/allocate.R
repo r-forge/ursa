@@ -8,7 +8,7 @@
       vec <- .shp.read(vec)
    }
    if (inherits(vec,c("SpatialPointsDataFrame","SpatialPixelsDataFrame"))) {
-      requireNamespace("sp")
+      requireNamespace("sp",quietly=.isPackageInUse())
       z <- vec@data
       lname <- colnames(z)
       proj4 <- sp::proj4string(vec)
