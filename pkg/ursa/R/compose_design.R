@@ -188,7 +188,7 @@
    }
    k <- m+1
    if (length(legend)==1) {
-      if ((isList)&&(forcedLegend)) { ## 20160112 added &&(forcedLegend)
+      if ((isList)&&(forcedLegend)&&((panelc>1)||(panelr>1))) { ## 20160112 added &&(forcedLegend)
          nl <- length(unique(fld[fld>0]))
         # print(c(panelc=panelc,panelr=panelr))
          oldL <- legend
@@ -203,6 +203,9 @@
                step4 <- TRUE
          }
          legend <- vector("list",nl)
+         if ((panelc==1)&&(panelr==1)) { ## single panel
+            ;
+         }
          if (panelc==1) { ## 1-column
             if (is.na(oldL))
                oldL <- "right"

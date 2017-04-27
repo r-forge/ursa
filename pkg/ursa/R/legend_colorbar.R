@@ -344,8 +344,21 @@
    scol <- paste0(tcol,"7F")
    if (length(z)>32767)
       useRaster <- FALSE
+   ocol <- substr(col,8,9)
+  # print(all(nchar(ocol)==2))
+  # print(any(as.integer(paste0("0x",ocol))))
+   opacity <- ((all(nchar(ocol)==2))&&((any(as.integer(paste0("0x",ocol))<255))))
    if (side %in% c(1,3))
    {
+      if (opacity) {
+         colBW <- colorRampPalette(c("black","white"))(16)
+         if (side==3)
+            colBW <- rev(colBW)
+         nu <- length(colBW)
+         zu <- matrix(rep(seq_along(colBW),times=length(z0)),nrow=nu)
+         image(x=z0,y=seq(0,1,length=nu),t(zu),axes=FALSE,col=colBW
+              ,xlab="",ylab="",useRaster=!useRaster,add=TRUE)
+      }
       image(x=z0,y=c(0,1),z=matrix(z,ncol=1),axes=FALSE,col=col
            ,xlab="",ylab="",useRaster=useRaster,add=TRUE)
       if (nchar(shadow)) {
@@ -363,6 +376,15 @@
    }
    else if (side %in% c(2,4))
    {
+      if (opacity) {
+         colBW <- colorRampPalette(c("black","white"))(16)
+         if (side==2)
+            colBW <- rev(colBW)
+         nu <- length(colBW)
+         zu <- matrix(rep(seq_along(colBW),each=length(z0)),ncol=nu)
+         image(y=z0,x=seq(0,1,length=nu),t(zu),axes=FALSE,col=colBW
+              ,xlab="",ylab="",useRaster=!useRaster,add=TRUE)
+      }
       image(y=z0,x=c(0,1),z=matrix(z,nrow=1),axes=FALSE,col=col
            ,xlab="",ylab="",useRaster=useRaster,add=TRUE)
       if (nchar(shadow)) {

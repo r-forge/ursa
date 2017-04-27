@@ -109,6 +109,8 @@
                          ,product=product,time=tile[,"time"]
                          ,verbose=verbose)
    for (i in seq(nrow(tile))) {
+      if (is.null(a[[i]]))
+         next
       img[tind[i,"c"]*tsize+seq(tsize)
          ,tind[i,"r"]*tsize+seq(tsize),seq(dim(a[[i]])[3])] <- a[[i]]
    }
@@ -139,9 +141,21 @@
   # dst <- paste0("tmp-",z,"-",y,"-",x,ext)
   # dst <- sapply(seq_along(src),function(x) tempfile())
    dst <- sapply(seq_along(src),function(x) tempfile())
-   download.file(src,dst,mode="wb",method="libcurl",quiet=!verbose)
+   method <- getOption("download.file.method")
+   isBundle <-  ((!is.null(method))&&(method=="libcurl")&&(capabilities("libcurl")))
+   if (isBundle) {
+      download.file(src,dst,mode="wb",method="libcurl",quiet=!verbose)
+   }
    a <- vector("list",length(src))
    for (i in seq_along(a)) {
+      if (!isBundle) {
+         res <- try(download.file(src[i],dst[i],mode="wb",quiet=!verbose))
+         if (inherits(res,"try-error")) {
+            print(res)
+            a[[i]] <- NULL
+            next
+         }
+      }
       if (isPNG) {
          a[[i]] <- aperm(png::readPNG(dst[i]),c(2,1,3))
       }

@@ -119,14 +119,15 @@
          cmd <- paste(im,fileout,ifelse(n>=255,"-colors 255","")
                      ,paste0("png8:",fileout))
       } 
-      else if ((nchar(im <- Sys.which("convert"))>0)&& ##
-                     (dirname(dirname(im))!=Sys.getenv("WINDIR"))) {
-         cmd <- paste(im,fileout,ifelse(n>=255,"-colors 255","")
-                     ,paste0("png8:",fileout))
-      }
       else if ((nchar(imdisplay <- Sys.which("imdisplay"))>0)) {
          cmd <- paste(file.path(dirname(imdisplay),"convert")
                      ,fileout,ifelse(n>=255,"-colors 255","")
+                     ,paste0("png8:",fileout))
+      }
+      else if ((nchar(im <- Sys.which("convert"))>0)&& ##
+                     (toupper(normalizePath(dirname(dirname(im))))!=
+                      toupper(normalizePath(Sys.getenv("WINDIR"))))) {
+         cmd <- paste(im,fileout,ifelse(n>=255,"-colors 255","")
                      ,paste0("png8:",fileout))
       }
       else ## else if... (other ways to force to bpp=8

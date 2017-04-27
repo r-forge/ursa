@@ -1,9 +1,6 @@
 #include <R.h>
 #include <Rmath.h>
-
-void resampl4(double *obj1,double *bg,int *dim1,int *dim2,double *lim1
-             ,double *lim2,double *C,double *A,int *V,double *obj2);
-
+#include "ursa.h"
 
 int progressBar(int cur,int max,char *text)
 {
@@ -3593,7 +3590,8 @@ void dist2dist(double *x1,double *y1,double *x2,double *y2
    }
    return;
 }
-void isNear(double *x1,double *x2,int *len1,int *len2,int *res) {
+void isNear(double *x1,double *x2,int *len1,int *len2,int *res)
+{
    int n1=*len1;
    int n2=*len2;
    int i1,i2,small;

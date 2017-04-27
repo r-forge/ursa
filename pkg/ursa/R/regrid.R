@@ -233,9 +233,9 @@
       y0 <- (g$miny+g$maxy)/2
       dx <- (expand[1])*(g$maxx-g$minx)/2
       dy <- (expand[1])*(g$maxy-g$miny)/2
-      print(with(g,c(minx,miny,maxx,maxy)))
+     # print(with(g,c(minx,miny,maxx,maxy)))
       bbox <- c(x0-dx,y0-dy,x0+dx,y0+dy)
-      print(bbox)
+     # print(bbox)
    }
    if ((is.na(res))&&(!is.na(resx))&&(!is.na(resy)))
       res <- c(resx,resy)

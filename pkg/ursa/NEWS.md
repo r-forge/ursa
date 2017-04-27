@@ -1,10 +1,18 @@
-# version 3.7-3
+# version 3.7-5
+
+* Adaptation for R-exts' "5.4 Registering native routines" for R-3.4.0.
+
+# version 3.7-4
 
 * Non-ascii for geocoding in 'glance'
 
 * New function 'get_earthdata' for retreiving MODIS mosaics.
 
 * Added package 'jpeg' in the category 'Imported'.
+
+# version 3.7-3
+
+* Non-ascii for geocoding in 'glance'
 
 # version 3.7-2
 
@@ -17,7 +25,7 @@
 
 * 'inst/glance' contains mock-up to create vector/raster file associantion with glance()
 
-* 'glance' can work without package 'sf'; however "package:methods" shoulb be in "search()"
+* 'glance' can work without package 'sf'; however "package:methods" should be in "search()"
 
 * Rename 'panel_gridline' to 'panel_graticule'.
 
