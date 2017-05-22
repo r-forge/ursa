@@ -13,11 +13,11 @@ glance(...)
 
 # non-public
 .glance(dsn, layer = ".*", grid = NULL, attr = ".+", size = NA, expand = 1.05,
-        border = 15, lat0 = NA, lon0 = NA, resetProj = FALSE, style = "auto",
+        border = 0, lat0 = NA, lon0 = NA, resetProj = FALSE, style = "auto",
         feature = c("auto", "attribute", "geometry"), alpha = NA,
         basemap.order = c("after", "before"), basemap.alpha = NA,
-        engine = c("native", "sp", "sf"), geocode = c("google", "nominatim"),
-        verbose = FALSE, ...)
+        engine = c("native", "sp", "sf"), geocode = c("nominatim", "google"),
+        zoom = NA, rasterize = FALSE,verbose = FALSE, ...)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -42,7 +42,7 @@ Integer of length 1 or 2 or character of length 1. Size of plotting panel in pix
 Numeric. Multiplier for plotting panel zoom in relation to extent of plotting geometry. Default is \code{1.05}.
 }
   \item{border}{
-Integer. Value in pixels of fixed margins around plotting geometry. Default is \code{15L}.
+Integer. Value in pixels of fixed margins around plotting geometry. Default is \code{0L}.
 }
   \item{lat0}{
 Numeric. Parallel os zero distortion. If \code{NA}, then parallel os zero distortion is determed from object geometry. Actual for \code{"+proj=stere"} projections. Default is \code{NA}.
@@ -88,7 +88,13 @@ Character. The opacity of plotted object. Default is \code{NA}; 0.75 for \code{b
 Character keyword. Forcing to vector files processing by functions from package \pkg{sp} (\code{engine="sp"}) or package \pkg{sf} (\code{engine="sf"}, if \pkg{sf} is installed). Default is \code{"native"}; if \code{dsn} is \code{Spatial} object or if \pkg{sf} is not installed, then \code{"sp"} is used.
 }
    \item{geocode}{
-Character. Keyword for geocode service. Valid values are \code{"google"}, \code{"nominatim"}. If \code{dsn} is character and file \code{dsn} not found, then trying to interpret \code{dsn} as a request to geocode service. The output is only basemap of web cartogrpaphy. Default is \code{"google"}. Is \code{style} is not specified, then "Google Static Map" is used for \code{geocode="google"}, and "OpenStreetMap static map images" for \code{geocode="nominatim"}.
+Character. Keyword for geocode service. Valid values are \code{"google"}, \code{"nominatim"}. If \code{dsn} is character and file \code{dsn} not found, then trying to interpret \code{dsn} as a request to geocode service. The output is only basemap of web cartogrpaphy. Default is \code{"nominatim"}. Is \code{style} is not specified, then "Google Static Map" is used for \code{geocode="google"}, and "OpenStreetMap static map images" for \code{geocode="nominatim"}.
+}
+   \item{zoom}{
+Positive integer or character. Zooming if web-cartography is applied for basemap. If integer, then value of zoom for tile services and staticmap. If character, then \code{"0"} means zoom by default (defined internally), \code{"+1"} means increment on 1 of default zoom, \code{"+2"} means zoom increment on 2, \code{"-1"} means zoom decrement on 1, \code{"-2"} means zoom decrement on 2, \emph{etc}. Default is \code{NA}; zoom is defined internally.
+}
+   \item{rasterize}{
+Logical. If \code{TRUE} and GDAL utilities are in the system search path, then overlay for panels is formed via rastetization of vector file. GDAL utility "gdal_rasterize" is used. Note, that GDAL (system level) is optional for this package. Default is \code{FALSE}.
 }
   \item{verbose}{
 Logical. Logical. Value \code{TRUE} may provide some additional information on console. Default is \code{FALSE}.

@@ -1,4 +1,4 @@
-'.rasterize' <- function(dsn,grid,attr=".+",len=640,res=NA,nodata=-9999
+'.rasterizeGDAL' <- function(dsn,grid,attr=".+",len=640,res=NA,nodata=-9999
                         ,expand=1.05,border=0,lat0=NA,lon0=NA,internalCall=FALSE
                         ,gdalopt="",ogropt="",where=""
                         ,strings=FALSE,resetProj=FALSE
@@ -522,7 +522,7 @@
                            ,"-tr",resx,resy
                            ,"-te",minx,miny,maxx,maxy
                            ,"-a_nodata",nodata2,"-init",nodata2
-                           ,"-of ENVI -ot Int32"
+                           ,"-of ENVI -ot","Int32"
                            ,tname,rname))
       if (verbose)
          message(cmd)
@@ -654,7 +654,7 @@
    ind <- .grep("^proj",names(arg1))
    isGoogle <- length(ind)>0 && arg1[[ind]]=="google"
   # arg1$verbose <- !FALSE
-   b <- do.call(".rasterize",arg1)
+   b <- do.call(".rasterizeGDAL",arg1)
    .elapsedTime("rasterization done")
    if (!TRUE)
       b <- b[c(length(b)-1,length(b))]

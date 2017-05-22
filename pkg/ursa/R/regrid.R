@@ -51,7 +51,8 @@
       cover <- 0.5-1e-3
    g1 <- x$grid
   # isCT <- x$category # .is.category(x)
-   isCT <- length(x$colortable)>0
+   ct <- x$colortable
+   isCT <- length(ct)>0
    clValue <- class(x$value)
    smValue <- storage.mode(x$value)
    x <- .extract(x)
@@ -99,8 +100,8 @@
    session_grid(g2)
   # isCT <- .is.colortable(x$colortable)
    y <- as.ursa(NA,bandname=bandname(x),nodata=nodata) ## ursa_new
-   if (isCT)
-      y$colortable <- x$colortable
+   ##~ if (isCT)
+      ##~ y$colortable <- x$colortable
    y$value <- .Cursa("resampl4",x=x$value,nodata=as.numeric(nodata)
                 ,dim1=as.integer(dimx),dim2=as.integer(dimy)
                 ,lim1=as.numeric(with(g1,c(minx,miny,maxx,maxy)))
@@ -124,23 +125,27 @@
    }
    if (verbose>2)
       .elapsedTime(paste0("finish:nodata-restore:",fun))
+   if (isCT)
+      y <- reclass(discolor(y),ct)
    if (verbose>1)
       print(summary(y$value))
    if (FALSE) {
-      if ((resample==0)&&(smValue=="integer")) {
-         if (TRUE) ## quick
-            storage.mode(y$value) <- "integer"
+      if (FALSE) {
+         if ((resample==0)&&(smValue=="integer")) {
+            if (TRUE) ## quick
+               storage.mode(y$value) <- "integer"
+            else
+               y$value <- as.integer(round(y$value))
+         }
+         if ((resample==0)&&(isCT)) {
+            class(y$value) <- "ursaCategory"
+         }
          else
-            y$value <- as.integer(round(y$value))
-      }
-      if ((resample==0)&&(isCT)) {
-         class(y$value) <- "ursaCategory"
+            class(y$value) <- "ursaNumeric"
       }
       else
          class(y$value) <- "ursaNumeric"
    }
-   else
-      class(y$value) <- "ursaNumeric"
    dim(y$value) <- with(g2,c(columns*rows,nb))
   # class(y$value) <- clValue
   # if ((.is.colortable(x$colortable))&&(length(unique(y$value))==length(x$colortable)))
@@ -154,7 +159,7 @@
                              ,bbox=NA,expand=NA
                              ,minx=NA,miny=NA,maxx=NA,maxy=NA,cut=NA
                              ,proj4=NA,border=0,zero=c("keep","node","center")
-                             ,raster=FALSE,tolerance=1e-10
+                             ,raster=FALSE,tolerance=NA #1e-10
                              ,verbose=FALSE,...)
 {
   # print("regrid")
@@ -214,6 +219,8 @@
          if (!toDefine)
             toDefine <- TRUE
       }
+      if ((!toDefine)&&(!is.na(g$columns))&&(!is.na(g$columns)))
+         toDefine <- TRUE
       if (toDefine) {
          g$resx <- with(g,(maxx-minx)/columns)
          g$resy <- with(g,(maxy-miny)/rows)
@@ -258,6 +265,14 @@
    }
    else
       step1 <- FALSE
+   if (is.na(tolerance)) {
+      tolx <- .Machine$double.eps*max(abs(c(g$minx,g$maxx)))*10
+      toly <- .Machine$double.eps*max(abs(c(g$miny,g$maxy)))*10
+      tolerance <- max(tolx,toly)
+   }
+   else {
+      tolx <- toly <- tolerance
+   }
    if (step1)
    {
       if (all(!is.na(c(minx,miny,maxx,maxy)))) {
@@ -267,8 +282,6 @@
          g$maxy <- maxy
          minx <- miny <- maxx <- maxy <- NA
       }
-      tolx <- .Machine$double.eps*max(abs(c(g$minx,g$maxx)))
-      toly <- .Machine$double.eps*max(abs(c(g$miny,g$maxy)))
       c0 <- with(g,(maxx-minx)/resx)
       r0 <- with(g,(maxy-miny)/resy)
      # r0 <- with(g,((maxy-meany)-(miny-meany))/resy)
@@ -289,7 +302,8 @@
       }
       if ((!.is.integer(g$columns,tolx))||(!.is.integer(g$rows,toly))) {
          stop(paste("#1. Unable to calculate integer dim size."
-                   ,"Try to change 'tolerance'",paste0("(",tolerance,")")))
+                   ,"Try to change 'tolerance'"
+                   ,paste0("(",format(tolerance,digits=1),")")))
       }
       g$columns <- as.integer(round(g$columns))
       g$rows <- as.integer(round(g$rows))
@@ -348,7 +362,8 @@
       if ((!.is.integer(g$columns,tolx))||(!.is.integer(g$rows,toly))) {
          print(g)
          stop(paste("#2. Unable to calculate integer dim size."
-                   ,"Try to change 'tolerance'",paste0("(",tolerance,")")))
+                   ,"Try to change 'tolerance'"
+                   ,paste0("(",format(tolerance,digits=1),")")))
       }
       g$columns <- as.integer(round(g$columns))
       g$rows <- as.integer(round(g$rows))
@@ -373,7 +388,8 @@
          if (verbose)
             print(g,digits=15)
          stop(paste("#3. Unable to calculate integer dim size."
-                   ,"Try to change 'tolerance'",paste0("(",tolerance,")")))
+                   ,"Try to change 'tolerance'"
+                   ,paste0("(",format(tolerance,digits=1),")")))
       }
       g$columns <- as.integer(round(g$columns))
       g$rows <- as.integer(round(g$rows))

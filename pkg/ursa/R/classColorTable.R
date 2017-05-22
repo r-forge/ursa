@@ -11,8 +11,12 @@
       class(x) <- "ursaColorTable"
       return(x)
    }
-   else if (!is.ursa(x))
-      return(NULL)
+   else if (!is.ursa(x)) {
+      ct <- x$colortable
+      if (!inherits(ct,"ursaColorTable")) {
+         return(NULL)
+      }
+   }
    else 
       ct <- x$colortable
    if (!length(ct))

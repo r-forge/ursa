@@ -179,6 +179,7 @@
       class(result$value) <- "ursaCategory"
    }
    else {
+      ursa_colortable(result) <- NULL
       class(result$value) <- "ursaNumeric"
    }
    result

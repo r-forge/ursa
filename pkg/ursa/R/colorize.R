@@ -11,7 +11,7 @@
                           ,minvalue=NA,maxvalue=NA,byvalue=NA,ltail=NA,rtail=NA
                           ,tail=NA,ncolor=NA,nbreak=NA,interval=0L,ramp=TRUE
                           ,byte=FALSE,lazyload=FALSE,reset=FALSE
-                          ,origin="1970-01-01",format="",alpha="FF"
+                          ,origin="1970-01-01",format="",alpha=""
                           ,colortable=NULL
                           ,verbose=FALSE,...)
 {
@@ -958,8 +958,9 @@
                }
             }
          }
-         else if (is.character(pal))
-            col <- colorRampPalette(unlist(strsplit(pal,split="\\s+")))(n)
+         else if (is.character(pal)) {
+            col <- colorRampPalette(unlist(strsplit(pal,split="\\s+")),alpha=TRUE)(n)
+         }
          else
             stop("Unable interpret 'pal' argument")
       }
@@ -975,7 +976,7 @@
    obj
 }
 '.as.colortable' <- function(x,value=NULL,name=NULL,blank="",col=NULL
-                            ,alpha="FF",colored=FALSE)
+                            ,alpha="",colored=FALSE)
 {
   # str(list(value=value,name=name,col=col,colored=colored))
    if (!is.ursa(x))
@@ -997,9 +998,13 @@
       val <- col
    else if (colored)
       val <- grDevices::rgb(runif(n),runif(n),runif(n))
+   val <- t(grDevices::col2rgb(val,alpha=TRUE))
    if (any(!is.na(val)))
-      val <- grDevices::rgb(t(grDevices::col2rgb(val)),max=255)
-   val <- paste0(val,alpha)
+      val <- grDevices::rgb(val[,1],val[,2],val[,3],val[,4],max=255)
+   
+   if (nchar(alpha)==2) ## if (toupper(alpha)!="")
+      val <- paste0(substr(val,1,7),toupper(alpha))
+  # val <- paste0(val,alpha)
    names(val) <- cname
    class(val) <- "ursaColorTable"
    x$colortable <- val

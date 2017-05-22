@@ -40,6 +40,9 @@
       }
       with(ursa_grid(obj),rasterImage(as.raster(obj),minx,miny,maxx,maxy
                                       ,interpolate=interpolate))
+      panel_annotation(attr(obj,"credits")
+                      ,pos="bottomright",cex=0.7,font="Arial Narrow"
+                      ,fg=sprintf("#000000%s","4F"))
       return(NULL)
    }
   # .panel_raster(colorize(obj,...),useRaster=useRaster
@@ -63,10 +66,11 @@
    e <- band_nNA(obj)
    isRGB <- nband(obj) %in% c(2,3,4) & all(band_nNA(obj)>=0) # '==0' is NA used for RGB?
    toResample <- floor(1/scale)>1 & !isRGB
-   if (verbose)
-      str(list(isRGB=isRGB,toResample=toResample,isColorTable=isCT))
    if (is.na(useRaster))
       useRaster <- getOption("ursaPngDevice")!="windows"
+   if (verbose)
+      str(list(isRGB=isRGB,isCT=isCT,toResample=toResample,isColorTable=isCT
+              ,useRasrer=useRaster))
    if (toResample)
    {
      # obj <- contract(obj,size=sc,verbose=TRUE)
@@ -79,9 +83,9 @@
      #    print(as.table(obj))
       obj <- regrid(obj,mul=scale,resample=ifelse(isCT,-1,1)
                    ,verbose=verbose)#,resetGrid=TRUE)
-      if ((TRUE)&&(isCT)) { ## FALSE?
-         obj <- reclass(obj,ct) ## round(obj)?
-      }
+     # if ((TRUE)&&(isCT)) { ## FALSE?
+     #    obj <- reclass(discolor(obj),ct) ## round(obj)?
+     # }
    }
    ##~ if (isRGB) {
       ##~ with(ursa_grid(obj),rasterImage(as.raster(obj),minx,miny,maxx,maxy
@@ -177,6 +181,9 @@
       session_grid(g2)
    col1 <- col2rgb(obj$colortable,alpha=TRUE)/255
    isAlpha <- any(col1[4,]!=1)
+   panel_annotation(attr(obj,"credits")
+                   ,pos="bottomright",cex=0.7,font="Arial Narrow"
+                   ,fg=sprintf("#000000%s",ifelse(isAlpha,alpha,"4F")))
    if (!isAlpha)
       return(invisible(obj$colortable))
    if (is.na(alpha))

@@ -1,5 +1,9 @@
 # version 3.7-5
 
+* Minor fixes for categories after resample
+
+# version 3.7-5
+
 * Adaptation for R-exts' "5.4 Registering native routines" for R-3.4.0.
 
 # version 3.7-4

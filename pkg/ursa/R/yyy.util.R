@@ -286,64 +286,6 @@
    }
    B
 }
-'.gdalwarp' <- function(src,dst=NULL,crs=NULL,resample="near",nodata=NA
-                       ,resetGrid=FALSE,verbose=1L) {
-  # a <- open_envi(src)
-  # ct <- ursa_colortable(a)
-  # close(a)
-   if (is.ursa(src)) {
-      removeSrc <- TRUE
-      .src <- src
-      nodata <- ignorevalue(src)
-      src <- .maketmp(ext=".")
-      write_envi(.src,src)
-   }
-   else {
-      removeSrc <- FALSE
-     # nodata <- NA
-   }
-   inMemory <- is.null(dst)
-   if (inMemory)
-      dst <- .maketmp(ext=".")
-   if (is.null(crs)) {
-      crs <- getOption("ursaSessionGrid")
-   }
-   else
-      crs <- ursa_grid(crs)
-   if (verbose)
-      print(c(inMemory=inMemory,removeSrc=removeSrc,isNullCrs=is.null(crs)))
-   if (is.null(crs))
-      cmd <- paste("gdalwarp -overwrite -of ENVI"
-                  ,ifelse(is.na(nodata),"",paste("-srcnodata",nodata,"-dstnodata",nodata))
-                  ,"-r",resample,src,dst)
-   else
-      cmd <- with(crs,paste("gdalwarp -overwrite -of ENVI"
-                        ,"-t_srs",.dQuote(proj4),"-tr",resx,resy,"-te",minx,miny,maxx,maxy
-                        ,ifelse(is.na(nodata),"",paste("-srcnodata",nodata,"-dstnodata",nodata))
-                        ,"-r",resample,src,dst))
-   if (verbose)
-      message(cmd)
-   if (verbose>1)
-      return(NULL)
-   system(cmd)
-   session_grid(NULL)
-   if (inMemory)
-      ret <- read_envi(dst)
-   else
-      ret <- open_envi(dst)
-   if (!is.na(nodata)) {
-      ignorevalue(ret) <- nodata
-      if (inMemory)
-         ret[ret==nodata] <- NA
-   }
-   if (inMemory)
-      envi_remove(dst)
-   if (removeSrc)
-      envi_remove(src)
-   if (resetGrid)
-      session_grid(ret)
-   ret
-}
 '.isRscript' <- function() .lgrep("^--file=",commandArgs(FALSE))>0
 '.isPackageInUse' <- function() "ursa" %in% loadedNamespaces()
 '.argv0path' <- function() {
