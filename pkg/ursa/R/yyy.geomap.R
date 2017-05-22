@@ -1,178 +1,10 @@
-'.geocode' <- function(loc=NULL,area=c("point","bounding"),type=NULL
-                      ,select=c("top","expand","all")
-                      ,service=c("nominatim","google"),verbose=TRUE) {
-   if (is.null(loc)) {
-      if (!TRUE) {
-         dst <- tempfile()
-         download.file("http://ip-api.com/csv",dst,mode="wt")
-         a <- readLines(dst,warn=FALSE)
-         file.remove(dst)
-         a <- unlist(strsplit(a,split=","))
-         pt <- c(lon=as.numeric(a[9]),lat=as.numeric(a[10]))
-      }
-      else
-         a <- readLines("http://ip-api.com/line")
-      pt <- c(lon=as.numeric(a[9]),lat=as.numeric(a[8]))
-      attr(pt,"type") <- "IP"
-      return(pt)
-   }
-   area <- match.arg(area)
-   service <- match.arg(service)
-   select <- match.arg(select)
-   if (service=="nominatim") {
-       ## curl -H Accept-Language:de 'http://nominatim.openstreetmap.org......."
-      src <- paste0("http://nominatim.openstreetmap.org/search.php?q=",loc
-                  # ,"&polygon_text=1"
-                   ,"&format=xml","&bounded=0","&accept-language=en-US,ru")
-      dst <- tempfile() # "nominatim.xml" # tempfile()
-      download.file(URLencode(URLencode(iconv(src,to="UTF-8")))
-                   ,dst,quiet=!verbose)
-      xmlstring <- scan(dst,character(),quiet=!verbose)
-      if (dirname(dst)==tempdir())
-         file.remove(dst)
-      ind <- grep("geotext",xmlstring)
-      if (length(ind)) {
-         geotext <- xmlstring[ind]
-         print(geotext)
-      }
-      ptype <- .grep("^type=",xmlstring,value=TRUE)
-      ptype <- .gsub(".*\'(.+)\'.*","\\1",ptype)
-      lon <- .grep("lon=",xmlstring,value=TRUE)
-      lon <- as.numeric(.gsub(".*\'(.+)\'.*","\\1",lon))
-      lat <- .grep("lat=",xmlstring,value=TRUE)
-      lat <- as.numeric(.gsub(".*\'(.+)\'.*","\\1",lat))
-      pt <- cbind(lon=lon,lat=lat)
-      rownames(pt) <- ptype
-      ind <- grep("boundingbox",xmlstring)
-      bounding <- xmlstring[ind]#[1]
-      bounding <- .gsub(".*\"(.+)\".*","\\1",bounding)
-      bounding <- lapply(bounding,function(p){
-         as.numeric(unlist(strsplit(p,split=",")))
-      })
-      bounding <- do.call(rbind,bounding)
-      rownames(bounding) <- ptype
-      colnames(bounding) <- c("miny","maxy","minx","maxx")
-      ann <- .grep("display_name=",xmlstring,value=TRUE)
-      ann <- .gsub(".*\"(.+)\".*","\\1",ann)
-      importance <- .grep("importance",xmlstring,value=TRUE)
-      importance <- as.numeric(.gsub(".*\'(.+)\'.*","\\1",importance))
-     # type <- NULL ## debug
-      if (is.character(type)) {
-         typeInd <- which(!is.na(match(ptype,type)))
-         if (length(typeInd)) {
-            bounding <- bounding[typeInd,,drop=FALSE]
-            pt <- pt[typeInd,,drop=FALSE]
-            importance <- importance[typeInd]
-         }
-      }
-      important <- which(importance==max(importance))
-      if (select=="top") {
-         lat <- lat[important]
-         lon <- lon[important]
-         pt <- pt[important,,drop=FALSE]
-         bounding <- bounding[important,,drop=FALSE]
-         ptype <- ptype[important]
-      }
-      if (area=="bounding") {
-         if (FALSE) {
-            print(bounding)
-            da <- data.frame(lon=range(bounding[,c(3,4)])
-                            ,lat=range(bounding[,c(1,2)]))#,z=1:2)
-         }
-         bbox <- c(minx=min(bounding[,3]),miny=min(bounding[,1])
-                  ,maxx=max(bounding[,4]),maxy=max(bounding[,2]))
-         if (select=="top")
-            attr(box,"type") <- type
-         return(bbox)
-      }
-      if (area=="point") {
-         if (nrow(pt)==1) {
-            ptype <- rownames(pt)
-            ptname <- colnames(pt)
-            pt <- c(pt)
-            names(pt) <- ptname
-            attr(pt,"type") <- ptype
-         }
-         return(pt)
-      }
-   }
-   else if (service=="google") {
-      src <- paste0("https://maps.googleapis.com/maps/api/geocode/xml?"
-                   ,"address=",loc)
-      dst <- tempfile() # "google.xml" #tempfile()
-      download.file(URLencode(URLencode(iconv(src,to="UTF-8")))
-                   ,dst,quiet=!verbose)
-      xmlstring <- scan(dst,character(),quiet=!verbose)
-      if (dirname(dst)==tempdir())
-         file.remove(dst) 
-      ilat <- .grep("<lat>",xmlstring)
-      ilon <- .grep("<lng>",xmlstring)
-      glat <- as.numeric(.gsub("<lat>(.+)</lat>","\\1",xmlstring[ilat]))
-      glon <- as.numeric(.gsub("<lng>(.+)</lng>","\\1",xmlstring[ilon]))
-      aname <- .grep("(location|southwest|northeast)",xmlstring[c(ilat,ilon)-1]
-                    ,value=TRUE)
-      aname <- .gsub("(<|>)","",aname)
-      bname <- .grep("<(viewport|bounds)>",xmlstring[c(ilat,ilon)-2]
-                    ,value=TRUE)
-      bname <- .gsub("(<|>)","",bname)
-      iname <- .grep("<(viewport|bounds)>",xmlstring)
-      names(glon) <- names(glat) <- aname
-      if ((!length(glon))||(!length(glat))) {
-        # loc <- RJSONIO::fromJSON("http://ip-api.com/json")
-         return(NULL)
-      }
-      ptype <- .grep("<location_type>",xmlstring,value=TRUE)
-      ptype <- .gsub("<.+>(.+)</.+>","\\1",ptype)
-      pt <- c(lon=unname(glon["location"]),lat=unname(glat["location"]))
-      attr(pt,"type") <- ptype
-      glon <- glon[.grep("location",aname,invert=TRUE)]
-      glat <- glat[.grep("location",aname,invert=TRUE)]
-      lname <- paste0(rep(bname,each=2),".",names(glon))
-      names(glon) <- names(glat) <- lname
-      n <- length(bname)
-      bbox <- cbind(minx=rep(NA,n),miny=rep(NA,n),maxx=rep(NA,n),maxy=rep(NA,n))
-      rownames(bbox) <- bname
-      for (i in seq_along(bname)) {
-         bbox[i,"minx"] <- glon[.grep(paste0(bname[i],"\\.southwest"),lname)]
-         bbox[i,"miny"] <- glat[.grep(paste0(bname[i],"\\.southwest"),lname)]
-         bbox[i,"maxx"] <- glon[.grep(paste0(bname[i],"\\.northeast"),lname)]
-         bbox[i,"maxy"] <- glat[.grep(paste0(bname[i],"\\.northeast"),lname)]
-      }
-      if (verbose) {
-         print(pt)
-         print(bbox)
-      }
-      if (area=="point") {
-         return(pt)
-      }
-      else if (area=="bounding") {
-         if (select %in% "top")
-            return(bbox["viewport",])
-         if (select %in% "expand")
-            return(bbox["bounds",])
-         return(bbox)
-         if (FALSE) {
-            glon <- range(glon)
-            glat <- range(glat)
-            dlon <- abs(diff(glon))
-            dlat <- abs(diff(glat))
-            if ((dlon<0.01)&&(dlat<0.01)) {
-               sc <- abs(1/cos(mean(glat)))
-               mul <- 1 # 3
-               glon <- mean(glon)+mul*abs(diff(glon))*sc*c(-1,1)/2
-               glat <- mean(glat)+mul*abs(diff(glat))*c(-1,1)/2
-            }
-            da <- data.frame(lon=range(glon),lat=range(glat))
-         }
-         return(bbox)
-      }
-   }
-   return(NULL)
-}
-'.geomap' <- function(place=NULL,style="",geocode="",size=NA,zoom="0",verbose=FALSE) {
+'.geomap' <- function(place=NULL,style="",geocode="",size=NA,zoom="0"
+                     ,verbose=FALSE) {
   # a <- .glance(place)
    if (!nchar(style))
       style <- "google static"
+   if (is.na(zoom))
+      zoom <- "0"
    staticMap <- c("openstreetmap","google","sputnik")
    tilePatt <- paste0("(",paste0(unique(c(staticMap,.untile())),collapse="|"),")")
    if (!.lgrep(tilePatt,style))
@@ -223,18 +55,23 @@
    geocodeStatus <- FALSE
    if (!((is.numeric(place))&&(length(place)==4))) {
       place <- try(.geocode(place,service=geocode,area="bounding"
-                           ,select="expand",verbose=verbose))
+                           ,select="top",verbose=verbose))
       if (inherits(place,"try-error")) {
          geocode <- switch(geocode,google="nominatim",nominatim="google")
          place <- try(.geocode(place,service=geocode,area="bounding"
-                              ,select="expand",verbose=verbose))
+                              ,select="top",verbose=verbose))
       }
       if (!inherits(place,"try-error"))
          geocodeStatus <- TRUE
    }
+  # print(place)
+  # q()
    credits <- attr(.untile(),"credits")[art]
   # str(unname(place),digits=8)
-   bbox <- place
+   if (length(place)==2)
+      bbox <- c(place,place)
+   else
+      bbox <- place
   # size <- c(640,640)
    B0 <- 6378137
    B <- B0*pi
@@ -278,6 +115,8 @@
          if (zman==0)
             zman <- zoom
       }
+      if (zman>18)
+         zman <- 18
    }
    if (FALSE) {
       pattZoom <- "(zoom=(\\d+))"
@@ -290,7 +129,13 @@
       if (verbose)
          print(c(zoomAuto=zoom,zoomManual=zman))
       m <- 2^(zoom-zman)
-      g0 <- regrid(g0,mul=1/m,expand=m)
+      if (FALSE)
+         g0 <- regrid(g0,mul=1/m,expand=m)
+      else {
+         bbox <- with(g0,c(minx,miny,maxx,maxy))
+         m2 <- with(g0,sqrt((maxx-minx)*(maxy-miny)))/2
+         g0 <- regrid(g0,mul=1/m,bbox=bbox+c(-1,-1,1,1)*m*m2)
+      }
       zoom <- zman
    }
    if ((TRUE)&&(geocodeStatus)) {
@@ -329,11 +174,20 @@
                        ,"+lat_ts=0.0 +lon_0=0.0"
                        ,"+x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null"
                        ,"+wktext  +no_defs")
-      g1 <- regrid(g0,setbound=c(minx,g0$miny,maxx,g0$maxy),proj=epsg3857)
-      g1 <- regrid(g1,res=2*pi*B0/dz)
-     # g1a <- regrid(g1,res=c(g0$resx,g0$resy))
-      g1 <- regrid(g1,minx=g1$minx-dx0,maxx=g1$maxx-dx0,res=c(g0$resx,g0$resy))
-     # print(g1)
+      if (FALSE) {
+         g2 <- regrid(g0,res=2*pi*B0/dz)
+         xr <- with(g2,seq(minx,maxx,by=resx)[-1]-resx/2)+dx0
+         yr <- rev(with(g2,seq(miny,maxy,by=resy)[-1]-resy/2))
+         g2 <- regrid(g2,res=c(g0$resx,g0$resy),proj4=g0$proj4)
+        # g2 <- regrid(g2,minx=g2$minx-dx0,maxx=g2$maxx-dx0)
+      }
+      else {
+         g1 <- regrid(g0,setbound=c(minx,g0$miny,maxx,g0$maxy),proj=epsg3857)
+         g1 <- regrid(g1,res=2*pi*B0/dz)
+         g1 <- regrid(g1,res=c(g0$resx,g0$resy),proj4=g0$proj4)
+         g1$minx <- g1$minx-dx0
+         g1$maxx <- g1$maxx-dx0
+      }
       sx <- sort(c(c(minx,maxx)
                   ,seq(-B*3,+B*3,by=2*B)))
       sx <- sx[sx>=minx & sx<=maxx]
@@ -450,7 +304,7 @@
             img[,j+seq(col2[i]),] <- png::readPNG(fname)
             file.remove(fname)
          }
-         basemap <- 255*as.ursa(img,aperm=TRUE,flip=TRUE)
+         basemap <- as.integer(255*as.ursa(img,aperm=TRUE,flip=TRUE))
       }
       else {
          center <- round(center,11)
@@ -476,7 +330,8 @@
          }
          fname <- tempfile()
          download.file(src,fname,mode="wb",quiet=!verbose)
-         basemap <- 255*as.ursa(png::readPNG(fname),aperm=TRUE,flip=TRUE)
+         basemap <- as.integer(255L*as.ursa(png::readPNG(fname)
+                                           ,aperm=TRUE,flip=TRUE))
          file.remove(fname)
       }
       mul <- unique(c(ursa_ncol(basemap)/ursa_ncol(g0)
@@ -489,7 +344,8 @@
       basemap <- as.integer(round(sum(basemap*c(0.30,0.59,0.11))))
       basemap <- colorize(basemap,minvalue=0,maxvalue=255,pal=c("black","white"))
    }
-   attr(basemap,"credits") <- unname(attr(.untile(),"credits")[art])
+   if (isTile)
+      attr(basemap,"credits") <- unname(attr(.untile(),"credits")[art])
    session_grid(g0)
    basemap
 }

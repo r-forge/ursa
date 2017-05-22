@@ -15,7 +15,7 @@ regrid(x, ...)
 .regrid(grid = NULL, mul = NA, res = NA, resx = NA, resy = NA, setbound = NA,
         columns = NA, rows = NA, dim = NA, bbox = NA, expand = NA,
         minx = NA, miny = NA, maxx = NA, maxy = NA, cut = NA, proj4 = NA, border = 0,
-        zero = c("keep", "node", "center"), raster = FALSE, tolerance = 1e-10,
+        zero = c("keep", "node", "center"), raster = FALSE, tolerance = NA,
         verbose = FALSE, ...)
 
 }
@@ -98,7 +98,7 @@ Positive \code{integer} of length 2. Dimenstion of raste image in the notation \
 \code{character}. Define central cell position relative to zero coordinates. If value is "keep", then central cell position is without changes. If value is "node", then zero coordinates are on the crossing of cell borders. If value is "center", then zero coordinates are in the center of central cell. \emph{Currently is not implemented. If grid is consistent, then value "keep" is used, else "node"}.
 }
   \item{tolerance}{
-\code{numeric}. Threshold for comparison float point numerics. Required for internal check of grid consistence. Default is \code{1e-11}.
+\code{numeric}. Threshold for comparison float point numerics. Required for internal check of grid consistence. Default is \code{NA}; value \code{.Machine$double.eps} multiplied on maximal value of coordinates is used.
 }
   \item{verbose}{
 Reporting via \code{message} about violation and restoration of coordinate grid regilarity after non-consistence usage of paramaters.
