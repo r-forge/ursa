@@ -1,6 +1,8 @@
-# version 3.7-5
+# version 3.7-6
 
 * Minor fixes for categories after resample
+
+* 'glance()' is recoded
 
 # version 3.7-5
 
