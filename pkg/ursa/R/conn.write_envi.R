@@ -18,7 +18,7 @@
    if ((isRaster)&&(!isCT)) {
       ursa_colortable(obj) <- character(0)
    }
-   if (!FALSE) {# deprecated (20161225 really?)
+   if (!FALSE) {# removed (20161225 restored)
       if (isGrid) {
          g1 <- session_grid()
          session_grid(obj)

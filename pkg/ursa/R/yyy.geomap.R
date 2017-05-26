@@ -1,5 +1,5 @@
 '.geomap' <- function(place=NULL,style="",geocode="",size=NA,zoom="0"
-                     ,verbose=FALSE) {
+                     ,border=0,verbose=FALSE) {
   # a <- .glance(place)
    if (!nchar(style))
       style <- "google static"
@@ -14,9 +14,9 @@
       proj <- "merc"
    }
    isStatic <- .lgrep("static",style)>0
-   if ((!isStatic)&&(":::" %in% as.character(as.list(match.call())[[1]]))) {
-      stop("Operation is prohibited: unable to display credits.")
-   }
+  # if ((!isStatic)&&("ursa" %in% loadedNamespaces())) {
+  #    stop("Operation is prohibited: unable to display attribution.")
+  # }
    len <- 640L
    if (is.na(size[1]))
       size <- c(len,len)
@@ -66,7 +66,7 @@
    }
   # print(place)
   # q()
-   credits <- attr(.untile(),"credits")[art]
+  # copyright <- attr(.untile(),"copyright")[art]
   # str(unname(place),digits=8)
    if (length(place)==2)
       bbox <- c(place,place)
@@ -104,6 +104,8 @@
          break
    }
    zoom <- i
+   if ((is.numeric(zman))&&(zman<=0))
+      zman <- as.character(zman)
    if (is.numeric(zman))
       zman <- round(zman)
    else if (is.character(zman)) { ## "+1" "---"
@@ -152,6 +154,9 @@
       g0 <- regrid(g0,maxy=+B)
    if (g0$miny<(-B))
       g0 <- regrid(g0,miny=-B)
+   if (border>0) {
+      g0 <- regrid(g0,border=border)
+   }
    cxy <- with(g0,c(minx+maxx,miny+maxy)/2)
    center <- c(.project(cxy,proj4,inv=TRUE))
    bound <- .project(with(g0,rbind(c(minx,miny),c(maxx,maxy))),g0$proj4
@@ -228,17 +233,18 @@
       }
       tgr <- expand.grid(z=zoom,y=v,x=h)
       igr <- expand.grid(y=seq_along(v)-1,x=seq_along(h)-1)
-      img <- array(0,dim=c(256*length(v),256*length(h),3))
+      img <- array(0L,dim=c(256*length(v),256*length(h),3))
      # print(tgr)
      # print(igr)
       for (i in seq(nrow(tgr))) {
          img2 <- .untile(z=zoom,x=tgr[i,"x"],y=tgr[i,"y"],server=art
                         ,verbose=verbose)
-         img[igr[i,"y"]*256+seq(256),igr[i,"x"]*256+seq(256),] <- img2[,,1:3]
+         img[igr[i,"y"]*256L+seq(256),igr[i,"x"]*256+seq(256),] <- img2[,,1:3]
       }
-      basemap <- 255*as.ursa(img,aperm=TRUE,flip=TRUE)
+      basemap <- as.ursa(img,aperm=TRUE,flip=TRUE)
       ursa(basemap,"grid") <- g1
-      basemap <- as.integer(regrid(basemap,g0,resample=FALSE))
+     # basemap <- as.integer(regrid(basemap,g0,resample=FALSE))
+      basemap <- regrid(basemap,g0,resample=FALSE)
    }
    else { ## staticmap
       php <- switch(art
@@ -345,7 +351,7 @@
       basemap <- colorize(basemap,minvalue=0,maxvalue=255,pal=c("black","white"))
    }
    if (isTile)
-      attr(basemap,"credits") <- unname(attr(.untile(),"credits")[art])
+      attr(basemap,"copyright") <- unname(attr(.untile(),"copyright")[art])
    session_grid(g0)
    basemap
 }

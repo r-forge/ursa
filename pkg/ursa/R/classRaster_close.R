@@ -58,6 +58,8 @@
         # if (FALSE) {
          if ((TRUE)&&(!is.na(bname[1]))) {
             metafile <- paste0(con$fname,".aux.xml")
+            if (!is.na(con$posZ[1]))
+               bname <- bname[con$posZ]
             added3 <- rep("",length(bname))
                for (i in seq_along(bname))
                   added3[i] <- paste0("    <MDI key=",.dQuote(paste0("Band_",i))

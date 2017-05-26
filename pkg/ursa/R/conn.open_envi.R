@@ -282,14 +282,56 @@
       y2 <- with(grid2,(seq(miny,maxy,by=resy)-0.5*resy))[-1]
       x1 <- with(grid,(seq(minx,maxx,by=resx)-0.5*resx))[-1]
       y1 <- with(grid,(seq(miny,maxy,by=resy)-0.5*resy))[-1]
+      tolx <- .Machine$double.eps*max(abs(c(grid$minx,grid$maxx)))*1e1
+      toly <- .Machine$double.eps*max(abs(c(grid$miny,grid$maxy)))*1e1
+      tolerance <- c(tolx,toly)
+      dig <- -as.integer(.gsub(".+e\\-(\\d+)$","\\1"
+                              ,format(signif(tolerance,1),sci=TRUE)))
+      tolerance <- 10^dig
       if ((length(x1)==length(x2))&&(all(abs(x1-x2)<1e-12)))
          con$indexC <- seq(grid$columns)
-      else
-         con$indexC <- match(x2,x1) ## release before 2011-02-19
+      else {
+        # con$indexC <- match(x2,x1) ## release before 2011-02-19
+         for (i in (seq(6)-1)) {
+            tol <- tolerance[1]*10^i
+            if (TRUE) ## reliable but 5x slower
+               a <- .is.near(x2,x1)
+            else
+               a <- match(round(x2/tol),round(x1/tol))
+           # if (anyNA(a))
+           #    next
+            ind <- diff(which(!is.na(a)))
+            if (!length(ind))
+               next
+            if (all(ind==1))
+               break
+         }
+         if (i==5)
+            con$indexC <- match(y2,y1)
+         else
+            con$indexC <- a
+      }
       if ((length(y1)==length(y2))&&(all(abs(y1-y2)<1e-12)))
          con$indexR <- seq(grid$rows)
-      else
-         con$indexR <- rev(grid$rows+1-match(y2,y1)) ## release before 2011-02-19
+      else {
+        # con$indexR <- rev(grid$rows+1-match(y2r,y1r)) ## release before 2011-02-19
+         for (i in (seq(6)-1)) {
+            tol <- tolerance[2]*10^i
+            if (TRUE) ## reliable but 5x slower
+               a <- .is.near(y2,y1)
+            else
+               a <- match(round(y2/tol),round(y1/tol))
+            ind <- diff(which(!is.na(a)))
+            if (!length(ind))
+               next
+            if (all(ind==1))
+               break
+         }
+         if (i==5)
+            con$indexR <- rev(grid$rows+1-match(y2,y1))
+         else
+            con$indexR <- rev(grid$rows+1-a)
+      }
       grid <- grid2
    }
    else if (FALSE) ## introduced 2012-08-16

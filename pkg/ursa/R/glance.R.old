@@ -1178,7 +1178,7 @@
          if (before) {
             panel_plot(basemap,alpha=basemap.alpha)
             if (isTile) {
-               panel_annotation(attr(.untile(),"credits")[art]
+               panel_annotation(attr(.untile(),"copyright")[art]
                                ,pos="bottomright",cex=0.7,font="Arial Narrow"
                                ,fg=sprintf("#000000%02X",round(basemap.alpha*255)))
             }
@@ -1239,7 +1239,7 @@
          if (after) {
             panel_plot(basemap,alpha=basemap.alpha)
             if (isTile) {
-               panel_annotation(attr(.untile(),"credits")[art]
+               panel_annotation(attr(.untile(),"copyright")[art]
                                ,pos="bottomright",cex=0.7,font="Arial Narrow"
                                ,fg=sprintf("#000000%02X",round(basemap.alpha*255)))
             }
@@ -1333,7 +1333,7 @@
          if (before) {
             panel_plot(basemap,alpha=basemap.alpha)
             if (isTile) {
-               panel_annotation(attr(.untile(),"credits")[art]
+               panel_annotation(attr(.untile(),"copyright")[art]
                                ,pos="bottomright",cex=0.7,font="Arial Narrow"
                                ,fg=sprintf("#000000%02X",round(basemap.alpha*255)))
             }
@@ -1378,7 +1378,7 @@
          if (after) {
             panel_plot(basemap,alpha=basemap.alpha)
             if (isTile) {
-               panel_annotation(attr(.untile(),"credits")[art]
+               panel_annotation(attr(.untile(),"copyright")[art]
                                ,pos="bottomright",cex=0.7,font="Arial Narrow"
                                ,fg=sprintf("#000000%02X",round(basemap.alpha*255)))
             }

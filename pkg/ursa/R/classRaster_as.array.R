@@ -17,7 +17,7 @@
    else
    {
       con <- x$con
-      if (is.na(con$indexC[1]))
+      if ((length(con$indexC)==1)&&(is.na(con$indexC[1]))) ## 20170525 added len==1
       {
          if (is.na(con$samples))
             nc <- x$grid$columns
@@ -26,7 +26,7 @@
       }
       else
          nc <- length(con$indexC)
-      if (is.na(con$indexR[1]))
+      if ((length(con$indexR)==1)&&(is.na(con$indexR[1]))) ## 20170525 added len==1
       {
          if (is.na(con$lines))
             nr <- x$grid$rows

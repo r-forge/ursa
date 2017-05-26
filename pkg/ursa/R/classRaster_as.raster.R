@@ -33,14 +33,12 @@
    return(b)
 }
 
-'.as.raster2' <- function(obj,...) { # quicker
+'.as.raster2' <- function(obj,...) { # faster
    max <- .getPrm(list(...),name=".*",default=255)
    verbose <- FALSE
    nb <- nband(obj)
    if (verbose)
       .elapsedTime("as.raster -- start")
-   pm <- !TRUE
-   fl <- !TRUE
    s <- ursa_value(!is.na(sum(obj,cover=1)))
    if (nb %in% c(3,4))
       a <- ursa_value(obj)
@@ -57,7 +55,7 @@
    res <- rep(NA_character_,prod(dim(s)))
    res[ind] <- c(grDevices::as.raster(a[,ind,,drop=FALSE],max=max))
    dim(res) <- dim(obj)[c(1,2)]
-   class(res) <- "raster"
+   class(res) <- class(as.raster(1))
    if (verbose)
       .elapsedTime("as.raster -- finish")
    res

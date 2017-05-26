@@ -129,7 +129,7 @@
       basemap <- NULL
    }
    attr(obj,"grid") <- g0
-  # str(attr(basemap,"credits"))
+  # str(attr(basemap,"copyright"))
    session_grid(g0)
    if (isSF) {
       geoType <- unique(as.character(sf::st_geometry_type(obj)))

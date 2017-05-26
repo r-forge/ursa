@@ -147,7 +147,14 @@
          class(y$value) <- "ursaNumeric"
    }
    dim(y$value) <- with(g2,c(columns*rows,nb))
-  # class(y$value) <- clValue
+   if (TRUE) { ## added 20170524
+      if (resample==0) {
+         class(y$value) <- clValue
+         storage.mode(y$value) <- smValue
+      }
+      else
+         class(y$value) <- "ursaNumeric"
+   }
   # if ((.is.colortable(x$colortable))&&(length(unique(y$value))==length(x$colortable)))
   #    y$colortable <- x$colortable
    if (!resetGrid)

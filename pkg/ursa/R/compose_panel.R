@@ -36,8 +36,11 @@
       ln <- bandname(img)
       units <- if (nb==1) ln[1] else ""
    }
-   isRGB <- nb/3==np || nb/4==np  || nb/2==np
+   isRGB <- nb/3==np || nb/4==np || nb/2==np
+   if (isRGB)
+      nl <- nb/np
   # print(c(isRGB=isRGB))
+  # print(c(nb=nb,np=np))
    annotation <- nb>1 & !isRGB #& !isList
    if (is.na(verbose))
       verbose <- nb>2
@@ -83,7 +86,7 @@
       for (i in seq(nl))
       {
          if ((verbose)&&(k==0)) {
-            pb <- ursaProgressBar(min=0,max=nb)
+            pb <- ursaProgressBar(min=0,max=ifelse(isRGB,nl,nb))
             setUrsaProgressBar(pb,k)
          }
          k <- k+1L

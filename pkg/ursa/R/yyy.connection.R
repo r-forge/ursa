@@ -36,6 +36,12 @@
          class(x$colortable) <- "ursaColorTable"
       }
    }
+   simple <- attr(x,"copyright")
+   simple <- ((is.character(simple))&&(nchar(simple)>0))
+   if ((simple)&&("ursa" %in% loadedNamespaces())) {
+      g1 <- ursa(x,"grid")
+      ursa(x,"grid") <- regrid(g1,setbound=c(0,0,g1$columns,g1$rows),proj4="")
+   }
    x$con <- .create.con(x,arglist)
    ind <- .grep("^(band|layer)*name",names(arglist))
    if (length(ind))

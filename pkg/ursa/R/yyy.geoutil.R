@@ -33,20 +33,20 @@
    s$kosmosnimki <- paste0("http://",letters[sample(seq(4),1)]
                           ,".tile.osm.kosmosnimki.ru/kosmo/{z}/{x}/{y}.png")
    osmCr <- "\uA9 OpenStreetMap contributors"
-   credit <- rep(osmCr,length(s))
-   names(credit) <- names(s)
-   credit["openstreetmap"] <- paste0(osmCr)
-   credit["cycle"] <- paste(osmCr,"(Cycle)")
-  # credit["transport"] <- paste0("Maps \xA9 Thunderforest, Data ",osmCr)
-   credit["mapsurfer"] <- paste0(osmCr
+   copyright <- rep(osmCr,length(s))
+   names(copyright) <- names(s)
+   copyright["openstreetmap"] <- paste0(osmCr)
+   copyright["cycle"] <- paste(osmCr,"(Cycle)")
+  # copyright["transport"] <- paste0("Maps \xA9 Thunderforest, Data ",osmCr)
+   copyright["mapsurfer"] <- paste0(osmCr
            ,", GIScience Research Group @ Heidelberg University")
-   credit["sputnik"] <- paste0(osmCr,", \uA9 \u0420\u043E\u0441\u0442\u0435\u043B\u0435\u043A\u043E\u043C")
-   credit["thunderforest"] <- paste0("Maps \uA9 Thunderforest, Data ",osmCr)
-   credit["carto"] <- paste(osmCr,"\uA9 CARTO")
-  # credit["kosmosnimki"] <- paste0(osmCr)
+   copyright["sputnik"] <- paste0(osmCr,", \uA9 \u0420\u043E\u0441\u0442\u0435\u043B\u0435\u043A\u043E\u043C")
+   copyright["thunderforest"] <- paste0("Maps \uA9 Thunderforest, Data ",osmCr)
+   copyright["carto"] <- paste(osmCr,"\uA9 CARTO")
+  # copyright["kosmosnimki"] <- paste0(osmCr)
    if (!(server %in% names(s))) {
       ret <- names(s)
-      attr(ret,"credits") <- credit
+      attr(ret,"copyright") <- copyright
       return(ret)
    }
    tile <- .gsub("{z}",z,.gsub("{y}",y,.gsub("{x}",x,s[[server]])))
@@ -55,8 +55,13 @@
   # message(tile)
   # download.file(tile,fname,method="curl",mode="wb",quiet=FALSE
   #              ,extra="-H Accept-Language:de")
-   a <- png::readPNG(fname)
+   a <- 255*png::readPNG(fname)
    file.remove(fname)
+   if (TRUE) {
+      dima <- dim(a)
+      a <- as.integer(c(a))
+      dim(a) <- dima
+   }
    if (!ursa)
       return(a)
    epsg3857 <- paste("+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0"
@@ -69,7 +74,7 @@
    dima <- dim(a)
    g1 <- regrid(ursa_grid(),setbound=c(xy)[c(1,3,2,4)]
                ,columns=dima[2],rows=dima[1],proj4=epsg3857)
-   b <- as.integer(255*as.ursa(a,aperm=TRUE,flip=TRUE))
+   b <- as.integer(255/255*as.ursa(a,aperm=TRUE,flip=TRUE))
    ursa(b,"grid") <- g1
   # session_grid(b)
   # display(b,scale=1,coast=FALSE)

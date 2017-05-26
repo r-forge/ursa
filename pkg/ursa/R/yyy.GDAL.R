@@ -24,6 +24,7 @@
   # print(dsn)
   # print(c(fname1=fname1,fname2=fname2,fname3=fname3))
   # print(c(isZip=isZip,cond1=cond1,cond2=cond2,cond3=cond3))
+   on.exit(NULL)
    if (cond1)
       dsn <- fname1
    else if (cond2 | cond3) {
@@ -31,16 +32,50 @@
          ziplist <- unzip(fname2)
       if (cond3)
          ziplist <- unzip(fname3)
-      on.exit(file.remove(ziplist))
+      on.exit(file.remove(ziplist),add=TRUE)
       dsn <- .grep("\\.shp$",ziplist,value=TRUE)
    }
    else
       dsn <- NA
+   isSF <- inherits(obj,"sf")
+   isSP <- !isSF
+  # print(dsn)
+  # str(obj)
+   cmd <- paste("gdalsrsinfo -o proj4",.dQuote(dsn))
+   if (verbose)
+      message(cmd)
+   proj4 <- system(cmd,intern=TRUE)
+   proj4 <- .gsub("'","",proj4)
+   proj4 <- .gsub("(^\\s|\\s$)","",proj4)
    ftemp <- .maketmp() # .maketmp() #tempfile(pattern="") # ".\\tmp1"
-   shpname <- dsn
    lname <- system(paste("ogrinfo","-q",.dQuote(dsn)),intern=TRUE)
    lname <- .gsub("(\\s\\(.+\\))*$","",lname)
    lname <- .gsub("^\\d+:\\s(.+)$","\\1",lname)
+   if (proj4!=g0$proj4) {
+      print("REPROJECT")
+      shpname <- .maketmp()
+      cmd <- paste("ogr2ogr","-t_srs",.dQuote(g0$proj4)
+              ,"-sql",.dQuote(paste("select FID,* from",.dQuote(.dQuote(lname))))
+              ,"-dialect",c("SQLITE","OGRSQL")[2]
+              ,"-select FID"
+              ,"-f",.dQuote(c("ESRI Shapefile","SQLite")[1])
+              ,ifelse(verbose,"-progress","")
+              ,paste0(shpname,".shp"),dsn
+              )
+      if (verbose)
+         message(cmd)
+     # .elapsedTime("a")
+      system(cmd)
+     # .elapsedTime("b")
+      list2 <- .dir(path=dirname(shpname)
+                   ,pattern=paste0(basename(shpname),"\\.(cpg|dbf|prj|shp|shx)")
+                   ,recursive=FALSE,full.names=TRUE)
+      on.exit(file.remove(list2),add=TRUE)
+      lname <- basename(shpname)
+      shpname <- .grep("\\.shp$",list2,value=TRUE)
+   }
+   else
+      shpname <- dsn
    if (is.null(dname)) {
       md <- system(paste("ogrinfo -al -so",dsn),intern=TRUE)
       patt <- "^(.+): \\S+ \\(.+\\)$"
@@ -48,7 +83,7 @@
       dname <- .grep(attr,.gsub(patt,"\\1",md),value=TRUE)
    }
    if (feature=="attribute") {
-      opt <- paste()
+     # opt <- paste()
       cmd <- with(g0,paste("gdal_rasterize"
               ,"-a FID"
               ,"-sql",.dQuote(paste("select FID,* from",.dQuote(.dQuote(lname))))
@@ -68,8 +103,6 @@
       if (verbose)
          .elapsedTime(paste("rasterize",.sQuote(feature),"-- finish"))
       va <- read_envi(ftemp,resetGrid=TRUE)
-      print(va)
-      q()
       envi_remove(ftemp)
       if (global_min(va)==0)
          va <- va+1L
@@ -88,12 +121,16 @@
          .elapsedTime(paste("rasterize",.sQuote(feature),"-- start"))
       nr <- nrow(obj)
       res <- lapply(seq(nr),function(i){
-         cmd <- with(g0,paste("gdal_rasterize","-a id"
-                             ,"-where",paste0(.dQuote("id"),"=",i)
-                             ,"-tr",resx,resy
-                             ,"-te",minx,miny,maxx,maxy
-                             ,"-of ENVI -ot Int16",ifelse(verbose,"","-q")
-                             ,shpname,ftemp))
+         cmd <- with(g0,paste("gdal_rasterize"
+              ,"-a FID"
+              ,"-sql",.dQuote(paste("select FID,* from",.dQuote(.dQuote(lname))
+                             ,"where",paste0(.dQuote("FID"),"=",i)))
+              ,"-dialect",c("SQLITE","OGRSQL")[2]
+             # ,"-where",paste0(.dQuote("FID"),"=",i)
+              ,"-tr",resx,resy
+              ,"-te",minx,miny,maxx,maxy
+              ,"-of ENVI -ot Int16",ifelse(verbose,"","-q")
+              ,shpname,ftemp))
          if (verbose)
             message(cmd)
          system(cmd)

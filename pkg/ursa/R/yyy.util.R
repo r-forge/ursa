@@ -286,6 +286,39 @@
    }
    B
 }
+'.degminsec' <- function(x,suffix=c("A","B")) {
+   s <- sign(x)
+   x <- abs(x)
+   y <- rep("",length(x))
+   x1 <- floor(x)
+   x2 <- floor((x-x1)*60)
+   x3a <- (x-x1-x2/60)*3600
+   x3 <- .round(x3a)
+   ind2 <- which(x3==60)
+   if (length(ind2)) {
+      x2[ind2] <- x2[ind2]+1
+      x3[ind2] <- 0
+   }
+   ind2 <- which(x2==60)
+   if (length(ind2)) {
+      x1[ind2] <- x1[ind2]+1
+      x2[ind2] <- 0
+   }
+   x1a <- abs(x1)
+   if (all(c(x2,x3)==0))
+      y <- sprintf("%.0f\uB0",x1a)
+   else if (all(x3==0))
+      y <- sprintf("%.0f\uB0%02.0f'",x1a,x2)
+   else
+      y <- sprintf("%.0f\uB0%02.0f'%02.0f\"",x1a,x2,x3)
+   if (length(ind2 <- s>=0))
+      y[ind2] <- paste0(y[ind2],suffix[1])
+   if (length(ind2 <- s<0))
+      y[ind2] <- paste0(y[ind2],suffix[2])
+   if ((length(unique(y))==1)&&(length(unique(x))!=1))
+      return(paste0(as.character(x),"\uB0",suffix[1]))
+   y
+}
 '.isRscript' <- function() .lgrep("^--file=",commandArgs(FALSE))>0
 '.isPackageInUse' <- function() "ursa" %in% loadedNamespaces()
 '.argv0path' <- function() {

@@ -36,7 +36,12 @@
       y <- .getPrm(arglist,name="^y",default=NA_real_)
       ind <- .getIndex(obj,x,y)
    }
-   n <- obj$grid$columns
+   if (is.ursa(obj))
+      n <- obj$grid$columns
+   else if (is.ursa(obj,"grid"))
+      n <- obj$columns
+   else
+      n <- session_grid()$columns
    res <- matrix(NA,nrow=2,ncol=length(ind)
                 ,dimnames=list(c("c","r"),ind))
    if ((!missing(ind))&&(length(ind)>0))
@@ -48,13 +53,19 @@
 }
 'coord_cr' <- function(obj,...)
 {
-   if (!is.ursa(obj))
-      return(NULL)
+  # if (!is.ursa(obj))
+  #    return(NULL)
    arglist <- list(...)
    n <- length(arglist)
    if (!n)
       return(NULL)
-   nc <- obj$grid$columns
+  # nc <- obj$grid$columns
+   if (is.ursa(obj))
+      nc <- obj$grid$columns
+   else if (is.ursa(obj,"grid"))
+      nc <- obj$columns
+   else
+      nc <- session_grid()$columns
    if (n==1) {
       ind <- arglist[[1]]
       row <- (ind-1L)%/%nc+1L
@@ -112,8 +123,15 @@
 }
 '.getIndex' <- function(obj,x,y)
 {
-   if (!is.ursa(obj))
+   isRaster <- is.ursa(obj)
+   isGrid <- is.ursa(obj,"grid")
+   if (!isRaster & !isGrid)
       return(NULL)
+   if (isRaster)
+      grid <- ursa(obj,"grid")
+   else
+      grid <- obj
+  # print(c(raster=isRaster,grid=isGrid))
    if (missing(y))
    {
       if (length(x)==1)
@@ -132,24 +150,24 @@
          stop("specify 'y'")
    }
    if (TRUE) {
-      columns <- obj$grid$columns
-      rows <- obj$grid$rows
+      columns <- grid$columns
+      rows <- grid$rows
    }
-   else if ((!is.na(obj$con$samples))&&(!is.na(obj$con$lines)))
+   else if ((isRaster)&&(!is.na(obj$con$samples))&&(!is.na(obj$con$lines)))
    {
       columns <- obj$con$samples
       rows <- obj$con$lines
    }
    else
    {
-      columns <- obj$grid$columns
-      rows <- obj$grid$rows
+      columns <- grid$columns
+      rows <- grid$rows
    }
    nx <- length(x)
    ny <- length(y)
    if (nx!=-11)
    {
-      x2 <- with(obj$grid,(seq(minx,maxx,resx)-0.5*resx)[-1])
+      x2 <- with(grid,(seq(minx,maxx,resx)-0.5*resx)[-1])
       whichx <- numeric(nx)
       for (i in seq(nx))
          whichx[i] <- which.min(abs(x2-x[i]))
@@ -158,7 +176,7 @@
       stop("TODO#1-X")
    if (ny!=-11)
    {
-      y2 <- with(obj$grid,(seq(miny,maxy,resy)-0.5*resy)[-1])
+      y2 <- with(grid,(seq(miny,maxy,resy)-0.5*resy)[-1])
       whichy <- numeric(ny)
       for (i in seq(ny))
          whichy[i] <- rows-which.min(abs(y2-y[i]))+1

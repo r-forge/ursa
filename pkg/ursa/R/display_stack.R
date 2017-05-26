@@ -32,5 +32,5 @@
    else
       compose_plot(p,las=las,trim=2L*(cl$legend>0),...) ## ,decor=decor
    compose_close(...)
-   0L
+   invisible(0L)
 }

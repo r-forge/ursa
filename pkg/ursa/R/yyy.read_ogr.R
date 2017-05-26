@@ -7,6 +7,8 @@
    geocode <- match.arg(geocode)
    geocodeStatus <- FALSE
    toUnloadMethods <- FALSE
+   if (is.na(resetProj))
+      resetProj <- TRUE
    cpg <- NULL
    if (engine=="sp") {
       isSF <- FALSE
@@ -237,7 +239,7 @@
       g0 <- NULL
    else if ((is.null(grid))&&(!is.null(g2)))
       g0 <- g2
-   else if (missing(grid))
+   else if (is.null(grid))
       g0 <- NULL
    else
       g0 <- grid

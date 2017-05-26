@@ -33,14 +33,13 @@
       return(invisible(lastCT))
    }
    isRGB <- nband(obj) %in% c(2,3,4) & all(band_nNA(obj)>=0) # '==0' is NA used for RGB?
-  # print(c(isRGB=isRGB))
    if (isRGB) {
       if ((is.numeric(alpha))&&(alpha<1)&&(nband(obj) %in% c(1,3))) {
          obj <- c(obj,ursa_new(round(alpha*255),bandname=paste("Band",nband(obj)+1)))
       }
       with(ursa_grid(obj),rasterImage(as.raster(obj),minx,miny,maxx,maxy
                                       ,interpolate=interpolate))
-      panel_annotation(attr(obj,"credits")
+      panel_annotation(attr(obj,"copyright")
                       ,pos="bottomright",cex=0.7,font="Arial Narrow"
                       ,fg=sprintf("#000000%s","4F"))
       return(NULL)
@@ -181,7 +180,7 @@
       session_grid(g2)
    col1 <- col2rgb(obj$colortable,alpha=TRUE)/255
    isAlpha <- any(col1[4,]!=1)
-   panel_annotation(attr(obj,"credits")
+   panel_annotation(attr(obj,"copyright")
                    ,pos="bottomright",cex=0.7,font="Arial Narrow"
                    ,fg=sprintf("#000000%s",ifelse(isAlpha,alpha,"4F")))
    if (!isAlpha)
@@ -190,7 +189,7 @@
       col1[4,] <- 1-col1[4,]
    bg <- col2rgb(getOption("ursaPngPanel"),alpha=TRUE)/255
    col2 <- apply(col1,2,function(x) x*c(bg))
-   if (identical(col1,col2))
+   if ((TRUE)||(identical(col1,col2))) ## 20170522 added TRUE
       return(invisible(obj$colortable))
    alphaPatch <- ifelse(!is.na(alpha),1,1-1e-2) ## desured to be 1
    col3 <- rgb(col2[1,],col2[2,],col2[3,],col2[4,]*alphaPatch,maxColorValue=1)
