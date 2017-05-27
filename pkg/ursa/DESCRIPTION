@@ -10,4 +10,4 @@ Depends: R (>= 3.0.0)
 Imports: utils, graphics, grDevices, stats, rgdal, png, jpeg
 Suggests: proj4, sf (>= 0.4-0), raster, ggmap, foreign, locfit, tcltk, sp, methods
 NeedsCompilation: yes
-ByteCompile: no
+ByteCompile: yes
