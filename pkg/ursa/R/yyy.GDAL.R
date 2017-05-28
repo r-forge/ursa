@@ -1,4 +1,6 @@
 '.rasterize' <- function(obj,...) {
+   if (!nchar(Sys.which("gdal_rasterize")))
+      return(NULL)
    arglist <- list(...)
    verbose <- .getPrm(arglist,name="verb(ose)*",default=FALSE)
   # obj <- .getPrm(arglist,name=".*",class=list("character","ursaVectorExternal"))
@@ -146,6 +148,8 @@
 }
 '.gdalwarp' <- function(src,dst=NULL,grid=NULL,resample="near",nodata=NA
                        ,resetGrid=FALSE,verbose=1L) {
+  if (!nchar(Sys.which("gdalwarp")))
+     return(NULL)
   # a <- open_envi(src)
   # ct <- ursa_colortable(a)
   # close(a)

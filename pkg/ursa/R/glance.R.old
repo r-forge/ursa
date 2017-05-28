@@ -77,7 +77,7 @@
   # feature <- "geometry"
    projClass <- c("longlat","stere","laea","merc")
    projPatt <- paste0("(",paste(projClass,collapse="|"),")")
-   staticMap <- c("openstreetmap","google","sputnik")
+   staticMap <- c("mapnik","google","sputnik")
    tilePatt <- paste0("(",paste0(unique(c(staticMap,.untile())),collapse="|"),")")
   # proj <- match.arg(proj)
    basemap.order <- match.arg(basemap.order)

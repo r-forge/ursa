@@ -19,7 +19,7 @@
                               ,'7'="carto")
                      ,ursa=FALSE,verbose=FALSE) {
    s <- list()
-   s$openstreetmap <- paste0("http://",letters[sample(seq(3),1)]
+   s$mapnik <- paste0("http://",letters[sample(seq(3),1)]
                   ,".tile.openstreetmap.org/{z}/{x}/{y}.png")
    s$cycle <- paste0("http://",letters[sample(seq(3),1)]
                     ,".tile.opencyclemap.org/cycle/{z}/{x}/{y}.png")
@@ -35,7 +35,7 @@
    osmCr <- "\uA9 OpenStreetMap contributors"
    copyright <- rep(osmCr,length(s))
    names(copyright) <- names(s)
-   copyright["openstreetmap"] <- paste0(osmCr)
+   copyright["mapnik"] <- paste0(osmCr)
    copyright["cycle"] <- paste(osmCr,"(Cycle)")
   # copyright["transport"] <- paste0("Maps \xA9 Thunderforest, Data ",osmCr)
    copyright["mapsurfer"] <- paste0(osmCr

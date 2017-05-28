@@ -96,8 +96,8 @@
       else if (pos[2]>0.95)
          y3 <- 0.95
       lat <- with(g1,.project(cbind(minx+x3*(maxx-minx),miny+y3*(maxy-miny))
-                             ,g1$proj4,inv=TRUE))[1,2]
-      sc <- 1/cos(lat*pi/180)
+                             ,g1$proj4,inv=TRUE))#[1,2]
+      sc <- if (is.null(lat)) 1 else 1/cos(lat[1,2]*pi/180)
    }
    else
       sc <- 1

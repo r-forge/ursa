@@ -562,9 +562,10 @@
          file.remove(wktout)
          file.remove(wktin)
       }
-      else
-         grid$proj4 <- attr(rgdal::GDALinfo(con$fname,returnStats=FALSE)
-                           ,"projection")
+      else {
+         .try(grid$proj4 <- attr(rgdal::GDALinfo(con$fname,returnStats=FALSE)
+                           ,"projection"))
+      }
       if (lverbose)
          .elapsedTime("wkt -> proj4 finish")
       session_grid(grid)

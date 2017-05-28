@@ -61,9 +61,9 @@ Valid values are \code{"stere"}, \code{"laea"}, \code{"merc"}, \code{"longlat"}.
    \item Web cartogrpaphy.
       \itemize{
          \item Static map\cr
-         Valid values are \code{"google"}, \code{"openstreetmap"}. Static maps have priority over tile services. however additional word \code{"static"} can be specified in the sentence, e.g., \code{"openstreetmap static"} or \code{"static google"}. Additional parameters for request to web-script can be added in the sentence in the form \code{"argument1=value1 [argument2=value2]"}, e.g., \code{style="google static maptype=terrain language=ru-RU scale=2"}.
+         Valid values are \code{"google"}, \code{"openstreetmap"}, \code{"sputnik"}. Static maps have priority over tile services. however additional word \code{"static"} can be specified in the sentence, e.g., \code{"openstreetmap static"} or \code{"static google"}. Additional parameters for request to web-script can be added in the sentence in the form \code{"argument1=value1 [argument2=value2]"}, e.g., \code{style="google static maptype=terrain language=ru-RU scale=2"}.
          \item Tile service\cr
-         Supported tile services can be returned by calling of non-public function \code{ursa:::.untile()} without arguments. Valid values are \code{"openstreetmap"}, \code{"cycle"}, \code{"transport"}, \code{"mapsurfer"}, \code{"sputnik"}, \code{"thunderforest"}, \code{"carto"}, \code{"kosmosnimki"}. Adding word \code{"tile"} forces tile services using, e.g. \code{style="tile openstreetmap"}.
+         Supported tile services can be returned by calling of non-public function \code{ursa:::.untile()} without arguments. Valid values are \code{"mapnik"}, \code{"cycle"}, \code{"transport"}, \code{"mapsurfer"}, \code{"sputnik"}, \code{"thunderforest"}, \code{"carto"}, \code{"kosmosnimki"}. Adding word \code{"tile"} forces tile services using, e.g. \code{style="tile mapnik"}.
       }
       By default, basemap is forced to greyscale. Adding word \code{"color"} to the sentence forces to use colored basemap.
       

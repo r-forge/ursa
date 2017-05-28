@@ -7,6 +7,8 @@
                        # ,keepProj=NA
                         ,feature=c("overlay","group","separate"),ID=FALSE
                         ,paint=5,verbose=FALSE,...) {
+   if (!nchar(Sys.which("gdal_rasterize")))
+      return(NULL)
    requireNamespace("foreign",quietly=.isPackageInUse()) ## 'foreign' is in R-core
   # str(dsn)
    fname <- dsn

@@ -782,7 +782,7 @@
                     ,projection_ellipse,projection_units)
    map_info <- paste0("{",paste(map_info,collapse=", "),"}")
    writeLines(sprintf("map info = %s",map_info),Fout)
-   if (!FALSE) ## forced 'gdalsrsinfo'/showWKT 
+   if ((TRUE)&&(nchar(Sys.which("gdalsrsinfo")))) ## forced 'gdalsrsinfo'/showWKT 
       projection_info <- "" 
    if (projection_info!="")
       writeLines(sprintf("projection info = %s",projection_info),Fout)
@@ -870,8 +870,10 @@
          wkt <- readLines(wktout,warn=FALSE)
          file.remove(wktout)
       }
-      else
-         wkt <- rgdal::showWKT(proj4)
+      else {
+         if (!.try(wkt <- rgdal::showWKT(proj4)))
+            wkt <- NULL
+      }
       if (lverbose)
          .elapsedTime("proj4 -> wkt finish")
    }

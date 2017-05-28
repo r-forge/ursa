@@ -61,5 +61,7 @@
         # print(res)
       }
    }
+   if (!exists("res"))
+      return(NULL)
    return(res)
 }

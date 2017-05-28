@@ -1,3 +1,14 @@
+# version 3.7-8
+
+* Patches for:
+  Error in dyn.load(file, DLLpath = DLLpath, ...) : 
+  unable to load shared object '/home/rforge/lib/R/3.4/rgdal/libs/rgdal.so':
+  libgdal.so.1: cannot open shared object file: No such file or directory
+
+# version 3.7-7
+
+* Better matching for floating-point coordinates
+
 # version 3.7-6
 
 * Minor fixes for categories after resample

@@ -49,6 +49,7 @@
 '.compose_graticule' <- function(panel=0L,col="grey70",lon=NA,lat=NA
                               ,lwd=0.5,lty=2,marginalia=rep(FALSE,4),trim=FALSE
                               ,language=NA,cex=0.75,verbose=FALSE) {
+  # verbose <- TRUE
    if (is.na(language)) {
       if (TRUE) {
          ctype <- Sys.getlocale("LC_TIME")
@@ -166,6 +167,12 @@
       ##~ }
       if (!isLonLat) {
          xy <- .project(xy,g1$proj4,inv=TRUE)
+         if (is.null(xy)) {
+            cat("Likely, reprojection by external utils is failed.\n")
+            res <- list(gridline=NULL,margin=NULL)
+            class(res) <- "ursaGridLine"
+            return(res)
+         }
       }
       xy <- xy[which(xy[,2]>=-90 & xy[,2]<=90),]
       n <- nrow(xy)
