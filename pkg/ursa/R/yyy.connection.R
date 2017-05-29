@@ -43,6 +43,10 @@
       ursa(x,"grid") <- regrid(g1,setbound=c(0,0,g1$columns,g1$rows),proj4="")
    }
    x$con <- .create.con(x,arglist)
+   if (!.is.con(x$con)) {
+      cat("Unable to create connection\n")
+      return(NULL)
+   }
    ind <- .grep("^(band|layer)*name",names(arglist))
    if (length(ind))
       x$name <- arglist[[ind[1]]]
@@ -507,9 +511,11 @@
                       ,'11'="Int8",'12'="UInt16",'13'="UInt32",'3'="Int32"
                       ,'5'="Float64",stop("cannot recognize datatype"))
       nb <- if (is.na(con$posZ[1])) con$bands else length(con$posZ)
-      con$handle <- methods::new("GDALTransientDataset"
+      try(con$handle <- methods::new("GDALTransientDataset"
                                 ,methods::new("GDALDriver",driver)
-                                ,con$lines,con$samples,nb,dtName)
+                                ,con$lines,con$samples,nb,dtName))
+      if (!inherits(con$handle,"GDALTransientDataset"))
+         return(NA)
       con$seek <- FALSE
    }
    if ("file" %in% class(con$handle))
