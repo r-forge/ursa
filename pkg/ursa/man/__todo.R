@@ -1,3 +1,4 @@
+require(plutil)
 invisible({
    list1 <- filelist(path="../R/",pattern="^[a-z].+\\.R$")
    list1 <- mygrep("^zzz",list1,value=TRUE,inv=TRUE)

@@ -1,5 +1,6 @@
 invisible({
    require(ursa) ##ursa::session_proj4
+  # plutil::ursula()
    if (FALSE) {
       session_grid(NULL)
       example(as.Raster)
@@ -14,11 +15,10 @@ invisible({
                 ,quote=FALSE,row.names=FALSE)
    }
    .examData <- read.csv2(.examOut)
-   ind <- which(.examData$check==2)
-   toRepair <- length(ind)
+   .toRepair <- length(which(.examData$check==2))
    for (.examI in sample(seq(nrow(.examData)))) {
       .examNow <- .examData[.examI,,drop=TRUE]
-      if ((toRepair)&&(.examNow$check!=2))
+      if ((.toRepair)&&(.examNow$check!=2))
          next
       if (.examNow$check %in% c(1))
          next

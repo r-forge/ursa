@@ -13,12 +13,12 @@ invisible({
    sl <- lapply(seq(k),function(id){
       x <- sort(with(g1,runif(n,min=minx,max=maxx)))
       y <- sort(with(g1,runif(n,min=miny,max=maxy)))
-      Lines(Line(cbind(x,y)),ID=id)
+      sp::Lines(sp::Line(cbind(x,y)),ID=id)
    })
-   sl <- SpatialLines(sl,proj4string=CRS(ursa_proj(g1)))#,id=length(sl))
-   lab <- t(sapply(coordinates(sl),function(xy) xy[[1]][round(n/2),]))
+   sl <- sp::SpatialLines(sl,proj4string=sp::CRS(ursa_proj(g1)))#,id=length(sl))
+   lab <- t(sapply(sp::coordinates(sl),function(xy) xy[[1]][round(n/2),]))
    lab <- as.data.frame(cbind(lab,z=seq(k)))
-   sl <- SpatialLinesDataFrame(sl
+   sl <- sp::SpatialLinesDataFrame(sl
                  ,data=data.frame(ID=runif(k,min=5,max=9),desc=LETTERS[seq(k)]))
    print(sl@data)
    ct <- colorize(sl@data$ID)#,stretch="linear")#,name=sldf@data$desc)
@@ -27,7 +27,7 @@ invisible({
   # pdf.stop(pdfname())
    shpname <- tempfile(pattern = "___tmp",tmpdir=".",fileext=".shp")
    layername <- gsub("\\.shp$","",basename(shpname))
-   writeOGR(sl,dirname(shpname),layername,driver="ESRI Shapefile")
+   try(writeOGR(sl,dirname(shpname),layername,driver="ESRI Shapefile"))
    sl1 <- sl[1:ceiling(k/2),]
   # sl2 <- readOGR(dirname(shpname),layername)[(nrow(sl1)+1):k,]
    compose_open(layout=c(1,2),legend=list(list("bottom",2)))
@@ -40,11 +40,13 @@ invisible({
    panel_new()
    panel_decor()
    panel_plot(sl,lwd=4,col="grey20",add=TRUE)
-   panel_plot(shpname,lwd=3,col=ct$colortable[ct$index])
+   if (file.exists(shpname))
+      panel_plot(shpname,lwd=3,col=ct$colortable[ct$index])
    panel_points(lab$x,lab$y,pch=as.character(lab$z),cex=2)
    compose_legend(ct$colortable)
    compose_close()
    file.remove(dir(path=dirname(shpname)
                   ,pattern=paste0(layername,"\\.(cpg|dbf|prj|shp|shx)")
                   ,full.names=TRUE))
+   print("OK")
 })

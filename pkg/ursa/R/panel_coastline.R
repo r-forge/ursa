@@ -443,7 +443,7 @@
          if (inherits(coast_xy,"SpatialPolygonsDataFrame"))
             plot(coast_xy,border=col,col=fill,lwd=lwd
                 ,usePolypath=TRUE,rule=c("winding","evenodd")[2],add=TRUE)
-         else {
+         else if (!all(is.na(c(coast_xy)))) {
             if (land)
             {
                g1 <- session_grid()

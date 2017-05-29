@@ -10,6 +10,6 @@ invisible({
    write_envi(a,fname)
    a2 <- read_envi(fname,resetGrid=TRUE)
    print(ursa_proj(a2))
-   print(rgdal::CRSargs(sp::CRS(p4s)))
+   try(print(rgdal::CRSargs(sp::CRS(p4s))))
    envi_remove(fname)
 })

@@ -7,6 +7,8 @@
    lat <- .getPrm(arglist,name="^lat",default=NA_real_)
    stopifnot(length(lon)==length(lat))
    xy <- .project(cbind(lon,lat),ursa_proj(obj),inv=FALSE)
+   if (is.null(dim(xy)))
+      return(NULL)
    .getValue(obj,.getIndex(obj,xy[,1],xy[,2]))
 }
 'value_cr' <- function(obj,...) {

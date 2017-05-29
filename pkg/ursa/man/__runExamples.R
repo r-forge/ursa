@@ -1,3 +1,4 @@
+require(plutil)
 invisible({
    require(ursa)
   # a <- lsf.str("package:ursa")

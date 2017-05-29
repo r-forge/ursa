@@ -25,4 +25,5 @@ invisible({
              ,ann=TRUE,ann.label="FJL",ann.lon=52,ann.lat=80,ann.buffer=1.2,
              ,ann.bg="#FF00000F",ann.verbose=TRUE)
    }
+   cat("Done!\n")
 })

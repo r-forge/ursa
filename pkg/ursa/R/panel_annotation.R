@@ -96,6 +96,10 @@
                                       ,"bottomleft","bottomright"))
                    })
    }
+   if (!length(pos)) {
+      cat("Unable to detect position for annotation\n")
+      return(invisible(NULL))
+   }
    if ((isCaption)&&(is.na(fill)))
       fill <- "#FFFFFF7F"
    if ((!isCaption)&&(is.na(bg)))
