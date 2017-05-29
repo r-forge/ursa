@@ -9,8 +9,13 @@
    a <- try(rgdal::GDALinfo(fname,returnStats=FALSE,returnRAT=FALSE
                 ,returnColorTable=TRUE,returnCategoryNames=TRUE),silent=TRUE)
    options(opW)
-   if (inherits(a,"try-error"))
-      return(NULL)
+   if (inherits(a,"try-error")) {
+      if (!file.exists(fname)) # 20170529 patch for failure with 'rgdal'
+         return(ursa_new()) 
+      return(NULL) 
+   }
+   else
+      isFail <- FALSE
    a1 <- as.numeric(a)
    g1 <- regrid()
    g1$rows <- as.integer(a1[1])
