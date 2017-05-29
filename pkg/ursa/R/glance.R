@@ -92,6 +92,8 @@
                    ,grid=grid,size=size,expand=expand,border=border
                    ,lat0=lat0,lon0=lon0,resetProj=resetProj,style=style#,zoom=NA
                    ,verbose=verbose)
+   if (inherits(obj,"NULL"))
+      return(invisible(NULL))
    isSF <- inherits(obj,"sf")
    isSP <- !isSF
    g0 <- attr(obj,"grid")

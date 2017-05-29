@@ -119,9 +119,13 @@
       if ((!geocodeStatus)||(file.exists(dsn))) {
          opW <- options(warn=0)
          if (isSF)
-            lname <- sf::st_layers(dsn)$name
+            lname <- try(sf::st_layers(dsn)$name)
          else {
-            lname <- rgdal::ogrListLayers(dsn)
+            lname <- try(rgdal::ogrListLayers(dsn))
+         }
+         if (inherits(lname,"try-error")) {
+            cat("Cannot get layers\n")
+            return(NULL)
          }
          if (!is.character(layer))
             layer <- lname[layer[1]]
@@ -130,7 +134,7 @@
          if (length(layer)>1) {
             print(paste("Select only one layer:",paste(paste0(seq(layer),")")
                                        ,.sQuote(layer),collapse=", ")),quote=FALSE)
-            return(30L)
+            return(NULL)
          }
          if (isSF)
             obj <- sf::st_read(dsn,layer=layer,quiet=TRUE)

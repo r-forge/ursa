@@ -25,7 +25,7 @@ invisible({
       proj4string(a) <- "+init=epsg:4326"
       glance(a,style="google color maptype=terrain")
       glance(a,style="openstreetmap color")
-      glance(a,style="openstreetmap color tile")
+      glance(a,style="mapnik color tile")
    }
    if (dontrun <- !FALSE) {
       glance("Svalbard")
