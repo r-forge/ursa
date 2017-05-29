@@ -10,7 +10,7 @@
                 ,returnColorTable=TRUE,returnCategoryNames=TRUE),silent=TRUE)
    options(opW)
    if (inherits(a,"try-error")) {
-      if (!file.exists(fname)) # 20170529 patch for failure with 'rgdal'
+      if (file.exists(fname)) # 20170529 patch for failure with 'rgdal'
          return(ursa_new()) 
       return(NULL) 
    }
