@@ -1,6 +1,7 @@
 # version 3.7-8
 
-* Patches for:
+* Patches for 'rgdal' usage diring examples on r-forge UNIX building machine.
+  E.g.:
   Error in dyn.load(file, DLLpath = DLLpath, ...) : 
   unable to load shared object '/home/rforge/lib/R/3.4/rgdal/libs/rgdal.so':
   libgdal.so.1: cannot open shared object file: No such file or directory
