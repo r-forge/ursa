@@ -1,16 +1,35 @@
-'get_earthdata' <- function(bbox=c(2000000,400000,2300000,700000)
+# https://earthdata.nasa.gov/about/science-system-description/eosdis-components/global-imagery-browse-services-gibs#ed-gibs-citation
+
+'get_earthdata' <- function(bbox=NA #,c(2000000,400000,2300000,700000)
                            ,res=c("2km","1km","500m","250m")
                            ,date=NA,product=""
-                           ,verbose=FALSE) {
+                           ,geocode = c("nominatim","google")
+                           ,expand=1.05,border=0,verbose=FALSE) {
    productList <- c('1'="MODIS_Aqua_CorrectedReflectance_Bands721"
                    ,'2'="MODIS_Terra_CorrectedReflectance_Bands721"
                    ,'3'="MODIS_Aqua_CorrectedReflectance_TrueColor"
                    ,'4'="MODIS_Terra_CorrectedReflectance_TrueColor"
                    ,'5'="VIIRS_SNPP_CorrectedReflectance_TrueColor"
                    ,'6'="Coastlines")
+   epsg3413 <- paste("","+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1"
+                 ,"+x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs")
+   epsg3857 <- paste("","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0"
+                    ,"+x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null"
+                    ,"+wktext  +no_defs")
+   if ((is.na(bbox)[1])&&(length(bbox)==1)) {
+      g0 <- session_grid()
+      if (.lgrep("\\+merc",g0$proj4)) {
+         ll <- with(g0,.project(cbind(c(minx,maxx),c(miny,maxy)),proj4,inv=TRUE))
+         bbox <- c(min(ll[,1]),min(ll[,2]),max(ll[,1]),max(ll[,2]))
+      }
+      else if (.gsub("(^\\s|\\s$)",g0$proj4)==.gsub("(^\\s|\\s$)",epsg3413))
+         bbox <- with(g0,c(minx,miny,maxx,maxy))
+      else
+         bbox <- NULL
+   }
    if (is.null(bbox))
       return(productList)
-   if (product %in% 1:6)
+   if (product %in% seq_along(productList))
       product <- productList[product]
    else {
       pr2 <- try(match.arg(product,productList),silent=TRUE)
@@ -39,12 +58,16 @@
    }
    if (is.na(date))
       date <- Sys.Date()-1L
-   epsg3413 <- paste("","+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1"
-                 ,"+x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs")
-   epsg3857 <- paste("","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0"
-                    ,"+x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null"
-                    ,"+wktext  +no_defs")
-   
+   if (is.character(date))
+      date <- as.Date(date)
+   if (is.character(bbox)) {
+      g0 <- attr(.read_ogr(bbox,geocode=geocode,expand=expand,border=border
+                          ,verbose=verbose),"grid")
+      ll <- with(g0,.project(cbind(c(minx,maxx),c(miny,maxy)),proj4,inv=TRUE))
+      bbox <- c(min(ll[,1]),min(ll[,2]),max(ll[,1]),max(ll[,2]))
+      if (length(bbox)!=4)
+         return(productList)
+   }
    epsg <- if ((any(bbox>(+360)))||(any(bbox<(-180)))) epsg3413 else epsg3857
    is3857 <- epsg==epsg3857
    is3413 <- epsg==epsg3413
@@ -118,6 +141,10 @@
   # session_grid(b);display_rgb(b*255);q()
    ursa(b,"grid") <- g3
    b <- as.integer(regrid(b,g1,resample=0)*255)
+   ursa(b,"nodata") <- NA
+   if ((nband(b)==4)&&(global_min(b[4])==255)&&(global_max(b[4])==255))
+      b <- b[-4]
+   attr(b,"copyright") <- "Global Imagery Browse Services, NASA/GSFC/ESDIS"
    session_grid(b)
    b
 }

@@ -7,20 +7,20 @@ Retrive data from Global Imagery Browse Services (GIBS) using API for Developers
 \code{get_earthdata} allows retrieving georeferences optical satellite images of low and moderate spatial resolution (up to 250m per cell) using GIBS API for Developers.
 }
 \usage{
-get_earthdata(bbox = c(2000000, 400000, 2300000, 700000),
-              res = c("2km", "1km", "500m", "250m"),
-              date = NA, product = "", verbose = FALSE)
+get_earthdata(bbox = NA, res = c("2km", "1km", "500m", "250m"),
+              date = NA, product = "", geocode = c("nominatim", "google"),
+              expand = 1.05, border = 0, verbose = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{bbox}{
-Numeric of length 4. Spatial extent in the notation \code{c(minx,miny,maxx,maxy)}. Can be in utits of meters or degrees. If all absolute values are less than 360, then units are in degrees and projection is EPSG:3857, else units are in meters and projection is EPSG:3413. If \code{bbox=NULL}, then function return list of available products. Default is region of Vaigach Island.
+Numeric of length 4 or character. Spatial extent in the notation \code{c(minx,miny,maxx,maxy)}. Can be in utits of meters or degrees. If all absolute values are less than 360, then units are in degrees and projection is EPSG:3857, else units are in meters and projection is EPSG:3413. If \code{bbox=NULL}, then function return list of available products. If \code{bbox=NA} then boundary box is attempted for taking from session grid. If character, then boundary box is taken from geocoding. Default is region of Vaigach Island.
 }
   \item{res}{
-Character or numeric. Parameter, which is responsible for dimension of output raster image. If character, then zoom is selected using keyword list \code{c("2km", "1km", "500m", "250m")} for EPSG:3413. If \code{res<10} then it is interpreted as zoom for Web Map Tile Service (WMTS). If \code{res>100} then \code{res} is interpeted as preffered image dimension. By default, \code{res=480L}.
+Character or numeric. Parameter, which is responsible for dimension of output raster image. If character, then zoom is selected using keyword list \code{c("2km", "1km", "500m", "250m")} for EPSG:3413. If \code{res<10} then it is interpreted as zoom for Web Map Tile Service (WMTS). If \code{res>100} then \code{res} is interpeted as preffered image dimension. If \code{res=NA} then \code{res=480L}.
 }
   \item{date}{
-Character or \code{"Date"} object. Date for image retrieving. Default is \code{Sys.Date()-2L}.
+Character or \code{"Date"} object. Date for image retrieving. Default is \code{Sys.Date()-1L}.
 }
   \item{product}{
 Character of integer. Data product form GIBS. Currently only MODIS-oriented (corrected reflectance) products are available:
@@ -35,6 +35,15 @@ Character of integer. Data product form GIBS. Currently only MODIS-oriented (cor
 Please check actual list by calling \code{get_earthdata(bbox=NULL)}.
 
 If numeric, then index of item among available products. \link[base:regex]{Regular expressions} can be used to simplify value of product, e.g., case-insensitive "aqua 721", "terra truecolor", "suomi", "SNNP".
+}
+   \item{geocode}{
+Character. Keyword for geocode service. Valid values are \code{"google"}, \code{"nominatim"}.
+}
+  \item{expand}{
+Numeric. Multiplier for plotting panel zoom in relation to extent of plotting geometry. Ignored if geocoding is not applied. Default is \code{1.05}.
+}
+  \item{border}{
+Integer. Value in pixels of fixed margins around plotting geometry. Ignored if geocoding is not applied. Default is \code{0L}.
 }
   \item{verbose}{
 Logical. Value \code{TRUE} may provide some additional information on console. Default is \code{FALSE}.}

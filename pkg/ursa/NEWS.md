@@ -1,3 +1,7 @@
+# version 3.7-9
+
+* Vectors without data table - fixed
+
 # version 3.7-8
 
 * Patches for 'rgdal' usage diring examples on r-forge UNIX building machine.

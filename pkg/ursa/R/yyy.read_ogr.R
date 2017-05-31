@@ -152,6 +152,8 @@
          }
       }
    }
+   if (verbose)
+      print(c('engine.sf'=isSF,'engine.sp'=isSP))
    if ((geocodeStatus)&&(style=="auto")) {
       style <- switch(geocode,nominatim="openstreetmap color"
                              ,google="google terrain color")
@@ -165,25 +167,26 @@
    if (isSF)
       dname <- names(sf::st_agr(obj))
    if (isSP) {
-      dname <- try(colnames(obj@data))
+      dname <- try(colnames(obj@data),silent=TRUE)
       if (inherits(dname,"try-error"))
          dname <- character()
    }
+   hasTable <- length(dname)>0
    dname <- .grep(attr,dname,value=TRUE)
   # str(dname);q()
-   if (!length(dname)) {
+   if ((hasTable)&&(!length(dname))) {
       message("unable to get attributes by name")
      # str(asf)
      # return(invisible(20L))
    }
-   if (TRUE) {
+   if ((TRUE)&&(length(dname))) {
       if (isSF)
          obj <- obj[,dname]
       if (isSP) {
          obj <- obj[,dname]
       }
    }
-   if (TRUE) {
+   if (hasTable) {
      # lc <- Sys.getlocale("LC_CTYPE")
      # Sys.setlocale("LC_CTYPE","Russian")
       for (i in seq_along(dname)) {

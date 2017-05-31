@@ -467,7 +467,7 @@
         }
       }
       else {
-         if (!is.numeric(res)) {
+         if ((!is.numeric(res))||(is.na(res))) {
             res <- max(c(bbox[3]-bbox[1]),(bbox[4]-bbox[2]))/len
            # res <- sqrt((bbox[3]-bbox[1])*(bbox[4]-bbox[2]))/len
             p <- pretty(res)
