@@ -44,9 +44,9 @@
             product <- productList[1]
          else if ((isTerra)&&(is721))
             product <- productList[2]
-         else if ((isAqua)&&(isTrueColor))
+         else if (isAqua) #((isAqua)&&(isTrueColor))
             product <- productList[3]
-         else if ((isTerra)&&(isTrueColor))
+         else if (isTerra) #((isTerra)&&(isTrueColor))
             product <- productList[4]
          else if (isSuomi)
             product <- productList[5]

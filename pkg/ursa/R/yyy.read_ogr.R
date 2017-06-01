@@ -1,10 +1,10 @@
 '.read_ogr' <- function(dsn,engine=c("native","sp","sf"),layer=".*",attr=".+"
-                       ,geocode=c("google","nominatim")
+                       ,geocode=c("nominatim","google")
                        ,grid=NULL,size=NA,expand=1.05,border=0
                        ,lat0=NA,lon0=NA,resetProj=FALSE,style="auto"#,zoom=NA
                        ,verbose=FALSE,...) {
    engine <- match.arg(engine)
-   geocode <- match.arg(geocode)
+  # geocode <- match.arg(geocode)
    geocodeStatus <- FALSE
    toUnloadMethods <- FALSE
    if (is.na(resetProj))
@@ -61,19 +61,65 @@
             isSF <- requireNamespace("sf",quietly=.isPackageInUse())
             isSP <- !isSF
          }
-         if (!isSF)
-            return(31L)
-         obj <- try(sf::st_as_sfc(dsn))
-         if (inherits(obj,"try-error")) {
-            print(class(dsn))
-            return(32L)
+         if (!isSF) # not a good exit
+            return(NULL) ## 31L
+         if (is.array(dsn)) {
+            message("process 'array' by 'sf' -- TODO")
+         }
+         else if (is.numeric(dsn)) {
+            if (length(dsn)==2) { ## point
+              # obj <- sf::st_sfc(sf::st_point(dsn))
+               obj <- sf::st_as_sf(data.frame(lon=dsn[1],lat=dsn[2])
+                                  ,coords=c("lon","lat"),crs=4326)
+            }
+            else if (length(dsn)==4) { ## boundary
+               obj <- matrix(dsn[c(1,2,1,4,3,4,3,2,1,2)],ncol=2,byrow=TRUE)
+              # colnames(obj) <- c("lon","lat")
+               ##~ obj <- sf::st_sf(sf::st_sfc(sf::st_polygon(list(obj)))
+                               ##~ ,coords=c("lon","lat"),crs=4326)
+               obj <- sf::st_sfc(sf::st_multilinestring(list(obj)),crs=4326)
+              # obj <- sf::st_sf(obj)
+            }
+            else
+               obj <- NULL
+            if (!is.null(obj)) {
+               sf::st_crs(obj) <- 4326
+            }
+            else
+               rm(obj)
+         }
+         else {
+            obj <- try(sf::st_as_sfc(dsn))
+            if (inherits(obj,"try-error")) {
+               message(paste("(#32) unable to process object of class"
+                            ,.sQuote(class(dsn))))
+               return(NULL) ## 32L
+            }
          }
       }
       else {
-         obj <- try(methods::as(dsn,"Spatial"))
+         if (is.array(dsn))
+            message("process 'array' by 'sp' -- TODO")
+         else if (is.numeric(dsn)) {
+            if (length(dsn)==2) { ## point
+               obj <- data.frame(lon=dsn[1],lat=dsn[2])
+               sp::coordinates(obj) <- ~lon+lat
+               sp::proj4string(obj) <- sp::CRS("+init=epsg:4326")
+            }
+            else if (length(dsn)==4) { ## boundary
+               obj <- matrix(dsn[c(1,2,1,4,3,4,3,2,1,2)],ncol=2,byrow=TRUE)
+               obj <- sp::SpatialLines(list(sp::Lines(sp::Line(obj),1L))
+                                      ,proj4string=sp::CRS("+init=epsg:4326"))
+            }
+           # else
+           #    obj <- NULL
+         }
+         else
+            obj <- try(methods::as(dsn,"Spatial"))
          if (inherits(obj,"try-error")) {
-            print(class(dsn))
-            return(33L)
+            message(paste("(#33) unable to process object of class"
+                   ,.sQuote(class(dsn))))
+            return(NULL) ## 33L
          }
          else {
             isSP <- TRUE
@@ -93,8 +139,15 @@
             dsn <- .grep("\\.shp$",ziplist,value=TRUE)
          }
          else {
-            da <- .geocode(dsn,service=geocode,area="bounding",select="top"
+            da <- .geocode(dsn,service=geocode[1],area="bounding",select="top"
                           ,verbose=verbose)
+            if ((is.null(da))&&(length(geocode)==2)) {
+               geocode <- geocode[2]
+               da <- .geocode(dsn,service=geocode,area="bounding",select="top"
+                             ,verbose=verbose)
+            }
+            else if (length(geocode)==2)
+               geocode <- geocode[1]
             if (is.null(dim(da)))
                da <- data.frame(lon=da[c("minx","maxx")],lat=da[c("miny","maxy")])
             else
@@ -164,9 +217,12 @@
      # but namespace "methods" is not unloaded, because namespace "sp" is loaded
      # 'as' is not found now
    }
-   if (isSF)
-      dname <- names(sf::st_agr(obj))
-   if (isSP) {
+   if (isSF) {
+      dname <- try(names(sf::st_agr(obj)),silent=TRUE)
+      if (inherits(dname,"try-error"))
+         dname <- character()
+   }
+   else if (isSP) {
       dname <- try(colnames(obj@data),silent=TRUE)
       if (inherits(dname,"try-error"))
          dname <- character()

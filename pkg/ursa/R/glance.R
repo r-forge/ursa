@@ -94,7 +94,7 @@
                    ,verbose=verbose)
    if (inherits(obj,"NULL"))
       return(invisible(NULL))
-   isSF <- inherits(obj,"sf")
+   isSF <- inherits(obj,c("sfc","sf"))
    isSP <- !isSF
    g0 <- attr(obj,"grid")
    toUnloadMethods <- attr(obj,"toUnloadMethods")
@@ -133,6 +133,8 @@
    attr(obj,"grid") <- g0
   # str(attr(basemap,"copyright"))
    session_grid(g0)
+   if (verbose)
+      print(c(sf=isSF,sp=isSP))
    if (isSF) {
       geoType <- unique(as.character(sf::st_geometry_type(obj)))
       obj_geom <- sf::st_geometry(obj)
@@ -385,8 +387,9 @@
                y <- c(g0$miny,g0$maxy)
             sc <- 1/cos(.project(cbind((g0$minx+g0$maxx)/2,y)
                                 ,g0$proj4,inv=TRUE)[,2]*pi/180)
-            x <- 0#ifelse(((isWeb)&&(isStatic)&&(isGoogle)),0.5,0)
-            if (max(sc)/min(sc)>1.5) {
+           # x <- 0#ifelse(((isWeb)&&(isStatic)&&(isGoogle)),0.5,0)
+            x <- ifelse(art %in% "google",0.5,0)
+            if (max(sc)/min(sc)>1.2) {
                y <- (y-g0$miny)/(g0$maxy-g0$miny)
                panel_scalebar(c(x,min(y)),...)
                panel_scalebar(c(x,max(y)),...)

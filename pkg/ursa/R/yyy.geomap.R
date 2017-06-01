@@ -50,7 +50,7 @@
                       ,canTile=canTile,tile=isTile,web=isWeb))
    if (!nchar(geocode))
       geocode <- if (.lgrep("google",style)) "google" else "nominatim"
-   geocodeList <- c("google","nominatim")
+   geocodeList <- c("nominatim","google")
    geocode <- match.arg(geocode,geocodeList)
    geocodeStatus <- FALSE
    if (!((is.numeric(place))&&(length(place)==4))) {

@@ -1,10 +1,15 @@
+# version 3.7-10
+
+* Adapation glance() for if argument "dsn" is "point" 'c(lon,lat)' and
+  "boundary" 'c(minx,miny,maxx,maxy)'
+
 # version 3.7-9
 
 * Vectors without data table - fixed
 
 # version 3.7-8
 
-* Patches for 'rgdal' usage diring examples on r-forge UNIX building machine.
+* Bypass for 'rgdal' usage diring examples on r-forge UNIX building machine.
   E.g.:
   Error in dyn.load(file, DLLpath = DLLpath, ...) : 
   unable to load shared object '/home/rforge/lib/R/3.4/rgdal/libs/rgdal.so':
