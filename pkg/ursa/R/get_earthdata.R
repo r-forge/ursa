@@ -2,9 +2,8 @@
 
 'get_earthdata' <- function(bbox=NA #,c(2000000,400000,2300000,700000)
                            ,res=c("2km","1km","500m","250m")
-                           ,date=NA,product=""
-                           ,geocode = c("nominatim","google")
-                           ,expand=1.05,border=0,verbose=FALSE) {
+                           ,date=NA,product="",geocode = c("nominatim","google")
+                           ,expand=1.05,border=0,display=FALSE,verbose=FALSE) {
    productList <- c('1'="MODIS_Aqua_CorrectedReflectance_Bands721"
                    ,'2'="MODIS_Terra_CorrectedReflectance_Bands721"
                    ,'3'="MODIS_Aqua_CorrectedReflectance_TrueColor"
@@ -63,8 +62,10 @@
    if (is.character(bbox)) {
       g0 <- attr(.read_ogr(bbox,geocode=geocode,expand=expand,border=border
                           ,verbose=verbose),"grid")
-      ll <- with(g0,.project(cbind(c(minx,maxx),c(miny,maxy)),proj4,inv=TRUE))
-      bbox <- c(min(ll[,1]),min(ll[,2]),max(ll[,1]),max(ll[,2]))
+      xy <- with(g0,cbind(c(minx,maxx),c(miny,maxy)))
+      ll <- with(g0,.project(xy,proj4,inv=TRUE))
+     # bbox <- c(min(ll[,1]),min(ll[,2]),max(ll[,1]),max(ll[,2]))
+      bbox <- c(ll)[c(1,3,2,4)]
       if (length(bbox)!=4)
          return(productList)
    }
@@ -146,7 +147,9 @@
       b <- b[-4]
    attr(b,"copyright") <- "Global Imagery Browse Services, NASA/GSFC/ESDIS"
    session_grid(b)
-   b
+   if (!display)
+      return(b)
+   display_brick(b,scale=1,coast=TRUE)
 }
 '.getEarthdataTile' <- function(x=13,y=23,z=4,epsg=c("3413","3857")
                       ,product="MODIS_Aqua_CorrectedReflectance_Bands721"

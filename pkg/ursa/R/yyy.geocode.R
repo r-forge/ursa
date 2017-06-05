@@ -1,5 +1,5 @@
 # http://geo2tag.org/?page_id=671&lang=en_US
-'.geocode' <- function(loc=NULL,area=c("point","bounding"),type=NULL
+'.geocode' <- function(loc=NULL,area=c("bounding","point"),place=""
                       ,select=c("top","expand","all")
                       ,service=c("nominatim","google"),verbose=FALSE) {
    if (is.null(loc)) {
@@ -19,6 +19,12 @@
    }
    area <- match.arg(area)
    service <- match.arg(service)
+   pSea <- "(Sea|\u043C\u043e\u0440\u0435)"
+   isSea <- .lgrep(paste0("(",pSea,"\\s|\\s",pSea,")"),loc)>0
+   if ((area=="bounding")&&(isSea)&&(service=="nominatim")) {
+      cat("Redirecting to 'google' for 'sea' geocoding\n")
+      service <- "google"
+   }
    select <- match.arg(select)
    if (service=="nominatim") {
        ## curl -H Accept-Language:de 'http://nominatim.openstreetmap.org......."
@@ -40,7 +46,18 @@
       ptype <- .gsub(".*\'(.+)\'.*","\\1",ptype)
       pclass <- .grep("^class=",xmlstring,value=TRUE)
       pclass <- .gsub(".*\'(.+)\'.*","\\1",pclass)
-      ptype <- paste0(pclass,":",ptype)
+      prank <- .grep("^place_rank=",xmlstring,value=TRUE)
+      prank <- .gsub(".*\'(.+)\'.*","\\1",prank)
+      if (FALSE) {
+         prank[prank=="8"] <- "state"
+         prank[prank=="10"] <- "region"
+         prank[prank=="12"] <- "county"
+         prank[prank=="16"] <- "city"
+        # prank[prank=="17"] <- "town|island"
+        # prank[prank=="18"] <- "village|"
+        # prank[prank=="19"] <- ""
+     }
+      ptype <- paste(pclass,ptype,prank,sep=":")
       lon <- .grep("lon=",xmlstring,value=TRUE)
       lon <- as.numeric(.gsub(".*\'(.+)\'.*","\\1",lon))
       lat <- .grep("lat=",xmlstring,value=TRUE)
@@ -63,21 +80,51 @@
       importance <- .grep("importance",xmlstring,value=TRUE)
       importance <- as.numeric(.gsub(".*\'(.+)\'.*","\\1",importance))
      # type <- NULL ## debug
-      if (is.character(type)) {
-         typeInd <- which(!is.na(match(ptype,type)))
-         typeInd <- .grep(type,ptype)
+      if ((is.character(place))&&(nchar(place))) {
+         typeInd <- which(!is.na(match(ptype,place)))
+         typeInd <- .grep(place,ptype)
          if (length(typeInd)) {
             bounding <- bounding[typeInd,,drop=FALSE]
             pt <- pt[typeInd,,drop=FALSE]
             importance <- importance[typeInd]
          }
       }
-      important <- which(importance==max(importance))
+      else if (is.numeric(place)) {
+         print("numeric place -- 'place_rank' -- ignored (TODO)")
+      }
+      important <- which(importance==max(importance))[1]
       if (select=="top") {
          lat <- lat[important]
          lon <- lon[important]
          pt <- pt[important,,drop=FALSE]
          bounding <- bounding[important,,drop=FALSE]
+         if ((bounding[,"minx"]==-180)&&(bounding[,"maxx"]==180)) {
+            if (verbose)
+               .elapsedTime("correct bounds (180 degree) -- download")
+            src <- paste0("http://nominatim.openstreetmap.org/search.php?q=",loc
+                         ,"&polygon_text=1"
+                         ,"&format=xml","&bounded=0","&accept-language=en-US,ru")
+            dst <- tempfile() # "nominatim.xml" # tempfile()
+            download.file(URLencode(URLencode(iconv(src,to="UTF-8")))
+                         ,dst,quiet=!verbose)
+            if (verbose)
+               .elapsedTime("correct bounds (180 degree) -- parsing")
+            b <- readLines(dst,encoding="UTF-8",warn=FALSE)
+            b <- unlist(strsplit(b,split="'"))
+            b <- .grep("MULTIPOLYGON",b,value=TRUE)
+            b <- .gsub("(MULTIPOLYGON|\\(|\\))"," ",b)
+            b <- .gsub("(^\\s+|\\s+$)","",b)
+            b <- unlist(strsplit(b,split=","))
+            b <- unlist(strsplit(b,split="\\s+"))
+            b <- b[nchar(b)>0]
+            b <- matrix(as.numeric(b),ncol=2,byrow=TRUE)[,1]
+            bounding[,"minx"] <- min(b[b>0])
+            bounding[,"maxx"] <- max(b[b<0])
+            if (dirname(dst)==tempdir())
+               file.remove(dst)
+            if (verbose)
+               .elapsedTime("correct bounds (180 degree) -- finish")
+         }
          ptype <- ptype[important]
       }
       if (area=="bounding") {
@@ -90,8 +137,8 @@
          if (select=="expand")
             bounding <- c(minx=min(bounding[,1]),miny=min(bounding[,2])
                          ,maxx=max(bounding[,3]),maxy=max(bounding[,4]))
-         if (select=="top")
-            attr(bounding,"type") <- type
+        # if (select=="top")
+        #    attr(bounding,"type") <- ptype
          return(bounding)
       }
       if (area=="point") {

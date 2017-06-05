@@ -1,6 +1,6 @@
-'.geomap' <- function(place=NULL,style="",geocode="",size=NA,zoom="0"
+'.geomap' <- function(loc=NULL,style="",geocode="",size=NA,zoom="0"
                      ,border=0,verbose=FALSE) {
-  # a <- .glance(place)
+  # a <- .glance(loc)
    if (!nchar(style))
       style <- "google static"
    if (is.na(zoom))
@@ -53,25 +53,25 @@
    geocodeList <- c("nominatim","google")
    geocode <- match.arg(geocode,geocodeList)
    geocodeStatus <- FALSE
-   if (!((is.numeric(place))&&(length(place)==4))) {
-      place <- try(.geocode(place,service=geocode,area="bounding"
+   if (!((is.numeric(loc))&&(length(loc)==4))) {
+      loc <- try(.geocode(loc,service=geocode,area="bounding"
                            ,select="top",verbose=verbose))
-      if (inherits(place,"try-error")) {
+      if (inherits(loc,"try-error")) {
          geocode <- switch(geocode,google="nominatim",nominatim="google")
-         place <- try(.geocode(place,service=geocode,area="bounding"
+         loc <- try(.geocode(loc,service=geocode,area="bounding"
                               ,select="top",verbose=verbose))
       }
-      if (!inherits(place,"try-error"))
+      if (!inherits(loc,"try-error"))
          geocodeStatus <- TRUE
    }
-  # print(place)
+  # print(loc)
   # q()
   # copyright <- attr(.untile(),"copyright")[art]
-  # str(unname(place),digits=8)
-   if (length(place)==2)
-      bbox <- c(place,place)
+  # str(unname(loc),digits=8)
+   if (length(loc)==2)
+      bbox <- c(loc,loc)
    else
-      bbox <- place
+      bbox <- loc
   # size <- c(640,640)
    B0 <- 6378137
    B <- B0*pi

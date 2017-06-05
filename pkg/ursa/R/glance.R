@@ -45,7 +45,7 @@
                arglist$engine <- "sp"
                return(do.call(".glance",arglist))
             }
-            if (inherits(obj,"may nbe GDAL???")) { ## not good idea
+            if (inherits(obj,"may be GDAL???")) { ## not good idea
                arglist[[1]] <- quote(obj)
                return(do.call("display",arglist))
             }
@@ -71,12 +71,17 @@
                         ,feature=c("auto","attribute","geometry"),alpha=NA
                         ,basemap.order=c("after","before"),basemap.alpha=NA
                         ,engine=c("native","sp","sf")
-                        ,geocode=c("nominatim","google"),zoom=NA
-                        ,rasterize=FALSE
+                        ,geocode=c("nominatim","google"),place=""
+                        ,zoom=NA,rasterize=FALSE
                         ,verbose=FALSE,...) {
    a <- as.list(match.call())
   # feature <- "geometry"
-   geocode <- match.arg(geocode)
+   if (TRUE) {
+      for (i in seq_along(geocode))
+         geocode[i] <- match.arg(geocode[i],c("nominatim","google"))
+   }
+   else
+      geocode <- match.arg(geocode)
    projClass <- c("longlat","stere","laea","merc")
    projPatt <- paste0("(",paste(projClass,collapse="|"),")")
    staticMap <- c("openstreetmap","google","sputnik")
@@ -89,7 +94,8 @@
   # print(c(dsn=class(dsn)))
   # obj <- .read_ogr(dsn)
    obj <- .read_ogr(dsn=dsn,engine=engine,layer=layer,attr=attr,geocode=geocode
-                   ,grid=grid,size=size,expand=expand,border=border
+                   ,place=place,grid=grid,size=size
+                   ,expand=expand,border=border
                    ,lat0=lat0,lon0=lon0,resetProj=resetProj,style=style#,zoom=NA
                    ,verbose=verbose)
    if (inherits(obj,"NULL"))
@@ -121,7 +127,25 @@
       bbox <- with(g0,c(minx,miny,maxx,maxy))
       lim <- c(.project(matrix(bbox,ncol=2,byrow=TRUE)
                                                ,g0$proj4,inv=TRUE))[c(1,3,2,4)]
-      basemap <- .geomap(lim,style=style,size=size,zoom=zoom,verbose=verbose)
+      for (i in seq(3)) {
+         basemap <- try(.geomap(lim,style=style,size=size,zoom=zoom
+                       ,verbose=verbose))
+         if (!inherits(basemap,"try-error"))
+            break
+         message(paste("failed to get map; trying another service"))
+         if ((.lgrep("sputnik",style))&&(.lgrep("static",style)))
+            style <- .gsub("sputnik","openstreetmap",style)
+         else if ((.lgrep("sputnik",style))&&(.lgrep("tile",style)))
+            style <- .gsub("sputnik","mapnik",style)
+         else if (.lgrep("openstreetmap",style))
+            style <- .gsub("openstreetmap","mapnik",style)
+         else if (.lgrep("google",style))
+            style <- .gsub("google","openstreetmap",style)
+         else if (.lgrep("mapsurfer",style))
+            style <- .gsub("mapsurfer","mapnik",style)
+         else if (.lgrep("mapnik",style))
+            style <- .gsub("mapnik","mapsurfer",style)
+      }
      # str(basemap);q()
       g0 <- ursa(basemap,"grid")
    }
@@ -388,16 +412,17 @@
             sc <- 1/cos(.project(cbind((g0$minx+g0$maxx)/2,y)
                                 ,g0$proj4,inv=TRUE)[,2]*pi/180)
            # x <- 0#ifelse(((isWeb)&&(isStatic)&&(isGoogle)),0.5,0)
+           # print(art)
             x <- ifelse(art %in% "google",0.5,0)
             if (max(sc)/min(sc)>1.2) {
                y <- (y-g0$miny)/(g0$maxy-g0$miny)
-               panel_scalebar(c(x,min(y)),...)
-               panel_scalebar(c(x,max(y)),...)
+               panel_scalebar(pos=c(x,min(y)),...)
+               panel_scalebar(pos=c(x,max(y)),...)
             }
-            else if (isWeb)
+            else # if (isWeb)
                panel_scalebar(pos=c(x,0),...)
-            else
-               panel_scalebar(pos="bottomleft",...)
+           # else
+           #    panel_scalebar(pos="bottomleft",...)
          }
          else
             panel_scalebar(pos="bottomleft",...)

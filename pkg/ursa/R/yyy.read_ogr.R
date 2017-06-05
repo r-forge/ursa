@@ -1,5 +1,5 @@
 '.read_ogr' <- function(dsn,engine=c("native","sp","sf"),layer=".*",attr=".+"
-                       ,geocode=c("nominatim","google")
+                       ,geocode=c("nominatim","google"),place=""
                        ,grid=NULL,size=NA,expand=1.05,border=0
                        ,lat0=NA,lon0=NA,resetProj=FALSE,style="auto"#,zoom=NA
                        ,verbose=FALSE,...) {
@@ -139,8 +139,8 @@
             dsn <- .grep("\\.shp$",ziplist,value=TRUE)
          }
          else {
-            da <- .geocode(dsn,service=geocode[1],area="bounding",select="top"
-                          ,verbose=verbose)
+            da <- .geocode(dsn,service=geocode[1],place=place
+                          ,area="bounding",select="top",verbose=verbose)
             if ((is.null(da))&&(length(geocode)==2)) {
                geocode <- geocode[2]
                da <- .geocode(dsn,service=geocode,area="bounding",select="top"
@@ -148,6 +148,10 @@
             }
             else if (length(geocode)==2)
                geocode <- geocode[1]
+            if (is.null(da)) {
+               cat(paste("unable to geocode request",dQuote(dsn),"\n"))
+               return(NULL)
+            }
             if (is.null(dim(da)))
                da <- data.frame(lon=da[c("minx","maxx")],lat=da[c("miny","maxy")])
             else

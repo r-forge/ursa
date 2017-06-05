@@ -1,3 +1,7 @@
+# version 3.7-11
+
+* geocoding for 180-longitute-objects is more correct, but traffic is higher
+
 # version 3.7-10
 
 * Adapation glance() for if argument "dsn" is "point" 'c(lon,lat)' and

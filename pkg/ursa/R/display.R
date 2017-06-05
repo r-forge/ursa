@@ -3,11 +3,11 @@
 #'glance.ursaRaster' <- function(obj,...) display(obj,...)
 'display' <- function(obj,...)
 {
-   verbose <- FALSE
    arglist <- list(...)
    isBlank <- missing(obj)
    if (isBlank)
       obj <- ursa_new()
+   verbose <- .getPrm(arglist,name="verb(ose)*",default=FALSE)
    toStack <- .getPrm(arglist,name="stack",default=FALSE)
    toBrick <- .getPrm(arglist,name="brick",default=FALSE)
    isStack <- .is.ursa_stack(obj)
@@ -29,8 +29,16 @@
          }
       }
    }
-   if ((!isStack)&&(!.try(obj <- as.ursa(obj))))
+   if ((!isStack)&&(!.try(obj <- as.ursa(obj)))) {
+      if (is.ursa(obj,"grid")) {
+         g0 <- session_grid()
+         session_grid(obj)
+         ret <- display()
+         session_grid(g0)
+         return(ret)
+      }
       return(NULL)
+   }
    if (.is.rgb(obj)) {
       if (verbose)
          print("display_rgb")

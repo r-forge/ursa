@@ -9,7 +9,7 @@ Retrive data from Global Imagery Browse Services (GIBS) using API for Developers
 \usage{
 get_earthdata(bbox = NA, res = c("2km", "1km", "500m", "250m"),
               date = NA, product = "", geocode = c("nominatim", "google"),
-              expand = 1.05, border = 0, verbose = FALSE)
+              expand = 1.05, border = 0, display = FALSE, verbose = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -45,8 +45,12 @@ Numeric. Multiplier for plotting panel zoom in relation to extent of plotting ge
   \item{border}{
 Integer. Value in pixels of fixed margins around plotting geometry. Ignored if geocoding is not applied. Default is \code{0L}.
 }
+  \item{display}{
+Logical. Value \code{TRUE} forced to display image instead of return it. Default is \code{FALSE}.
+}
   \item{verbose}{
-Logical. Value \code{TRUE} may provide some additional information on console. Default is \code{FALSE}.}
+Logical. Value \code{TRUE} may provide some additional information on console. Default is \code{FALSE}.
+}
 }
 \details{
 Argunet \code{method="libcurl"} is used in function \code{\link[utils:download.file]{download.file}} for tile downloading. Please check \code{\link[base:capabilities]{capabilities}("libcurl")}.
@@ -59,7 +63,9 @@ Longitude 180 degrees has a seam in EPSG:3857 (e.g., see \code{bbox=c(170,68,-17
 \value{
 If \code{bbox=NULL}, then character vector of available products.
 
-In other cases, object of class \code{ursaRaster} with RGBA image.
+If \code{display=FALSE} then object of class \code{ursaRaster} with RGBA image.
+
+If \code{display=TRUE} then returned value of \code{\link[ursa:display_brick]{display_brick}}.
 }
 
 \references{
