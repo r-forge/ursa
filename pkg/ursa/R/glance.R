@@ -62,8 +62,8 @@
    }
    invisible(0L)
 }
-'.glance' <- function(dsn,layer=".*",grid=NULL,attr=".+",size=NA,expand=1.05
-                        ,border=0,lat0=NA,lon0=NA,resetProj=FALSE
+'.glance' <- function(dsn,layer=".*",grid=NULL,attr=".+",size=NA,expand=1
+                        ,border=27,lat0=NA,lon0=NA,resetProj=FALSE
                         ##~ ,proj=c("auto","stere","laea","merc","longlat"#,"internal"
                                ##~ ,"google","osm","cycle","transport","mapsurfer"
                                ##~ ,"sputnik")
@@ -71,14 +71,18 @@
                         ,feature=c("auto","attribute","geometry"),alpha=NA
                         ,basemap.order=c("after","before"),basemap.alpha=NA
                         ,engine=c("native","sp","sf")
-                        ,geocode=c("nominatim","google"),place=""
+                        ,geocode="",place=""
                         ,zoom=NA,rasterize=FALSE
                         ,verbose=FALSE,...) {
    a <- as.list(match.call())
   # feature <- "geometry"
    if (TRUE) {
-      for (i in seq_along(geocode))
-         geocode[i] <- match.arg(geocode[i],c("nominatim","google"))
+      geocodeList <- eval(as.list(args(.geocode))$service)
+      if (!nchar(geocode))
+         geocode <- geocodeList
+      else
+         for (i in seq_along(geocode))
+            geocode[i] <- match.arg(geocode[i],geocodeList)
    }
    else
       geocode <- match.arg(geocode)
@@ -95,7 +99,8 @@
   # obj <- .read_ogr(dsn)
    obj <- .read_ogr(dsn=dsn,engine=engine,layer=layer,attr=attr,geocode=geocode
                    ,place=place,grid=grid,size=size
-                   ,expand=expand,border=border
+                  # ,expand=expand,border=border
+                   ,expand=expand,border=0
                    ,lat0=lat0,lon0=lon0,resetProj=resetProj,style=style#,zoom=NA
                    ,verbose=verbose)
    if (inherits(obj,"NULL"))
@@ -103,6 +108,13 @@
    isSF <- inherits(obj,c("sfc","sf"))
    isSP <- !isSF
    g0 <- attr(obj,"grid")
+   if ((FALSE)&&(expand!=1)) {
+      bbox <- with(g0,c(minx,miny,maxx,maxy))
+      .sc <- (expand-1)*sqrt(diff(bbox[c(1,3)])*diff(bbox[c(2,4)]))
+      bbox <- bbox+c(-1,-1,1,1)*.sc
+      g0 <- regrid(g0,bbox=bbox)
+      print(g0)
+   }
    toUnloadMethods <- attr(obj,"toUnloadMethods")
    dname <- attr(obj,"colnames")
    style <- attr(obj,"style")
@@ -124,12 +136,13 @@
   # attr(obj,"dname") <- NULL
    #attr(obj,"geocodeStatus") <- NULL
    if (isWeb) {
+     # print(g0)
       bbox <- with(g0,c(minx,miny,maxx,maxy))
       lim <- c(.project(matrix(bbox,ncol=2,byrow=TRUE)
                                                ,g0$proj4,inv=TRUE))[c(1,3,2,4)]
       for (i in seq(3)) {
          basemap <- try(.geomap(lim,style=style,size=size,zoom=zoom
-                       ,verbose=verbose))
+                       ,border=border,verbose=verbose))
          if (!inherits(basemap,"try-error"))
             break
          message(paste("failed to get map; trying another service"))
@@ -147,15 +160,18 @@
             style <- .gsub("mapnik","mapsurfer",style)
       }
      # str(basemap);q()
-      g0 <- ursa(basemap,"grid")
+     # print(g0)
+      g0 <- ursa(basemap,"grid") ## 0605 TODO
+     # print(g0)
    }
    else {
-      if (border>0)
-         g0 <- regrid(g0,border=border)
+     # if (border>0)
+     #    g0 <- regrid(g0,border=border)
       basemap <- NULL
    }
+  # if (border>0)
+  #    g0 <- regrid(g0,border=border)
    attr(obj,"grid") <- g0
-  # str(attr(basemap,"copyright"))
    session_grid(g0)
    if (verbose)
       print(c(sf=isSF,sp=isSP))
@@ -285,7 +301,7 @@
          else if (geocode=="nominatim")
             style <- "openstreetmap static color"
          else
-            style <- "google static color"
+            style <- "openstreetmap static color"
       }
       basemap.alpha <- 1
       alpha <- 0
@@ -396,7 +412,7 @@
          }
          if (toCoast)
             panel_coastline(cline)
-         if (geocodeStatus)
+         if ((geocodeStatus)||(!length(ct)))
             panel_graticule(gline,margin=c(T,T,F,F))
          else
             panel_graticule(gline)

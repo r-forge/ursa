@@ -8,7 +8,7 @@ Retrive data from Global Imagery Browse Services (GIBS) using API for Developers
 }
 \usage{
 get_earthdata(bbox = NA, res = c("2km", "1km", "500m", "250m"),
-              date = NA, product = "", geocode = c("nominatim", "google"),
+              date = NA, product = "", geocode = "",
               expand = 1.05, border = 0, display = FALSE, verbose = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -37,7 +37,7 @@ Please check actual list by calling \code{get_earthdata(bbox=NULL)}.
 If numeric, then index of item among available products. \link[base:regex]{Regular expressions} can be used to simplify value of product, e.g., case-insensitive "aqua 721", "terra truecolor", "suomi", "SNNP".
 }
    \item{geocode}{
-Character. Keyword for geocode service. Valid values are \code{"google"}, \code{"nominatim"}.
+Character. Keyword for geocode service. Valid values are \code{"google"}, \code{"nominatim"}. Default is \code{""}; several services are considered in the case of failure.
 }
   \item{expand}{
 Numeric. Multiplier for plotting panel zoom in relation to extent of plotting geometry. Ignored if geocoding is not applied. Default is \code{1.05}.

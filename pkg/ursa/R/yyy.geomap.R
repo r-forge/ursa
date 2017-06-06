@@ -48,9 +48,9 @@
    if (verbose)
       print(data.frame(proj=proj,art=art,color=isColor,static=isStatic
                       ,canTile=canTile,tile=isTile,web=isWeb))
+   geocodeList <- eval(as.list(args(.geocode))$service)
    if (!nchar(geocode))
       geocode <- if (.lgrep("google",style)) "google" else "nominatim"
-   geocodeList <- c("nominatim","google")
    geocode <- match.arg(geocode,geocodeList)
    geocodeStatus <- FALSE
    if (!((is.numeric(loc))&&(length(loc)==4))) {
@@ -135,7 +135,8 @@
          g0 <- regrid(g0,mul=1/m,expand=m)
       else {
          bbox <- with(g0,c(minx,miny,maxx,maxy))
-         m2 <- with(g0,sqrt((maxx-minx)*(maxy-miny)))/2
+         m2 <- if (m<1) 1 else with(g0,sqrt((maxx-minx)*(maxy-miny)))/2
+        # print(c(m=m,m2=m2,expand=m*m2))
          g0 <- regrid(g0,mul=1/m,bbox=bbox+c(-1,-1,1,1)*m*m2)
       }
       zoom <- zman

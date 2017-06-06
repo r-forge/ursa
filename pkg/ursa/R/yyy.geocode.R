@@ -1,4 +1,6 @@
 # http://geo2tag.org/?page_id=671&lang=en_US
+
+# geocodeList <- eval(as.list(args(.geocode))$service)
 '.geocode' <- function(loc=NULL,area=c("bounding","point"),place=""
                       ,select=c("top","expand","all")
                       ,service=c("nominatim","google"),verbose=FALSE) {
@@ -98,7 +100,8 @@
          lon <- lon[important]
          pt <- pt[important,,drop=FALSE]
          bounding <- bounding[important,,drop=FALSE]
-         if ((bounding[,"minx"]==-180)&&(bounding[,"maxx"]==180)) {
+         dg <- 1
+         if ((bounding[,"minx"]<=(-180+dg))&&(bounding[,"maxx"]>=(180-dg))) {
             if (verbose)
                .elapsedTime("correct bounds (180 degree) -- download")
             src <- paste0("http://nominatim.openstreetmap.org/search.php?q=",loc
@@ -137,8 +140,10 @@
          if (select=="expand")
             bounding <- c(minx=min(bounding[,1]),miny=min(bounding[,2])
                          ,maxx=max(bounding[,3]),maxy=max(bounding[,4]))
-        # if (select=="top")
+         if (select=="top") {
         #    attr(bounding,"type") <- ptype
+            bounding <- bounding[1,,drop=TRUE]
+         }
          return(bounding)
       }
       if (area=="point") {

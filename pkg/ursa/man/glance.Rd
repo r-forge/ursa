@@ -12,11 +12,11 @@ Command line utility for spatial view of raster or vector GIS file.
 glance(...)
 
 # non-public
-.glance(dsn, layer = ".*", grid = NULL, attr = ".+", size = NA, expand = 1.05,
-        border = 0, lat0 = NA, lon0 = NA, resetProj = FALSE, style = "auto",
+.glance(dsn, layer = ".*", grid = NULL, attr = ".+", size = NA, expand = 1,
+        border = 27, lat0 = NA, lon0 = NA, resetProj = FALSE, style = "auto",
         feature = c("auto", "attribute", "geometry"), alpha = NA,
         basemap.order = c("after", "before"), basemap.alpha = NA,
-        engine = c("native", "sp", "sf"), geocode = c("nominatim", "google"),
+        engine = c("native", "sp", "sf"), geocode = "",
         place="", zoom = NA, rasterize = FALSE,verbose = FALSE, ...)
 
 }
@@ -39,10 +39,10 @@ Character. Pattern for attribute selection by name using \link[base:regex]{regul
 Integer of length 1 or 2 or character of length 1. Size of plotting panel in pixels. If character, then parsed to integer of length 1 or 2. Length 2 is used only for web cartography. If length 1, then \code{size} defines width of panel, and height is defined automatically. If integer, then width of panel for plotting in pixels. Default is \code{NA}; for web cartogrpaphy value of maximal size of static maps, and code{640} for other cases.
 }
   \item{expand}{
-Numeric. Multiplier for plotting panel zoom in relation to extent of plotting geometry. Default is \code{1.05}.
+Numeric. Multiplier for plotting panel zoom in relation to extent of plotting geometry. Default is \code{1.0}.
 }
   \item{border}{
-Integer. Value in pixels of fixed margins around plotting geometry. Default is \code{0L}.
+Integer. Value in pixels of fixed margins around plotting geometry. Default is \code{27L}.
 }
   \item{lat0}{
 Numeric. Parallel os zero distortion. If \code{NA}, then parallel os zero distortion is determed from object geometry. Actual for \code{"+proj=stere"} projections. Default is \code{NA}.
@@ -88,7 +88,7 @@ Character. The opacity of plotted object. Default is \code{NA}; 0.75 for \code{b
 Character keyword. Forcing to vector files processing by functions from package \pkg{sp} (\code{engine="sp"}) or package \pkg{sf} (\code{engine="sf"}, if \pkg{sf} is installed). Default is \code{"native"}; if \code{dsn} is \code{Spatial} object or if \pkg{sf} is not installed, then \code{"sp"} is used.
 }
    \item{geocode}{
-Character. Keyword for geocode service. Valid values are \code{"google"}, \code{"nominatim"}. If \code{dsn} is character and file \code{dsn} not found, then trying to interpret \code{dsn} as a request to geocode service. The output is only basemap of web cartogrpaphy. Default is \code{"nominatim"}. Is \code{style} is not specified, then "Google Static Map" is used for \code{geocode="google"}, and "OpenStreetMap static map images" for \code{geocode="nominatim"}.
+Character. Keyword for geocode service. Valid values are \code{"google"}, \code{"nominatim"}. If \code{dsn} is character and file \code{dsn} not found, then trying to interpret \code{dsn} as a request to geocode service. The output is only basemap of web cartogrpaphy. Default is \code{""}; several services are considered in the case of failure. Is \code{style} is not specified, then "Google Static Map" is used for \code{geocode="google"}, and "OpenStreetMap static map images" for \code{geocode="nominatim"}.
 }
    \item{place}{
 Character. Type of geographical object (river, island) in the geocoding request. If \code{geocode} service is \code{"nominatim"}, then \code{place} is searched among attributes "class" and "type". Default is \code{""}; any object is acceptable.

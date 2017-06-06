@@ -2,7 +2,7 @@
 
 'get_earthdata' <- function(bbox=NA #,c(2000000,400000,2300000,700000)
                            ,res=c("2km","1km","500m","250m")
-                           ,date=NA,product="",geocode = c("nominatim","google")
+                           ,date=NA,product="",geocode=""
                            ,expand=1.05,border=0,display=FALSE,verbose=FALSE) {
    productList <- c('1'="MODIS_Aqua_CorrectedReflectance_Bands721"
                    ,'2'="MODIS_Terra_CorrectedReflectance_Bands721"

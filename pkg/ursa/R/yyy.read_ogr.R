@@ -1,9 +1,10 @@
 '.read_ogr' <- function(dsn,engine=c("native","sp","sf"),layer=".*",attr=".+"
-                       ,geocode=c("nominatim","google"),place=""
-                       ,grid=NULL,size=NA,expand=1.05,border=0
+                       ,geocode="",place=""
+                       ,grid=NULL,size=NA,expand=1,border=27
                        ,lat0=NA,lon0=NA,resetProj=FALSE,style="auto"#,zoom=NA
                        ,verbose=FALSE,...) {
    engine <- match.arg(engine)
+  # print(c(expand=expand,border=border))
   # geocode <- match.arg(geocode)
    geocodeStatus <- FALSE
    toUnloadMethods <- FALSE
@@ -139,6 +140,9 @@
             dsn <- .grep("\\.shp$",ziplist,value=TRUE)
          }
          else {
+            geocodeList <- eval(as.list(args(.geocode))$service)
+            if ((length(geocode)==1)&&(!nchar(geocode)))
+               geocode <- geocodeList
             da <- .geocode(dsn,service=geocode[1],place=place
                           ,area="bounding",select="top",verbose=verbose)
             if ((is.null(da))&&(length(geocode)==2)) {
@@ -537,7 +541,7 @@
       bbox[c(2,4)] <- mean(bbox[c(2,4)])+c(-1,1)*expand*diff(bbox[c(2,4)])/2
    }
    else {
-      .sc <- (expand-1)*sqrt(diff(bbox[c(1,3)])*diff(bbox[c(2,4)]))
+      .sc <- (expand-1)*sqrt(diff(bbox[c(1,3)])*diff(bbox[c(2,4)]))/2
       bbox <- bbox+c(-1,-1,1,1)*.sc
    }
    if (is.null(g0)) {
@@ -549,6 +553,9 @@
       g1$proj4 <- proj4
       g0 <- regrid(g1,bbox=unname(bbox[c("xmin","ymin","xmax","ymax")])
                   ,border=0) ## border=border
+   }
+   if (border>0) {
+      g0 <- regrid(g0,border=border)
    }
    attr(obj,"grid") <- g0
    attr(obj,"toUnloadMethods") <- toUnloadMethods
