@@ -74,19 +74,22 @@
    if (!anyNA(res))
       return(res)
    patt <- "(<=|<|=|>|\\(|\\[|;|,|\\]|\\))" ## <= < = > >= [ ] ( ) ; ,
-   if (.lgrep(patt,value)>0) {
+   found <- sum(grepl(patt,value,perl=TRUE))
+   if (found>0) {
       ivalue <- .gsub(patt," ",value)
       l1 <- length(ivalue)
       ivalue <- paste(ivalue,collapse=" ")
       ivalue <- unlist(strsplit(ivalue,split="\\s+"))
       ivalue <- ivalue[nchar(ivalue)>0]
+      invalid <- ((found<l1)||(length(unique(c(table(ivalue))))>1)) ## 20170609 intro
+     # print(c(invalid=invalid))
       ivalue <- unique(ivalue) ## added 20161101
       ##~ leadingZero <- .grep("^0[1-9]",ivalue)
       ##~ if(!length(leadingZero))
          ##~ res <- as.numeric(ivalue)
       ##~ else
       res <- ivalue
-      if (anyNA(res)) {
+      if ((anyNA(res))||(invalid)) {
          return(value)
       }
       l2 <- length(ivalue)
@@ -107,6 +110,7 @@
          return(value)
    }
    ivalue <- res
+   print(c(l1=l1,l2=l2))
    if (l1==l2)
       return(ivalue)
    if ((l1-1)*2!=l2)

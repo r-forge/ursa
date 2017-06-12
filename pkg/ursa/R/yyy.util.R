@@ -335,4 +335,4 @@
 '.argv0dir' <- function() dirname(.argv0path())
 '.dQuote' <- function(ch) paste0("\"",ch,"\"")
 '.sQuote' <- function(ch) paste0("'",ch,"'")
-'.require' <- function(pkg) do.call("require",list(pkg,quietly=TRUE))
+'.require' <- function(pkg,quietly=TRUE) do.call("require",list(pkg,quietly=quietly))

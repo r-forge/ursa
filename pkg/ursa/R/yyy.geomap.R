@@ -1,8 +1,14 @@
 '.geomap' <- function(loc=NULL,style="",geocode="",size=NA,zoom="0"
                      ,border=0,verbose=FALSE) {
-  # a <- .glance(loc)
+  # if (!nchar(style))
+  #    style <- "google static"
+   geocodeList <- eval(as.list(args(.geocode))$service)
+   if (!nchar(geocode))
+      geocode <- if (.lgrep("google",style)) "google" else "nominatim"
+   geocode <- match.arg(geocode,geocodeList)
    if (!nchar(style))
-      style <- "google static"
+      style <- paste(switch(geocode,nominatim="openstreetmap",gooogle="google"
+                           ,"mapnik"),"color")
    if (is.na(zoom))
       zoom <- "0"
    staticMap <- c("openstreetmap","google","sputnik")
@@ -48,12 +54,8 @@
    if (verbose)
       print(data.frame(proj=proj,art=art,color=isColor,static=isStatic
                       ,canTile=canTile,tile=isTile,web=isWeb))
-   geocodeList <- eval(as.list(args(.geocode))$service)
-   if (!nchar(geocode))
-      geocode <- if (.lgrep("google",style)) "google" else "nominatim"
-   geocode <- match.arg(geocode,geocodeList)
    geocodeStatus <- FALSE
-   if (!((is.numeric(loc))&&(length(loc)==4))) {
+   if (!((is.numeric(loc))&&(length(loc) %in% c(4,2)))) {
       loc <- try(.geocode(loc,service=geocode,area="bounding"
                            ,select="top",verbose=verbose))
       if (inherits(loc,"try-error")) {
@@ -64,8 +66,8 @@
       if (!inherits(loc,"try-error"))
          geocodeStatus <- TRUE
    }
-  # print(loc)
-  # q()
+   if ((is.numeric(loc))&&(length(loc) %in% c(2)))
+      geocodeStatus <- TRUE
   # copyright <- attr(.untile(),"copyright")[art]
   # str(unname(loc),digits=8)
    if (length(loc)==2)
@@ -83,7 +85,7 @@
    proj4 <- paste("","+proj=merc +a=6378137 +b=6378137"
                  ,"+lat_ts=0.0",paste0("+lon_0=",lon_0)
                  ,"+x_0=0.0 +y_0=0 +k=1.0"
-                 ,"+units=m +nadgrids=@null +wktext  +no_defs")
+                 ,"+units=m +nadgrids=@null +wktext +no_defs")
    bbox <- matrix(bbox,ncol=2,byrow=TRUE)
    bbox <- .project(bbox,proj4)
    bbox <- c(xmin=bbox[1,1],ymin=bbox[1,2],xmax=bbox[2,1],ymax=bbox[2,2])
@@ -92,11 +94,11 @@
    s <- 2*6378137*pi/(2^(1:21+8))
    zman <- zoom
    zoom <- which.min(abs(s-res))
-   for (i in c(zoom,zoom-1)) {
+   for (i in seq(zoom,1,by=-1)) {
       if (i<1)
          break
       res <- s[i]
-      g0 <- regrid(ursa_grid(),res=res,proj4=proj4#,border=border
+      g0 <- regrid(ursa_grid(),res=res,proj4=proj4,border=border
                   ,setbound=unname(bbox[c("xmin","ymin","xmax","ymax")]))
      # if (isTile)
      #    break
@@ -155,9 +157,8 @@
       g0 <- regrid(g0,maxy=+B)
    if (g0$miny<(-B))
       g0 <- regrid(g0,miny=-B)
-   if (border>0) {
-      g0 <- regrid(g0,border=border)
-   }
+  # if (border>0)
+  #    g0 <- regrid(g0,border=border)
    cxy <- with(g0,c(minx+maxx,miny+maxy)/2)
    center <- c(.project(cxy,proj4,inv=TRUE))
    bound <- .project(with(g0,rbind(c(minx,miny),c(maxx,maxy))),g0$proj4

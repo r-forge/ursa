@@ -34,7 +34,7 @@
 }
 
 '.as.raster2' <- function(obj,...) { # faster
-   max <- .getPrm(list(...),name=".*",default=255)
+   maxv <- .getPrm(list(...),name=".*",default=255)
    verbose <- FALSE
    nb <- nband(obj)
    if (verbose)
@@ -53,7 +53,7 @@
    dim(a) <- c(1,dim(a))
    ind <- which(!is.na(c(s)))
    res <- rep(NA_character_,prod(dim(s)))
-   res[ind] <- c(grDevices::as.raster(a[,ind,,drop=FALSE],max=max))
+   res[ind] <- c(grDevices::as.raster(a[,ind,,drop=FALSE],max=maxv))
    dim(res) <- dim(obj)[c(1,2)]
    class(res) <- class(as.raster(1))
    if (verbose)

@@ -45,7 +45,9 @@
    turn <- .getPrm(arglist,name="turn",kwd=kwd,default=FALSE)
    useRaster <- .getPrm(arglist,name="useRaster",kwd=kwd,default=NA)
    trim <- .getPrm(arglist,name="trim",kwd=kwd,default=0L)
-   abbrev <- .getPrm(arglist,name="abbrev",class=list("integer","logical"),kwd=kwd,default=24L)
+   abbrev <- .getPrm(arglist,name="abbrev",class=list("integer","logical")
+                    ,kwd=kwd,default=24L)
+   opacity <- .getPrm(arglist,name="opacity",kwd=kwd,default=NA_real_)
    if (is.logical(abbrev))
       abbrev <- 24L*as.integer(abbrev)
    verbose <- .getPrm(arglist,name="verb(ose)*",kwd=kwd,default=FALSE)
@@ -63,12 +65,13 @@
                             ,cex=cex,adj=adj,las=las,forceLabel=forceLabel
                             ,lomar=lomar,himar=himar,turn=turn
                             ,useRaster=useRaster,trim=trim,abbrev=abbrev
-                            ,verbose=verbose)
+                            ,opacity=opacity,verbose=verbose)
 }
 '.legend_colorbar' <- function(ct,units="",labels=NA,align=NULL,shift=1 # labels=11L
                             ,cex=1,adj=NA,las=1
                             ,forceLabel=FALSE,lomar=0,himar=0,turn=FALSE
-                            ,useRaster=NA,trim=0L,abbrev=24L,verbose=FALSE)
+                            ,useRaster=NA,trim=0L,abbrev=24L,opacity=NA
+                            ,verbose=FALSE)
 {
    if (.skipPlot(FALSE))
       return(NULL)
@@ -347,11 +350,16 @@
    ocol <- substr(col,8,9)
   # print(all(nchar(ocol)==2))
   # print(any(as.integer(paste0("0x",ocol))))
-   opacity <- ((all(nchar(ocol)==2))&&((any(as.integer(paste0("0x",ocol))<255))))
+   if (is.na(opacity))
+      opacity <- ((all(nchar(ocol)==2))&&((any(as.integer(paste0("0x",ocol))<255))))
+   if (opacity<=0)
+      opacity <- 0
+   else if (opacity>=1)
+      opacity <- 1
    if (side %in% c(1,3))
    {
       if (opacity) {
-         colBW <- colorRampPalette(c("black","white"))(16)
+         colBW <- colorRampPalette(c("grey40","grey80","white","white"))(16)
          if (side==3)
             colBW <- rev(colBW)
          nu <- length(colBW)
@@ -377,7 +385,7 @@
    else if (side %in% c(2,4))
    {
       if (opacity) {
-         colBW <- colorRampPalette(c("black","white"))(16)
+         colBW <- colorRampPalette(c("grey40","grey80","white","white"))(16)
          if (side==2)
             colBW <- rev(colBW)
          nu <- length(colBW)

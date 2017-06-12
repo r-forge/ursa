@@ -13,25 +13,31 @@
    download.file(tile,fname,mode="wb",quiet=!verbose)
    return(tile)
 }
+# https://leaflet-extras.github.io/leaflet-providers/preview/
+# https://leaflet-extras.github.io/leaflet-providers/leaflet-providers.js
 '.untile' <- function(z=4,x=10,y=3,server=""
                      ,osm=c('1'="osm",'2'="cycle",'3'="transport"
                               ,'4'="mapsurfer",'5'="sputnik",'6'="thunderforest"
                               ,'7'="carto")
                      ,ursa=FALSE,verbose=FALSE) {
    s <- list()
-   s$mapnik <- paste0("http://",letters[sample(seq(3),1)]
-                  ,".tile.openstreetmap.org/{z}/{x}/{y}.png")
-   s$cycle <- paste0("http://",letters[sample(seq(3),1)]
-                    ,".tile.opencyclemap.org/cycle/{z}/{x}/{y}.png")
-   s$transport <- paste0("http://",letters[sample(seq(3),1)]
-                        ,".tile2.opencyclemap.org/transport/{z}/{x}/{y}.png")
+   s$mapnik <- "http://{abc}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+   s$cycle <- "http://{abc}.tile.opencyclemap.org/cycle/{z}/{x}/{y}.png"
+   s$osmfr <- "http://{abc}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png"
+   s$transport <- "http://{abc}.tile2.opencyclemap.org/transport/{z}/{x}/{y}.png"
    s$mapsurfer <- "http://korona.geog.uni-heidelberg.de/tiles/roads/x={x}&y={y}&z={z}"
    s$sputnik <- "http://tiles.maps.sputnik.ru/tiles/kmt2/{z}/{x}/{y}.png"
-   s$thunderforest <- paste0("https://",letters[sample(seq(3),1)]
-                            ,".tile.thunderforest.com/landscape/{z}/{x}/{y}.png")
+   s$thunderforest <- "https://{abc}.tile.thunderforest.com/landscape/{z}/{x}/{y}.png"
+  # https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png?apikey=<insert-your-apikey-here> 
    s$carto <- "http://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
-   s$kosmosnimki <- paste0("http://",letters[sample(seq(4),1)]
-                          ,".tile.osm.kosmosnimki.ru/kosmo/{z}/{x}/{y}.png")
+   s$kosmosnimki <- "http://{abcd}.tile.osm.kosmosnimki.ru/kosmo/{z}/{x}/{y}.png"
+   s$Esri.Ocean <- "https://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}.jpg"
+   s$Esri.Topo <- "http://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}.jpg"
+  # leaflet demo: app_id=tFZyfnyJAmhfh5gdoGcR&app_code=vJ8o9OCQ1o0Y2wwbRspzSA
+   s$HERE.Aerial <- paste0("https://{1234}.aerial.maps.cit.api.here.com/maptile"
+                          ,"/2.1/maptile/newest/hybrid.day/{z}/{x}/{y}/256/png8?"
+                          ,"app_id=",getOption("HEREtiles")$app_id
+                          ,"&app_code=",getOption("HEREtiles")$app_code,"&lg=eng")
    osmCr <- "\uA9 OpenStreetMap contributors"
    copyright <- rep(osmCr,length(s))
    names(copyright) <- names(s)
@@ -42,20 +48,48 @@
            ,", GIScience Research Group @ Heidelberg University")
    copyright["sputnik"] <- paste0(osmCr,", \uA9 \u0420\u043E\u0441\u0442\u0435\u043B\u0435\u043A\u043E\u043C")
    copyright["thunderforest"] <- paste0("Maps \uA9 Thunderforest, Data ",osmCr)
-   copyright["carto"] <- paste(osmCr,"\uA9 CARTO")
-  # copyright["kosmosnimki"] <- paste0(osmCr)
+   copyright["carto"] <- paste0(osmCr,", \uA9 CARTO")
+   copyright["kosmosnimki"] <- paste0(osmCr,", \uA9 ScanEx")
+   copyright["Esri.Ocean"] <- "\uA9 Esri: GEBCO, NOAA, CHS, OSU, UNH, CSUMB, National Geographic, DeLorme, NAVTEQ, and Esri"
+   copyright["Esri.Topo"] <- "\uA9 Esri - contributors to Esri World Topo Map"
+   copyright["HERE.Aerial"] <- "Map \uA9 1987-2014 HERE"
+   copyright["osmfr"] <- paste("\uA9 Openstreetmap France",osmCr)
    if (!(server %in% names(s))) {
       ret <- names(s)
       attr(ret,"copyright") <- copyright
       return(ret)
    }
    tile <- .gsub("{z}",z,.gsub("{y}",y,.gsub("{x}",x,s[[server]])))
-   fname <- tempfile(fileext=".png")
-   download.file(tile,fname,mode="wb",quiet=!verbose)
+   if (.lgrep("\\{..+}",tile)) {
+      dom <- unlist(strsplit(.gsub2("\\{(.+)\\}","\\1",gsub("\\{.\\}","",tile)),""))
+      tile <- .gsub("{.+}",sample(dom,1),tile)
+   }
+   fext <- .gsub("^.+\\.(.+)$","\\1",basename(tile))
+   if (!(fext %in% c("png","jpg","jpeg"))) {
+      if ((.lgrep("png8",basename(tile)))||
+             (server %in% c("mapsurfer")))
+         fext <- "png"
+      else if (server %in% c("nosuchnameyet"))
+         fext <- "jpg"
+      else {
+         cat(paste("Unable to detect either 'png' or 'jpg' format of tile:"
+                  ,s[[server]],"\n"))
+         stop()
+      }
+   }
+   fname <- tempfile(fileext=".tile")
+   a <- try(download.file(tile,fname,mode="wb"))#,quiet=!verbose))
+   if (inherits(a,"try-error")) {
+      message(a)
+      stop()
+   }
   # message(tile)
   # download.file(tile,fname,method="curl",mode="wb",quiet=FALSE
   #              ,extra="-H Accept-Language:de")
-   a <- 255*png::readPNG(fname)
+   if (fext %in% c("png"))
+      a <- 255*png::readPNG(fname)
+   else if (fext %in% c("jpg","jpeg"))
+      a <- 255*jpeg::readJPEG(fname)
    file.remove(fname)
    if (TRUE) {
       dima <- dim(a)

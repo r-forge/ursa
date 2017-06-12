@@ -15,7 +15,7 @@ legend_colorbar(...)
 .legend_colorbar(ct, units = "", labels = NA, align = NULL, shift = 1, cex = 1,
                  adj = NA, las = 1, forceLabel = FALSE, lomar = 0, himar = 0,
                  turn = FALSE, useRaster = NA, trim = 0L, abbrev = 24L,
-                 verbose = FALSE)
+                 opacity = NA, verbose = FALSE)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -39,11 +39,12 @@ legend_colorbar(...)
       \cr \code{useRaster} \tab \code{useRaster} \tab \emph{See below}.
       \cr \code{trim} \tab \code{trim} \tab \emph{See below}.
       \cr \code{abbrev} \tab \code{abbrev} \tab \emph{See below}.
+      \cr \code{opacity} \tab \code{opacity} \tab \emph{See below}.
       \cr \code{verb(ose)*} \tab \code{verbose} \tab \emph{See below}.
    }
    }
   \item{ct}{
-  \code{ursaRaster}object with color table or object of class \code{ursaColorTable}. First argument in \code{legend_colorbar}; name can be omitted.
+  \code{ursaRaster} object with color table or object of class \code{ursaColorTable}. First argument in \code{legend_colorbar}; name can be omitted.
   }
   \item{units}{
   Argument of class \code{character} or \code{expression} with matching name \code{"unit(s)*"} in \code{legend_colorbar}. Text, which is used as a caption for color bars. If \code{character} then caption is displayed in bold. Default is \code{""}: no caption.
@@ -74,6 +75,9 @@ legend_colorbar(...)
 Argument of values {0L, 1L, 2L} with matching name \code{"trim"} in \code{legend_colorbar}. Determs behaviour for plotting marginal labels. If \code{0L}, then marginal labels are displayed as is. If \code{1L}, then marginal labels are shifted inside of color bar to prevent their outcrop to the panel(s) limits. If \code{2L} then outctopped labels are not displayed.}
   \item{abbrev}{
   Argument of class \code{integer} or \code{logical} with matching name \code{"abbrev"} in \code{legend_colorbar}. \code{TRUE} is interpeted as default value. \code{FALSE} is interpreted as \code{0L}. If positive, then labels are abbreviated, and this argument is passed as argument \code{minlength} to function \code{\link[base:abbreviate]{abbreviate}}: \code{abbreviate(label, minlength=abbrev, strict=TRUE)}. If abbreviation is failed (e.g., non-ASCII symbols), the \code{\link[base:subset]{subset}} is applied. 
+  }
+  \item{opacity}{
+  Argument of class \code{integer} or \code{logical} with matching name \code{"abbrev"} in \code{legend_colorbar}. Responses for shading of color bar. If \code{FALSE} or \code{0}, then no shading. If \code{TRUE} or \code{1}, then shading is forced. Default is \code{NA}; if semi-transparence is detected, then shading is applied.
   }
   \item{verbose}{Argument of class \code{logical} with matching name \code{"verb(ose)*"} in \code{legend_colorbar}. Value \code{TRUE} may provide some additional information on console. Default is \code{FALSE}.
 }

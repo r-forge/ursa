@@ -15,13 +15,13 @@
       }
       else
          a <- readLines("http://ip-api.com/line")
-      pt <- c(lon=as.numeric(a[9]),lat=as.numeric(a[8]))
-      attr(pt,"type") <- "IP"
+      pt <- cbind(lon=as.numeric(a[9]),lat=as.numeric(a[8]))
+      rownames(pt) <- "ip-api.com"
       return(pt)
    }
    area <- match.arg(area)
    service <- match.arg(service)
-   pSea <- "(Sea|\u043C\u043e\u0440\u0435)"
+   pSea <- "(Sea|\u043C\u043e\u0440\u0435)" ## 'MOPE' in Russian
    isSea <- .lgrep(paste0("(",pSea,"\\s|\\s",pSea,")"),loc)>0
    if ((area=="bounding")&&(isSea)&&(service=="nominatim")) {
       cat("Redirecting to 'google' for 'sea' geocoding\n")
@@ -100,6 +100,8 @@
          lon <- lon[important]
          pt <- pt[important,,drop=FALSE]
          bounding <- bounding[important,,drop=FALSE]
+      }
+      if (select %in% c("expand","top")) {
          dg <- 1
          if ((bounding[,"minx"]<=(-180+dg))&&(bounding[,"maxx"]>=(180-dg))) {
             if (verbose)
@@ -114,8 +116,8 @@
                .elapsedTime("correct bounds (180 degree) -- parsing")
             b <- readLines(dst,encoding="UTF-8",warn=FALSE)
             b <- unlist(strsplit(b,split="'"))
-            b <- .grep("MULTIPOLYGON",b,value=TRUE)
-            b <- .gsub("(MULTIPOLYGON|\\(|\\))"," ",b)
+            b <- .grep("MULTI(POLYGON|LINESTRING)",b,value=TRUE)
+            b <- .gsub("(MULTI(POLYGON|LINESTRING)|\\(|\\))"," ",b)
             b <- .gsub("(^\\s+|\\s+$)","",b)
             b <- unlist(strsplit(b,split=","))
             b <- unlist(strsplit(b,split="\\s+"))
@@ -128,7 +130,8 @@
             if (verbose)
                .elapsedTime("correct bounds (180 degree) -- finish")
          }
-         ptype <- ptype[important]
+         if (select=="top")
+            ptype <- ptype[important]
       }
       if (area=="bounding") {
          bounding <- bounding[,c(3,1,4,2),drop=FALSE]
@@ -150,9 +153,9 @@
          if (nrow(pt)==1) {
             ptype <- rownames(pt)
             ptname <- colnames(pt)
-           # pt <- c(pt)
+            pt <- c(pt)
            # names(pt) <- ptname
-            attr(pt,"type") <- ptype
+           # attr(pt,"type") <- ptype
          }
          return(pt)
       }

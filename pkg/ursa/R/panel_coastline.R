@@ -7,7 +7,7 @@
 'compose_coastline' <- function(...) {
    arglist <- list(...)
    kwd <- "coast(line)*"
-   coastline <- .getPrm(arglist,name=paste0("(",kwd,"|decor$)")
+   coastline <- .getPrm(arglist,name=paste0("(",kwd,"|decor)$")
                        ,class=list("integer","logical"),default=TRUE)
    if (any(!coastline)) {
       res <- list(coast_xy=NULL)
@@ -374,7 +374,7 @@
       return(NULL)
    arglist <- list(...)
    kwd <- "coast(line)*"
-   coastline <- .getPrm(arglist,name=paste0("(",kwd,"|decor)")
+   coastline <- .getPrm(arglist,name=paste0("^(",kwd,"|decor)$")
                        ,class=list("integer","logical","ursaCoastLine")[1:2]
                        ,default=TRUE)
    ##~ if (inherits(coastline,"ursaCoastLine")) {

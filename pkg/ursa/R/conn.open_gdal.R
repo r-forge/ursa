@@ -8,9 +8,8 @@
    opW <- options(warn=0-!verbose) ## to prevent 'GeoTransform values not available'
    a <- try(rgdal::GDALinfo(fname,returnStats=FALSE,returnRAT=FALSE
                 ,returnColorTable=TRUE,returnCategoryNames=TRUE),silent=TRUE)
-   options(opW)
    if (inherits(a,"try-error")) {
-      if (file.exists(fname)) # 20170529 patch for failure with 'rgdal'
+      if ((!.lgrep("\\.(rds)$",fname))&&(file.exists(fname))) # 20170529 patch for failure with 'rgdal'
          return(ursa_new()) 
       return(NULL) 
    }

@@ -20,7 +20,16 @@
       ret <- panel_raster(obj,...)
    }
    else if (inherits(obj,"Spatial")) {
-      ret <- sp::plot(obj,...)
+      oprj <- sp::proj4string(obj)
+      sprj <- session_proj4()
+      oprj2 <- .gsub("\\+wktext\\s","",oprj)
+      sprj2 <- .gsub("\\+wktext\\s","",sprj)
+     # arglist <- list(...) ## remove dupe of 'add=TRUE'
+     # str(arglist)
+      if (!identical(oprj2,sprj2))
+         ret <- sp::plot(sp::spTransform(obj,sprj),add=TRUE,...)
+      else
+         ret <- sp::plot(obj,add=TRUE,...)
    }
    else if (inherits(obj,"sfc")) {
       ret <- plot(obj,add=TRUE,...)

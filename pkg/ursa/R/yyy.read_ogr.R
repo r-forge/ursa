@@ -486,18 +486,18 @@
             t_srs <- paste("","+proj=merc +a=6378137 +b=6378137"
                           ,"+lat_ts=0.0",paste0("+lon_0=",lon_0)
                           ,"+x_0=0.0 +y_0=0 +k=1.0"
-                          ,"+units=m +nadgrids=@null +wktext  +no_defs")
+                          ,"+units=m +nadgrids=@null +wktext +no_defs")
          else if (proj %in% c("longlat"))
             t_srs <- "+proj=longlat +datum=WGS84 +no_defs"
          else if (proj %in% c("zzzgoogle")) {
             if (FALSE)#(selection %in% c(1000L,3L))
                t_srs <- paste("","+proj=merc +a=6378137 +b=6378137"
                              ,"+lat_ts=0.0 +lon_0=180.0 +x_0=0.0 +y_0=0 +k=1.0"
-                             ,"+units=m +nadgrids=@null +wktext  +no_defs")
+                             ,"+units=m +nadgrids=@null +wktext +no_defs")
             else
                t_srs <- paste("","+proj=merc +a=6378137 +b=6378137"
                              ,"+lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0"
-                             ,"+units=m +nadgrids=@null +wktext  +no_defs")
+                             ,"+units=m +nadgrids=@null +wktext +no_defs")
          }
          else
             t_srs <- NULL
@@ -556,6 +556,13 @@
    }
    if (border>0) {
       g0 <- regrid(g0,border=border)
+   }
+   if ((FALSE)&&(isWeb)) {
+      bbox <- with(g0,.project(cbind(c(minx,maxx),c(miny,maxy))
+                              ,proj4,inv=TRUE))[c(1,3,2,4)]
+      basemap <- .geomap(bbox,border=0,style=style,verbose=verbose)
+      g0 <- ursa(basemap,"grid")
+      attr(obj,"basemap") <- basemap
    }
    attr(obj,"grid") <- g0
    attr(obj,"toUnloadMethods") <- toUnloadMethods

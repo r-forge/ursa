@@ -73,11 +73,12 @@
                        ,default=1)
       labcex <- .getPrm(arglist,name="(lab)*cex",default=0.85)
       method <- .getPrm(arglist,name="method",default="flattest")
+      labels <- .getPrm(arglist,name="label(s)",class="character",default=NULL)
       if ((isFilled)&&(!isLabel))
          drawL <- FALSE
       else
          drawL <- TRUE
-      contour(res,levels=res$lev,col=col,lwd=lwd,lty=lty
+      contour(res,levels=res$lev,col=col,lwd=lwd,lty=lty,labels=labels
                        ,labcex=labcex,method=method,drawlabels=drawL,add=TRUE)
    }
    res$col
@@ -96,16 +97,31 @@
    }
    if (verbose)
       print(data.frame(sc=sc,before=before))
+   
    '.smooth' <- function(obj,sc) {
+      proposed <- FALSE ## added 20170608 (TRUE)
       if (sc<=1)
          return(obj)
      # verbose <- TRUE
       g2 <- regrid(g0,mul=sc,border=1)
       cov <- .getPrm(arglist,name="cover",default=NA_real_)
+      if (proposed) {
+         ct2 <- ursa(obj,"colortable")
+         if (length(ct2)) {
+            print(ursa(obj,"table"))
+            obj <- discolor(obj)
+         }
+      }
       obj <- regrid(obj,border=1,cover=cov,resample=1+1e-6,fillNA=TRUE
                    ,verbose=verbose)
       obj <- regrid(obj,mul=sc,cover=cov,cascade=TRUE,verbose=verbose)
       obj <- regrid(obj,g2,verbose=verbose)
+      if (proposed) {
+         if (length(ct2)) {
+            obj <- colorize(obj,colortable=ct2,lazyload=FALSE)
+           # obj <- as.integer(round(obj));ursa(obj,"colortable") <- ct2
+         }
+      }
       obj
    }
    if (before) {
@@ -154,12 +170,13 @@
       class(ct2) <- "ursaColorTable"
    }
    obj <- reclass(obj,ct)
-  # print("HERE");q()
+  # obj <- reclass(discolor(obj),ct) ## 20170608 proposed
    res <- as.matrix(obj,coords=TRUE)
    val <- .deintervale(ct)
    oneBreak <- length(val)==1
-   dval <- if (oneBreak) 0 else diff(val)/2
-   if ((category)&&(.is.nominal(ct))) {
+   if (!is.character(val))
+      dval <- if (oneBreak) 0 else diff(val)/2
+   if (((category)&&(.is.nominal(ct)))||(is.character(val))) {
       val2 <- .deintervale(ct2)
       dval2 <- diff(val2)
       res$lev <- c(head(val2,1)-head(dval2,1),val2,tail(val2,1)+tail(dval2,1))

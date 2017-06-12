@@ -30,17 +30,15 @@
                      ,arglist[[1]]))
          return(do.call(".glance",arglist))
       else {
-         b <- open_gdal(arglist[[1]])
-         if (!is.null(b)) {
-            close(b)
-            do.call("display",arglist)
-         }
-         else if (.lgrep("\\.rds$",basename(arglist[[1]]))) {
+         if (.lgrep("\\.rds$",basename(arglist[[1]]))) {
             obj <- readRDS(arglist[[1]])
            # print(class(obj))
            # print(inherits(obj,"Spatial"))
             if ((inherits(obj,"Spatial"))||
                 (.lgrep("Spatial(Points|Lines|Polygons)DataFrame",class(obj)))) {
+              # print(isS4(obj))
+              # print(loadedNamespaces())
+              # requireNamespace("methods")
                arglist[[1]] <- quote(obj) ## 'GADM' distributes 'rds'
                arglist$engine <- "sp"
                return(do.call(".glance",arglist))
@@ -49,6 +47,12 @@
                arglist[[1]] <- quote(obj)
                return(do.call("display",arglist))
             }
+         }
+         b <- open_gdal(arglist[[1]])
+         if (!is.null(b)) {
+            close(b)
+            do.call("display",arglist)
+            return(invisible(2L))
          }
         # else if (requireNamespace("sf",quietly=.isPackageInUse())) {
         #    do.call(".glance",arglist)
@@ -97,6 +101,11 @@
    engine <- match.arg(engine)
   # print(c(dsn=class(dsn)))
   # obj <- .read_ogr(dsn)
+   S4 <- isS4(dsn)
+   if (S4) {
+      .require("methods",quietly=.isPackageInUse())
+     # requireNamespace("methods",quietly=.isPackageInUse())
+   }
    obj <- .read_ogr(dsn=dsn,engine=engine,layer=layer,attr=attr,geocode=geocode
                    ,place=place,grid=grid,size=size
                   # ,expand=expand,border=border
@@ -115,7 +124,7 @@
       g0 <- regrid(g0,bbox=bbox)
       print(g0)
    }
-   toUnloadMethods <- attr(obj,"toUnloadMethods")
+   toUnloadMethods <- if (S4) TRUE else attr(obj,"toUnloadMethods")
    dname <- attr(obj,"colnames")
    style <- attr(obj,"style")
    geocodeStatus <- attr(obj,"geocodeStatus")
@@ -136,7 +145,6 @@
   # attr(obj,"dname") <- NULL
    #attr(obj,"geocodeStatus") <- NULL
    if (isWeb) {
-     # print(g0)
       bbox <- with(g0,c(minx,miny,maxx,maxy))
       lim <- c(.project(matrix(bbox,ncol=2,byrow=TRUE)
                                                ,g0$proj4,inv=TRUE))[c(1,3,2,4)]
@@ -158,6 +166,8 @@
             style <- .gsub("mapsurfer","mapnik",style)
          else if (.lgrep("mapnik",style))
             style <- .gsub("mapnik","mapsurfer",style)
+         else
+            style <- "mapnik"
       }
      # str(basemap);q()
      # print(g0)
@@ -165,12 +175,10 @@
      # print(g0)
    }
    else {
-     # if (border>0)
-     #    g0 <- regrid(g0,border=border)
+      if (border>0)
+         g0 <- regrid(g0,border=border)
       basemap <- NULL
    }
-  # if (border>0)
-  #    g0 <- regrid(g0,border=border)
    attr(obj,"grid") <- g0
    session_grid(g0)
    if (verbose)
@@ -358,7 +366,7 @@
             if (isSF)
                panel_plot(obj_geom)
             if (isSP)
-               panel_plot(obj,add=TRUE)
+               panel_plot(obj)#,add=TRUE)
          }
          else if (rasterize){
             ct[[i]] <- panel_raster(colorize(res[[i]]),alpha=alpha)
@@ -392,18 +400,18 @@
             }
             else {
                if (.lgrep("polygon",geoType)) {
-                  panel_plot(obj,col=col,border=bg.polygon,lwd=0.1,lty="blank"
-                            ,add=TRUE)
-                  panel_plot(obj,col="transparent",border=bg.polygon,lwd=0.1
-                            ,add=TRUE)
+                  panel_plot(obj,col=col,border=bg.polygon,lwd=0.1,lty="blank")
+                           # ,add=TRUE)
+                  panel_plot(obj,col="transparent",border=bg.polygon,lwd=0.1)
+                           # ,add=TRUE)
                }
                if (.lgrep("point",geoType)) {
-                  panel_plot(obj,col=bg.point,bg=col,pch=21,lwd=0.25,cex=1
-                            ,add=TRUE)
+                  panel_plot(obj,col=bg.point,bg=col,pch=21,lwd=0.25,cex=1)
+                           # ,add=TRUE)
                }
                if (.lgrep("line",geoType)) {
-                  panel_plot(obj,lwd=3,col=bg.line,add=TRUE)
-                  panel_plot(obj,lwd=2,col=col,add=TRUE)
+                  panel_plot(obj,lwd=3,col=bg.line)#,add=TRUE)
+                  panel_plot(obj,lwd=2,col=col)#,add=TRUE)
                }
             }
          }
@@ -521,17 +529,17 @@
             else {
                if (.lgrep("polygon",geoType)) {
                   panel_plot(obj[i,],col=unname(ct[[i]]$colortable[ct[[i]]$ind])
-                            ,lwd=0.1,add=TRUE)
+                            ,lwd=0.1)#,add=TRUE)
                }
                if (.lgrep("point",geoType)) {
                   panel_plot(obj[i,]
                             ,col="black",bg=unname(ct[[i]]$colortable[ct[[i]]$ind])
-                            ,pch=21,lwd=0.25,cex=1,add=TRUE)
+                            ,pch=21,lwd=0.25,cex=1)#,add=TRUE)
                }
                if (.lgrep("line",geoType)) {
                   panel_plot(obj[i,],lwd=3,col="#0000007F",add=TRUE)
                   panel_plot(obj[i,],lwd=2
-                            ,col=unname(ct[[i]]$colortable[ct[[i]]$ind]),add=TRUE)
+                            ,col=unname(ct[[i]]$colortable[ct[[i]]$ind]))#,add=TRUE)
                }
             }
          }

@@ -123,8 +123,10 @@
       }
       else {
          if (length(cname)==length(ct)) { ## categoral
-           # rel$value <- as.numeric(cname) ## 20170401 removed
-            rel$value <- seq_along(as.numeric(cname))-1L ## 20170401 added
+           # m1: OK for 'obj <- colorize(x,lazy=TRUE);reclass(obj)'
+           # m2: WANTED TEST!
+            rel$value <- as.numeric(cname) ## m1, 20170401 removed
+           # rel$value <- seq_along(as.numeric(cname))-1L ## m2, 20170401 added
             rel$breakvalue <- NULL
          }
          else { ## interval

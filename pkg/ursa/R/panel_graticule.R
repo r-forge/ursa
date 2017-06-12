@@ -742,7 +742,7 @@
    if (.skipPlot())
       return(NULL)
    arglist <- list(...)
-   kwd <- "(graticule|grid(line)*)"
+   kwd <- "^(graticule|grid(line)*)$"
    figure <- getOption("ursaPngFigure")
    gridline <- .getPrm(arglist,name=kwd,class=list("integer","logical")
                       ,default=TRUE)

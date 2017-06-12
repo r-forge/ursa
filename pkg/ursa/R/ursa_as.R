@@ -127,7 +127,7 @@
       .epsg3857 <- paste("","+proj=merc +a=6378137 +b=6378137"
                         ,"+lat_ts=0.0 +lon_0=0.0"
                         ,"+x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null"
-                        ,"+wktext  +no_defs")
+                        ,"+wktext +no_defs")
       ll <- matrix(as.numeric(attr(obj,"bb")),ncol=2,byrow=TRUE)
       bbox <- .project(list(x=ll[,2],y=ll[,1]),.epsg3857)
      # bbox <- c(bbox$x[1],bbox$y[1],bbox$x[2],bbox$y[2])

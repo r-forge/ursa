@@ -112,8 +112,9 @@
    }
   # if ((length(ct)>0)&&(obj$category)) {
    if (length(ct)>0) {
-      if ((is.ursa(obj))&&(!.is.category(obj))) # if ((is.ursa(obj))&&(!attr(obj$value,"category"))) 
+      if ((is.ursa(obj))&&(!.is.category(obj))) { # if ((is.ursa(obj))&&(!attr(obj$value,"category")))
          return(reclass(obj,ct,verbose=verbose)) ## recursive!!!
+      }
       val <- .deintervale(ct)
       if (is.character(val)) {
          if (FALSE)

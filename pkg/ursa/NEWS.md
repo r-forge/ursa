@@ -1,6 +1,11 @@
+# version 3.7-12
+
+* Minor changes for geocoded glance()
+
 # version 3.7-11
 
-* geocoding for 180-longitute-objects is more correct, but traffic is higher
+* 'nominatim' geocoding for 180-longitute-objects is more correct,
+  but traffic is higher
 
 * alternate geocoding service in the case of base one failure
 
