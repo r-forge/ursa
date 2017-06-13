@@ -33,11 +33,10 @@
    s$kosmosnimki <- "http://{abcd}.tile.osm.kosmosnimki.ru/kosmo/{z}/{x}/{y}.png"
    s$Esri.Ocean <- "https://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}.jpg"
    s$Esri.Topo <- "http://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}.jpg"
-  # leaflet demo: app_id=tFZyfnyJAmhfh5gdoGcR&app_code=vJ8o9OCQ1o0Y2wwbRspzSA
    s$HERE.Aerial <- paste0("https://{1234}.aerial.maps.cit.api.here.com/maptile"
                           ,"/2.1/maptile/newest/hybrid.day/{z}/{x}/{y}/256/png8?"
-                          ,"app_id=",getOption("HEREtiles")$app_id
-                          ,"&app_code=",getOption("HEREtiles")$app_code,"&lg=eng")
+                          ,"app_id=",getOption("HEREapp")$id
+                          ,"&app_code=",getOption("HEREapp")$code,"&lg=eng")
    osmCr <- "\uA9 OpenStreetMap contributors"
    copyright <- rep(osmCr,length(s))
    names(copyright) <- names(s)
@@ -78,7 +77,7 @@
       }
    }
    fname <- tempfile(fileext=".tile")
-   a <- try(download.file(tile,fname,mode="wb"))#,quiet=!verbose))
+   a <- try(download.file(tile,fname,mode="wb",quiet=!verbose))
    if (inherits(a,"try-error")) {
       message(a)
       stop()
