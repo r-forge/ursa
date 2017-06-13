@@ -154,7 +154,7 @@
             ptype <- rownames(pt)
             ptname <- colnames(pt)
             pt <- c(pt)
-           # names(pt) <- ptname
+            names(pt) <- ptname
            # attr(pt,"type") <- ptype
          }
          return(pt)

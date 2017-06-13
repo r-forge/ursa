@@ -9,7 +9,8 @@
    a <- try(rgdal::GDALinfo(fname,returnStats=FALSE,returnRAT=FALSE
                 ,returnColorTable=TRUE,returnCategoryNames=TRUE),silent=TRUE)
    if (inherits(a,"try-error")) {
-      if ((!.lgrep("\\.(rds)$",fname))&&(file.exists(fname))) # 20170529 patch for failure with 'rgdal'
+      # 20170529 patch for failure with 'rgdal' at r-forge
+      if ((FALSE)&&(!.lgrep("\\.(rds)$",fname))&&(file.exists(fname))) ## 20170529
          return(ursa_new()) 
       return(NULL) 
    }
