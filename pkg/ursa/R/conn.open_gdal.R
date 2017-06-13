@@ -10,8 +10,11 @@
                 ,returnColorTable=TRUE,returnCategoryNames=TRUE),silent=TRUE)
    if (inherits(a,"try-error")) {
       # 20170529 patch for failure with 'rgdal' at r-forge
-      if ((FALSE)&&(!.lgrep("\\.(rds)$",fname))&&(file.exists(fname))) ## 20170529
-         return(ursa_new()) 
+      if (.Platform$OS.type=="unix"){
+         message("This problem has been appeared only for Unix OS since May 2017")
+         if ((!.lgrep("\\.(rds)$",fname))&&(file.exists(fname))) {## 20170529
+            return(ursa_new())
+      } 
       return(NULL) 
    }
    else
