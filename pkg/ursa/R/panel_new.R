@@ -50,7 +50,7 @@
       sc <- getOption("ursaPngScale")
       if (!is.numeric(sc))
          sc <- 1
-      g2 <- regrid(mul=sc/8,resetGrid=TRUE)
+      g2 <- regrid(mul=sc/8,resetGrid=TRUE,tolerance=0.999) ## let rough grid
       dima <- dim(g2)
       minc <- 247/255
       maxc <- 1.000

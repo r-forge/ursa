@@ -7,6 +7,7 @@
                  ,class=list(c("list","ursaRaster"),"ursaRaster"))
    isList <- .is.ursa_stack(img)
    if ((is.null(img))||((!isList)&&(ursa_blank(img)))) { ## was 'missing'
+  # if (is.null(img)) { 
       panel_new(...)
       panel_decor(...)
       return(NULL)
@@ -87,7 +88,7 @@
       {
          if ((verbose)&&(k==0)) {
             pb <- ursaProgressBar(min=0,max=ifelse(isRGB,nl,nb))
-            setUrsaProgressBar(pb,k)
+           # setUrsaProgressBar(pb,k)
          }
          k <- k+1L
         # if (i %in% skip)

@@ -68,9 +68,6 @@
 }
 '.glance' <- function(dsn,layer=".*",grid=NULL,attr=".+",size=NA,expand=1
                         ,border=27,lat0=NA,lon0=NA,resetProj=FALSE
-                        ##~ ,proj=c("auto","stere","laea","merc","longlat"#,"internal"
-                               ##~ ,"google","osm","cycle","transport","mapsurfer"
-                               ##~ ,"sputnik")
                         ,style="auto"
                         ,feature=c("auto","attribute","geometry"),alpha=NA
                         ,basemap.order=c("after","before"),basemap.alpha=NA
@@ -92,8 +89,9 @@
       geocode <- match.arg(geocode)
    projClass <- c("longlat","stere","laea","merc")
    projPatt <- paste0("(",paste(projClass,collapse="|"),")")
-   staticMap <- c("openstreetmap","google","sputnik")
-   tilePatt <- paste0("(",paste0(unique(c(staticMap,.untile())),collapse="|"),")")
+   staticMap <- c("openstreetmap","google","sputnikmap")
+   tileClass <- c(staticMap,.tileService())
+   tilePatt <- paste0("(",paste0(unique(c(staticMap,tileClass)),collapse="|"),")")
    basemap.order <- match.arg(basemap.order)
    after <- basemap.order %in% "after"
    before <- basemap.order %in% "before"
@@ -128,12 +126,28 @@
    dname <- attr(obj,"colnames")
    style <- attr(obj,"style")
    geocodeStatus <- attr(obj,"geocodeStatus")
+  # obj <- sp::SpatialLinesDataFrame(obj,data=data.frame(uid="test it")) ## for debug
+   noAttr <- geocodeStatus |
+       ((isSF)&&(inherits(obj,"sfc"))) |
+       ((isSP)&&(!inherits(obj,paste0("Spatial",c("Points","Lines","Polygons")
+                                     ,"DataFrame"))))
+   toColor <- ((is.numeric(dsn))||(noAttr))
+   if ((toColor)&&(!.lgrep("(colo(u)*r|gr[ae]y(scale)*)",style)))
+      style <- paste(style,"color")
+   else if ((!toColor)&&(!.lgrep("(colo(u)*r|gr[ae]y(scale)*)",style)))
+      style <- paste(style,"greyscale")
    if (!.lgrep(projPatt,style))
       proj <- "auto"
    else
       proj <- .gsub2(projPatt,"\\1",style)
-   if (!.lgrep(tilePatt,style))
+   if (!FALSE) { ## dev
+      s1 <- .tileService()
+      s2 <- strsplit(style,split="\\s+")
+      s <- expand.grid(s1,s2)
+   }
+   if (!.lgrep(tilePatt,style)) {
       art <- "none"
+   }
    else {
       art <- .gsub2(tilePatt,"\\1",style)
       proj <- "merc"
@@ -148,15 +162,17 @@
       bbox <- with(g0,c(minx,miny,maxx,maxy))
       lim <- c(.project(matrix(bbox,ncol=2,byrow=TRUE)
                                                ,g0$proj4,inv=TRUE))[c(1,3,2,4)]
+      ostyle <- style
       for (i in seq(3)) {
-         basemap <- try(.geomap(lim,style=style,size=size,zoom=zoom
-                       ,border=border,verbose=verbose))
+         if ((style!=ostyle)||(i==1))
+            basemap <- try(.geomap(lim,style=style,size=size,zoom=zoom
+                          ,border=border,verbose=verbose))
          if (!inherits(basemap,"try-error"))
             break
-         message(paste("failed to get map; trying another service"))
-         if ((.lgrep("sputnik",style))&&(.lgrep("static",style)))
-            style <- .gsub("sputnik","openstreetmap",style)
-         else if ((.lgrep("sputnik",style))&&(.lgrep("tile",style)))
+         .style <- style
+         if (.lgrep("sputnikmap",style)) #&&(.lgrep("static",style)))
+            style <- .gsub("sputnikmap","openstreetmap",style)
+         else if (.lgrep("sputnik",style)) #&&(.lgrep("tile",style)))
             style <- .gsub("sputnik","mapnik",style)
          else if (.lgrep("openstreetmap",style))
             style <- .gsub("openstreetmap","mapnik",style)
@@ -168,19 +184,25 @@
             style <- .gsub("mapnik","mapsurfer",style)
          else
             style <- "mapnik"
+         if (style==ostyle)
+            next
+         message(paste("failed to get map; trying another service:"
+                      ,.style,"->",style))
       }
-     # str(basemap);q()
-     # print(g0)
-      g0 <- ursa(basemap,"grid") ## 0605 TODO
+      if (inherits(basemap,"try-error"))
+         basemap <- NULL
+      else
+         g0 <- ursa(basemap,"grid") ## 0605 TODO
      # print(g0)
    }
-   else {
-      if (border>0)
-         g0 <- regrid(g0,border=border)
+   else
       basemap <- NULL
-   }
+   if ((is.null(basemap))&&(border>0))
+      g0 <- regrid(g0,border=border)
    attr(obj,"grid") <- g0
    session_grid(g0)
+  # xy <- with(g0,.project(rbind(c(minx,miny),c(maxx,maxy)),proj4,inv=TRUE))
+  # display(blank="white",col="black");q()
    if (verbose)
       print(c(sf=isSF,sp=isSP))
    if (isSF) {
@@ -225,72 +247,6 @@
    if ((rasterize)&&(nchar(Sys.which("gdal_rasterize")))) {
       res <- .rasterize(obj,feature=feature,verbose=verbose)
    }
-   else if (FALSE) { ## remove this branch after tests
-      '.removeShapefile' <- function(bn) {
-         file.remove(.dir(path=dirname(bn)
-                     ,pattern=paste0(basename(bn),"\\.(cpg|dbf|prj|shp|shx)$")
-                     ,full.names=TRUE))
-      }
-      ftemp <- .maketmp() #tempfile(pattern="") #tempfile(pattern="") ## ".\\tmp1"
-      shpname <- paste0(ftemp,".shp")
-      .removeShapefile(ftemp)
-      if (isSF) {
-         sf::st_write(obj_geom,shpname,quiet=TRUE)
-      }
-      if (isSP) {
-         da <- obj@data
-         obj@data <- data.frame(id=seq(nrow(da)))
-         rgdal::writeOGR(obj,dirname(ftemp),basename(ftemp),driver="ESRI Shapefile")
-         obj@data <- da
-         rm(da)
-      }
-      if (feature=="attribute") {
-         cmd <- with(g0,paste("gdal_rasterize","-a id"
-                             ,"-tr",resx,resy
-                             ,"-te",minx,miny,maxx,maxy
-                             ,"-of ENVI -ot Int16",ifelse(verbose,"","-q")
-                             ,shpname,ftemp))
-         if (verbose)
-            message(cmd)
-         system(cmd)
-         va <- read_envi(ftemp)
-         .removeShapefile(ftemp)
-         envi_remove(ftemp)
-         va[va==0] <- NA
-        # res <- vector("list",length(dname))
-         res <- lapply(dname,function(x){
-            if (isSF)
-               y <- reclass(va,src=seq(nrow(obj)),dst=obj[[x]])
-            if (isSP)
-               y <- reclass(va,src=seq(nrow(obj)),dst=obj[[x]])
-            names(y) <- x
-            y
-         })
-      }
-      else if (feature=="geometry") {
-         nr <- ifelse(isSF,nrow(obj),nrow(obj))
-         res <- lapply(seq(nr),function(i){
-            cmd <- with(g0,paste("gdal_rasterize","-a id"
-                                ,"-where",paste0(.dQuote("id"),"=",i)
-                                ,"-tr",resx,resy
-                                ,"-te",minx,miny,maxx,maxy
-                                ,"-of ENVI -ot Int16",ifelse(verbose,"","-q")
-                                ,shpname,ftemp))
-            if (verbose)
-               message(cmd)
-            system(cmd)
-            va <- read_envi(ftemp)
-            envi_remove(ftemp)
-            va[va==0] <- NA
-            va
-         })
-         .removeShapefile(ftemp)
-      }
-     # if (isSF)
-     #    isSF <- FALSE
-     # if (isSP)
-     #    isSP <- FALSE
-   }
    ##~ print(session_grid())
    if (isSF)
       geoType <- unique(as.character(sf::st_geometry_type(obj)))
@@ -305,11 +261,11 @@
    if (geocodeStatus) { ## move to 'visualization' block
       if (style=="auto") {
          if (geocode=="google")
-            style <- "google static color"
+            style <- "google static"
          else if (geocode=="nominatim")
-            style <- "openstreetmap static color"
+            style <- "openstreetmap static"
          else
-            style <- "openstreetmap static color"
+            style <- "openstreetmap static"
       }
       basemap.alpha <- 1
       alpha <- 0
@@ -325,8 +281,10 @@
         # print(i)
         # print(dname[i])
         # str(obj[,dname[i]][,1])
-         if (isSF)
-            val <- obj[,dname[i],drop=TRUE][,1]
+         if (isSF) {
+           # val <- obj[,dname[i],drop=TRUE][,1] ## sf>=0.4
+            val <- obj[,dname[i],drop=TRUE]#[,1] ## sf>=0.5
+         }
          if (isSP)
             val <- obj@data[,dname[i],drop=TRUE]
          if ((is.character(cpg))&&(is.character(val)))
@@ -363,10 +321,12 @@
          }
         # if ((!length(ct))||(all(is.na(ct[[i]]$index)))) {
          if (!length(ct)) {
-            if (isSF)
+            if (isSF) {
                panel_plot(obj_geom)
-            if (isSP)
+            }
+            if (isSP) {
                panel_plot(obj)#,add=TRUE)
+            }
          }
          else if (rasterize){
             ct[[i]] <- panel_raster(colorize(res[[i]]),alpha=alpha)

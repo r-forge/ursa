@@ -25,8 +25,9 @@
    }
    isNative <- engine=="native"
    if (!((is.character(dsn))&&(length(dsn)==1))) {
-      if (inherits(dsn,paste0("Spatial",c("Points","Lines","Polygons")
-                             ,"DataFrame"))) {
+      spcl <- paste0("Spatial",c("Points","Lines","Polygons"))
+      spcl <- c(spcl,paste0(spcl,"DataFrame"))
+      if (inherits(dsn,spcl)) {
          if ((!toUnloadMethods)&&(!("package:methods" %in% search()))) {
            # .require("methods")
             opW <- options(warn=1)
@@ -65,7 +66,7 @@
          if (!isSF) # not a good exit
             return(NULL) ## 31L
          if (is.array(dsn)) {
-            message("process 'array' by 'sf' -- TODO")
+            message("process 'array' by 'sf' -- TODO (dilemma: raster is array)")
          }
          else if (is.numeric(dsn)) {
             if (length(dsn)==2) { ## point
@@ -89,18 +90,22 @@
             else
                rm(obj)
          }
+         else if (inherits(dsn,c("sfc","sf"))) {
+            obj <- dsn
+            dsn <- class(obj)
+         }
          else {
             obj <- try(sf::st_as_sfc(dsn))
             if (inherits(obj,"try-error")) {
                message(paste("(#32) unable to process object of class"
-                            ,.sQuote(class(dsn))))
+                            ,.sQuote(paste(class(dsn),collapse=" | "))))
                return(NULL) ## 32L
             }
          }
       }
       else {
          if (is.array(dsn))
-            message("process 'array' by 'sp' -- TODO")
+            message("process 'array' by 'sp' -- TODO (dilemma: raster is array)")
          else if (is.numeric(dsn)) {
             if (length(dsn)==2) { ## point
                obj <- data.frame(lon=dsn[1],lat=dsn[2])
@@ -157,16 +162,16 @@
                return(NULL)
             }
             if (is.null(dim(da)))
-               da <- data.frame(lon=da[c("minx","maxx")],lat=da[c("miny","maxy")])
+               da <- da[c("minx","miny","maxx","maxy")]
             else
-               da <- data.frame(lon=da[,c("minx","maxx")],lat=da[,c("miny","maxy")])
+               da <- da[,c("minx","miny","maxx","maxy")]
+            da <- matrix(da[c(1,2,1,4,3,4,3,2,1,2)],ncol=2,byrow=TRUE)
             if (isSF) {
-               obj <- sf::st_as_sf(da,coords=c("lon","lat"),crs=4326)
+               obj <- sf::st_sfc(sf::st_multilinestring(list(da)),crs=4326)
             }
             if (isSP) {
-               obj <- da
-               sp::coordinates(obj) <- ~lon+lat
-               sp::proj4string(obj) <- "+init=epsg:4326"
+               obj <- sp::SpatialLines(list(sp::Lines(sp::Line(da),1L))
+                                      ,proj4string=sp::CRS("+init=epsg:4326"))
             }
             geocodeStatus <- TRUE
          }
@@ -197,8 +202,9 @@
                                        ,.sQuote(layer),collapse=", ")),quote=FALSE)
             return(NULL)
          }
-         if (isSF)
+         if (isSF) {
             obj <- sf::st_read(dsn,layer=layer,quiet=TRUE)
+         }
          else {
             obj <- rgdal::readOGR(dsn,layer,verbose=FALSE)
          }
@@ -254,8 +260,11 @@
      # lc <- Sys.getlocale("LC_CTYPE")
      # Sys.setlocale("LC_CTYPE","Russian")
       for (i in seq_along(dname)) {
-         if (isSF)
-            da <- obj[,dname[i],drop=TRUE][,,drop=TRUE]
+         if (isSF) {
+            da <- obj[,dname[i],drop=TRUE] ## sf>=0.5
+           # da <- obj[,dname[i],drop=TRUE][,,drop=TRUE] ## sf>=0.4
+           # str(da)
+         }
          if (isSP) {
             da <- obj@data[,dname[i]]
          }
@@ -287,8 +296,8 @@
    }
    projClass <- c("longlat","stere","laea","merc")
    projPatt <- paste0("(",paste(projClass,collapse="|"),")")
-   staticMap <- c("openstreetmap","google","sputnik")
-   tilePatt <- paste0("(",paste0(unique(c(staticMap,.untile())),collapse="|"),")")
+   staticMap <- c("openstreetmap","google","sputnikmap")
+   tilePatt <- paste0("(",paste0(unique(c(staticMap,.tileService())),collapse="|"),")")
    len <- 640L
    if (is.na(size[1]))
       size <- c(len,len)
@@ -326,12 +335,12 @@
       proj <- "merc"
    }
    isStatic <- .lgrep("static",style)>0
-   mlen <- switch(art,google=640,openstreetmap=960,sputnik=511)
+   mlen <- switch(art,google=640,openstreetmap=960,sputnikmap=640)
    if (isStatic) {
       len[len>mlen] <- mlen
    }
-  # canTile <- .lgrep(art,eval(as.list(args(".untile"))$server))>0
-   canTile <- .lgrep(art,.untile())>0
+  # canTile <- .lgrep(art,eval(as.list(args(".tileService"))$server))>0
+   canTile <- .lgrep(art,.tileService())>0
    isTile <- .lgrep("tile",style)>0 & canTile
    if ((!isStatic)&&(!isTile)) {
       if (art %in% staticMap)
@@ -341,10 +350,10 @@
       else
          art <- "none"
    }
-   isColor <- .lgrep("colo(u)*r",style)>0
+  # isColor <- .lgrep("colo(u)*r",style)>0
    isWeb <- .lgrep(tilePatt,art)
    if (verbose)
-      print(data.frame(proj=proj,art=art,color=isColor,static=isStatic
+      print(data.frame(proj=proj,art=art,static=isStatic
                       ,canTile=canTile,tile=isTile,web=isWeb))
   # isOSM <- proj %in% "osm"
   # isGoogle <- proj %in% "google"

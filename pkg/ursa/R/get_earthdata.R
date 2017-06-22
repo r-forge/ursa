@@ -55,10 +55,17 @@
       else
          product <- pr2
    }
-   if (is.na(date))
-      date <- Sys.Date()-1L
-   if (is.character(date))
+   if (is.na(date)) {
+      t0 <- as.integer(format(as.POSIXlt(Sys.time(),tz="UTC"),"%H"))
+      date <- Sys.Date()-ifelse(t0>17.5,0L,1L)
+   }
+   if (is.character(date)) {
+      if (.lgrep("today",date))
+         date <- Sys.Date()
+      else if (.lgrep("yesterday",date))
+         date <- Sys.Date()-1L
       date <- as.Date(date)
+   }
    if (is.character(bbox)) {
       g0 <- attr(.read_ogr(bbox,geocode=geocode,expand=expand,border=border
                           ,verbose=verbose),"grid")

@@ -9,7 +9,7 @@
    if (inherits(obj,"ggmap"))
       obj <- as.ursa(obj)
    if (is.null(obj))
-      return(NULL)
+      return(invisible(NULL))
    useRaster <- .getPrm(arglist,name="useRaster",kwd=kwd,default=NA)
    interpolate <- .getPrm(arglist,name="interp(olate)*",kwd=kwd,default=FALSE)
    alpha <- .getPrm(arglist,name="(alpha|transp(aren(cy)*)*)"
@@ -39,10 +39,11 @@
       }
       with(ursa_grid(obj),rasterImage(as.raster(obj),minx,miny,maxx,maxy
                                       ,interpolate=interpolate))
-      panel_annotation(attr(obj,"copyright")
-                      ,pos="bottomright",cex=0.7,font="Arial Narrow"
-                      ,fg=sprintf("#000000%s","4F"))
-      return(NULL)
+      ann <- attr(obj,"copyright")
+      if ((is.character(ann))&&(nchar(ann)>1))
+         panel_annotation(ann,pos="bottomright",cex=0.7,font="Arial Narrow"
+                         ,fg=sprintf("#000000%s","4F"))
+      return(invisible(NULL))
    }
   # .panel_raster(colorize(obj,...),useRaster=useRaster
   #              ,interpolate=interpolate,alpha=alpha,verbose=verbose)

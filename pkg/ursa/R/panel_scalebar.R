@@ -14,7 +14,17 @@
       return(NULL)
    }
    position <- .getPrm(arglist,name="pos(ition)*",kwd=kwd
-                      ,class=list("character","numeric"),default="bottomleft")
+                      ,class=list("character","numeric"),default="---")
+   g0 <- session_grid()
+   canScale <- .lgrep("\\+proj=(merc|zzzzz)\\s",g0$proj4)>0
+   if ((position=="---")&&(canScale)) {
+      lon <- with(g0,.project(rbind(c(minx,miny),c(maxx,maxy)),proj4,inv=TRUE))[,2]
+      sc <- sort(1/cos(lon*pi/180))
+      if (sc[2]/sc[1]>1.25)
+         position <- c("bottomleft","topleft")
+   }
+   if (position[1]=="---")
+      position <- "bottomleft"
    w <- .getPrm(arglist,name="w",kwd=kwd,class=list("numeric","character")
                ,default=NA_real_)
    cex <- .getPrm(arglist,name="cex",kwd=kwd,default=0.75)

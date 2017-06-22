@@ -58,14 +58,15 @@ Character. Either projection class or source of web-catrogrpaphy for basemep. Sp
 \itemize{
    \item Projection class \cr
 Valid values are \code{"stere"}, \code{"laea"}, \code{"merc"}, \code{"longlat"}. Default is keyword \code{"auto"}; use object projection, if this projection differs from projection class \code{"+longlat"}, otherwise, projection (\code{"stere"} or \code{"merc"}) is determed internally.
-   \item Web cartogrpaphy.
+   \item Web cartography.
       \itemize{
          \item Static map\cr
-         Valid values are \code{"google"}, \code{"openstreetmap"}, \code{"sputnik"}. Static maps have priority over tile services. however additional word \code{"static"} can be specified in the sentence, e.g., \code{"openstreetmap static"} or \code{"static google"}. Additional parameters for request to web-script can be added in the sentence in the form \code{"argument1=value1 [argument2=value2]"}, e.g., \code{style="google static maptype=terrain language=ru-RU scale=2"}.
+         Valid values are \code{"google"}, \code{"openstreetmap"}, \code{"sputnikmap"}. Static maps have priority over tile services. however additional word \code{"static"} can be specified in the sentence, e.g., \code{"openstreetmap static"} or \code{"static google"}. Additional parameters for request to web-script can be added in the sentence in the form \code{"argument1=value1 [argument2=value2]"}, e.g., \code{style="google static maptype=terrain language=ru-RU scale=2"}.
          \item Tile service\cr
-         Supported tile services can be returned by calling of non-public function \code{ursa:::.untile()} without arguments. Valid values are \code{"mapnik"}, \code{"cycle"}, \code{"transport"}, \code{"mapsurfer"}, \code{"sputnik"}, \code{"thunderforest"}, \code{"carto"}, \code{"kosmosnimki"}. Adding word \code{"tile"} forces tile services using, e.g. \code{style="tile mapnik"}.
+         Supported tile services can be returned by calling of non-public function \code{ursa:::.tileService()} without arguments. Valid values are \code{"mapnik"}, \code{"cycle"}, \code{"transport"}, \code{"mapsurfer"}, \code{"sputnik"}, \code{"thunderforest"}, \code{"carto"}, \code{"kosmosnimki"}, etc. 
+%%~          Adding word \code{"tile"} forces tile services using, e.g. \code{style="tile mapnik"}.
       }
-      By default, basemap is forced to greyscale. Adding word \code{"color"} to the sentence forces to use colored basemap.
+      By default, if data has no attributes (e. g., geometry only), then basemap is drawn in color, else in grayscale. Adding word \code{"color"} (or \code{"colour"}) to the sentence forces to use colored basemap. Adding word \code{"gray"} (or \code{"grey"}, \code{"greyscale"}, \code{"grayscale"}) to the sentence forces to use colored basemap.
       
       The order of words in the sentence is any.
    }

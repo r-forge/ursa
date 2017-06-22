@@ -334,8 +334,9 @@
             for (i in dl2) {
                lon3 <- seq(v1,v2,by=i)
                lon3 <- lon3[lon3>lon[1] & lon3<lon[2]]
-               if (length(lon3)<=nc) {
+               if (length(lon3)>1)
                   lon0 <- lon3
+               if (length(lon3)<=nc) {
                   break
                }
             }
@@ -345,7 +346,16 @@
         # else 
         # if (length(lon3)==1)
         #    lon3 <- .prettyLabel(lon,ncol=nc)$at
-         lon <- if (length(lon3)>1) lon3 else lon2b
+         if (TRUE) { ## ++ 20170616
+            if (length(lon3)>1)
+               lon <- lon3
+            else if (length(lon0)<=3)
+               lon <- lon0
+            else
+               lon <- lon2b
+         }
+         else
+            lon <- if (length(lon3)>1) lon3 else lon2b ## -- 20170616
          lat1 <- lat0 <- .prettyLabel(lat,ncol=nr+2)$at
          mm <- (lat0-floor(lat0))*60
         # mm <- 0.5

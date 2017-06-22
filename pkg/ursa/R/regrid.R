@@ -215,17 +215,19 @@
       g$miny <- setbound[2]
       g$maxx <- setbound[3]
       g$maxy <- setbound[4]
-      toDefine <- FALSE
-      if ((is.na(g$columns))&&(!is.na(columns))) {
+      toDefine <- 0L
+     # if ((is.na(g$columns))&&(!is.na(columns))) { ## -- 20170613
+      if (!is.na(columns)) { ## ++ 20170613
          g$columns <- as.integer(round(columns))
-         if (!toDefine)
-            toDefine <- TRUE
+         toDefine <- toDefine+1L
       }
-      if ((is.na(g$rows))&&(!is.na(rows))) {
+     # if ((is.na(g$rows))&&(!is.na(rows))) { ## -- 20170613
+      if (!is.na(rows)) { ## ++ 20170613
          g$rows <- as.integer(round(rows))
-         if (!toDefine)
-            toDefine <- TRUE
+         toDefine <- toDefine+1L
       }
+      if (toDefine<2)
+         toDefine <- FALSE
       if ((!toDefine)&&(!is.na(g$columns))&&(!is.na(g$columns)))
          toDefine <- TRUE
       if (toDefine) {

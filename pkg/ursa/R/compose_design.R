@@ -105,19 +105,23 @@
          for (pr in seq(nl))
          {
             pc <- ceiling(nl/pr)
+            if (((pc-1)*pr>=nl)||(pc*(pr-1)>=nl)) {
+               s0[pr] <- 9999
+               next
+            }
+            if ((isList)&&((pc>2)&&(pr>2))) {
+               s0[pr] <- 9999
+               next
+            }
             lc <- pc*nc
             lr <- pr*nr
-            if ((isList)&&((pc>2)&&(pr>2)))
-               s0[pr] <- 9999
-            else {
-               s1 <- (lc/lr)/ratio#-1 ## ratio 1.5=15:10  16:9   4:3
-               if (s1<1)
-                  s1 <- 1/s1
-               s0[pr] <- s1-1
-               if (FALSE)
-                  print(data.frame(panelc=pc,panelr=pr,nc=nc,nr=nr
-                                  ,lc=lc,lr=lr,ratio=(lc/lr)/ratio,s=s0[pr]))
-            }
+            s1 <- (lc/lr)/ratio#-1 ## ratio 1.5=15:10  16:9   4:3
+            if (s1<1)
+               s1 <- 1/s1
+            s0[pr] <- s1-1
+            if (verbose)
+               print(data.frame(panelc=pc,panelr=pr,nc=nc,nr=nr
+                               ,lc=lc,lr=lr,ratio=(lc/lr)/ratio,s=s0[pr]))
          }
          ind <- which.min(abs(s0))[1]
          if ((FALSE)&&(length(legend)==1)&&(is.na(legend)))
@@ -134,13 +138,21 @@
                panelr <- ceiling(nl/panelc)
             }
          }
-         if (nl<=panelr*(panelc-1))
-            panelc <- panelc-1
-         else if (nl<=(panelr-1)*panelc)
-            panelr <- panelr-1
+         ##~ if (nl<=panelr*(panelc-1)) repeat({
+            ##~ panelc <- panelc-1
+            ##~ if (nl<=panelr*(panelc-1))
+               ##~ break
+         ##~ })
+         ##~ else if (nl<=(panelr-1)*panelc) repeat ({
+            ##~ panelr <- panelr-1
+            ##~ if (nl<=(panelr-1)*panelc)
+               ##~ break
+         ##~ })
          if (!length(skip))
             skip <- which(is.na(match(seq(panelc*panelr),seq(nl))))
-        # print(c(bands=nl,c=panelc,r=panelr,layout=panelc*panelr,nc=nc,nr=nr))
+         if (verbose)
+            print(c(bands=nl,columns=panelc,rows=panelr,panels=panelc*panelr
+                   ,samples=nc,lines=nr))
          rm(nc,nr,lc,lr,s0,ind)
       }
       else

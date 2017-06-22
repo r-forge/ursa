@@ -419,14 +419,20 @@
    }
    else
       width <- max(strwidth(align,units="inches",cex=cex))
-   if (is.numeric(shift))
-      width <- width*shift
+   height <- max(strheight(label,units="inches",cex=cex,family=family)) ## family was missing
+   if (is.numeric(shift)) {
+     # print(c(side=side,las=las,shift=shift))
+      if ((side %in% c(2,4))&&(las %in% c(1,2))||
+          (side %in% c(1,3))&&(las %in% c(0,1)))
+         width <- width*shift
+      else
+         height <- height*shift
+   }
    if (width < 0) {
       width <- strwidth(paste(rep(0,max(nchar(label))),collapse="")
                        ,units="inches",cex=cex,family=family)
       width <- strheight("000",units="inches",cex=cex,family=family)
    }
-   height <- max(strheight(label,units="inches",cex=cex,family=family)) ## family was missing
   # return(NULL)
   # a <- 2*adj*width#*scale[2]
   # print(a)

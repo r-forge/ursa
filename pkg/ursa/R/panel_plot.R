@@ -31,12 +31,22 @@
       else
          ret <- sp::plot(obj,add=TRUE,...)
    }
-   else if (inherits(obj,"sfc")) {
-      ret <- plot(obj,add=TRUE,...)
-   }
-   else if (inherits(obj,"sf")) {
-     # ret <- plot(sf::st_geometry(obj),...)
-      ret <- try(.panel_plot(sf::st_geometry(obj),add=TRUE,...))
+   else if (inherits(obj,c("sf","sfc"))) {
+      oprj <- sf::st_crs(obj)$proj4string
+      sprj <- session_proj4()
+      oprj2 <- .gsub("\\+wktext\\s","",oprj)
+      sprj2 <- .gsub("\\+wktext\\s","",sprj)
+      oprj2 <- .gsub("(^\\s|\\s$)","",oprj2)
+      sprj2 <- .gsub("(^\\s|\\s$)","",sprj2)
+      if (!identical(oprj2,sprj2))
+         obj <- sf::st_transform(obj,sprj)
+      if (inherits(obj,"sfc")) {
+         ret <- plot(obj,add=TRUE,...)
+      }
+      else if (inherits(obj,"sf")) {
+        # ret <- plot(sf::st_geometry(obj),...)
+         ret <- try(.panel_plot(sf::st_geometry(obj),add=TRUE,...))
+      }
    }
    else {
       ret <- try(.panel_plot(obj,add=TRUE,...))
@@ -49,14 +59,15 @@
          ret <- NULL
       }
    }
-   ret
+   invisible(ret)
 }
 'panel_box' <- function(...){
    if (.skipPlot(FALSE))
       return(NULL)
    bg <- sum(c(col2rgb(getOption("ursaPngBackground")))*c(0.30,0.59,0.11))
-   if (!length(list(...)))
+   if (!length(list(...))) {
       box(lwd=0.5,col=ifelse(bg<128,"#FFFFFF7F","#0000007F"))
+   }
    else
       box(...)
 }

@@ -1,5 +1,5 @@
 '.geomap' <- function(loc=NULL,style="",geocode="",size=NA,zoom="0"
-                     ,border=0,verbose=FALSE) {
+                     ,border=27,verbose=FALSE) {
   # if (!nchar(style))
   #    style <- "google static"
    geocodeList <- eval(as.list(args(.geocode))$service)
@@ -7,12 +7,13 @@
       geocode <- if (.lgrep("google",style)) "google" else "nominatim"
    geocode <- match.arg(geocode,geocodeList)
    if (!nchar(style))
-      style <- paste(switch(geocode,nominatim="openstreetmap",gooogle="google"
+      style <- paste(switch(geocode,nominatim="openstreetmap",google="google"
                            ,"mapnik"),"color")
    if (is.na(zoom))
       zoom <- "0"
-   staticMap <- c("openstreetmap","google","sputnik")
-   tilePatt <- paste0("(",paste0(unique(c(staticMap,.untile())),collapse="|"),")")
+   staticMap <- c("openstreetmap","google","sputnikmap")
+   tilePatt <- paste0("(",paste0(unique(c(staticMap,.tileService()))
+                                ,collapse="|"),")")
    if (!.lgrep(tilePatt,style))
       art <- "none"
    else {
@@ -34,12 +35,12 @@
       size <- rep(size,length=2)
    if (is.numeric(size))
       len <- as.integer(round(max(size)))
-   mlen <- switch(art,google=640,openstreetmap=960,sputnik=511)
+   mlen <- switch(art,google=640,openstreetmap=960,sputnikmap=640)
    if (isStatic) {
       len[len>mlen] <- mlen
    }
-  # canTile <- .lgrep(art,eval(as.list(args(".untile"))$server))>0
-   canTile <- .lgrep(art,.untile())>0
+  # canTile <- .lgrep(art,eval(as.list(args(".tileService()"))$server))>0
+   canTile <- .lgrep(art,.tileService())>0
    isTile <- .lgrep("tile",style)>0 & canTile
    if ((!isStatic)&&(!isTile)) {
       if (art %in% staticMap)
@@ -50,11 +51,26 @@
          art <- "none"
    }
    isColor <- .lgrep("colo(u)*r",style)>0
+   isGrey <- ifelse(isColor,FALSE,.lgrep("gr[ae]y(scale)*",style)>0)
+   if (isGrey)
+      isColor <- FALSE
    isWeb <- .lgrep(tilePatt,art)
    if (verbose)
-      print(data.frame(proj=proj,art=art,color=isColor,static=isStatic
+      print(data.frame(proj=proj,art=art,color=isColor,grey=isGrey,static=isStatic
                       ,canTile=canTile,tile=isTile,web=isWeb))
    geocodeStatus <- FALSE
+   if (inherits(loc,"Spatial")) {
+      proj4 <- sp::proj4string(loc)
+      loc <- sp::bbox(loc)
+      loc <- c(.project(matrix(c(loc),ncol=2,byrow=TRUE),proj4
+                       ,inv=TRUE))[c(1,3,2,4)]
+   }
+   if (inherits(loc,"sf")) {
+      loc <- sf::st_bbox(loc)
+      proj4 <- attr(loc,"crs")$proj4string
+      loc <- c(.project(matrix(loc,ncol=2,byrow=TRUE),proj4
+                       ,inv=TRUE))[c(1,3,2,4)]
+   }
    if (!((is.numeric(loc))&&(length(loc) %in% c(4,2)))) {
       loc <- try(.geocode(loc,service=geocode,area="bounding"
                            ,select="top",verbose=verbose))
@@ -68,7 +84,7 @@
    }
    if ((is.numeric(loc))&&(length(loc) %in% c(2)))
       geocodeStatus <- TRUE
-  # copyright <- attr(.untile(),"copyright")[art]
+  # copyright <- attr(.tileService()(),"copyright")[art]
   # str(unname(loc),digits=8)
    if (length(loc)==2)
       bbox <- c(loc,loc)
@@ -105,6 +121,8 @@
       if ((g0$columns<=size[1])&&(g0$rows<=size[2]))
          break
    }
+   if ((art=="sputnikmap")&&(!isTile))
+      g0 <- regrid(regrid(g0,mul=1/2),mul=2,border=-1) ## even cols/rows
    zoom <- i
    if ((is.numeric(zman))&&(zman<=0))
       zman <- as.character(zman)
@@ -143,7 +161,7 @@
       }
       zoom <- zman
    }
-   if ((TRUE)&&(geocodeStatus)) {
+   if ((TRUE)&&(geocodeStatus)) { ## <-- is this good feature to expand to 640x640?
       x0 <- (g0$minx+g0$maxx)/2
       y0 <- (g0$miny+g0$maxy)/2
       minx <- x0-g0$resx*size[1]/2
@@ -238,9 +256,10 @@
       img <- array(0L,dim=c(256*length(v),256*length(h),3))
      # print(tgr)
      # print(igr)
+      tile <- .tileService(art)
       for (i in seq(nrow(tgr))) {
-         img2 <- .untile(z=zoom,x=tgr[i,"x"],y=tgr[i,"y"],server=art
-                        ,verbose=verbose)
+         img2 <- .tileGet(z=zoom,x=tgr[i,"x"],y=tgr[i,"y"],url=tile$url
+                         ,fileext=tile$fileext,verbose=verbose)
          img[igr[i,"y"]*256L+seq(256),igr[i,"x"]*256+seq(256),] <- img2[,,1:3]
       }
       basemap <- as.ursa(img,aperm=TRUE,flip=TRUE)
@@ -250,7 +269,7 @@
    }
    else { ## staticmap
       php <- switch(art
-         ,sputnik=paste0("http://static-api.maps.sputnik.ru/v1/"
+         ,sputnikmap=paste0("http://static-api.maps.sputnik.ru/v1/"
                         ,"?width={w}&height={h}&z={z}&clng={lon}&clat={lat}")
          ,google=paste0("http://maps.googleapis.com/maps/api/staticmap"
                        ,"?center={lat},{lon}&zoom={z}&size={w}x{h}")
@@ -348,12 +367,21 @@
          g0 <- regrid(g0,mul=mul)
       ursa(basemap,"grid") <- g0
    }
-   if (!isColor) {
+   if (isGrey) {
       basemap <- as.integer(round(sum(basemap*c(0.30,0.59,0.11))))
       basemap <- colorize(basemap,minvalue=0,maxvalue=255,pal=c("black","white"))
    }
    if (isTile)
-      attr(basemap,"copyright") <- unname(attr(.untile(),"copyright")[art])
+      attr(basemap,"copyright") <- tile$copyright
+   else {
+      if (art=="sputnikmap")
+         attr(basemap,"copyright") <- paste("\uA9 OpenStreetMap contributors,"
+                        ,"\u0421\u043F\u0443\u0442\u043D\u0438\u043A","\uA9"
+                        ,"\u0420\u043E\u0441\u0442\u0435\u043B\u0435\u043A\u043E\u043C")
+   else
+      attr(basemap,"copyright") <- " "
+   }
    session_grid(g0)
+   ursa(basemap,"nodata") <- NA
    basemap
 }

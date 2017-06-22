@@ -1,6 +1,10 @@
 # version 3.7-13
 
-* ongoing...
+* gentle requirements to "chessboard" grid in 'panel_new()'
+
+* fix layout in 'compose_design()' for images like strips
+
+* in suggestion, sf (>= 0.5-0)
 
 # version 3.7-12
 

@@ -108,7 +108,7 @@
       if (proposed) {
          ct2 <- ursa(obj,"colortable")
          if (length(ct2)) {
-            print(ursa(obj,"table"))
+           # print(ursa(obj,"table"))
             obj <- discolor(obj)
          }
       }

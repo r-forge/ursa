@@ -374,9 +374,21 @@
       return(NULL)
    arglist <- list(...)
    kwd <- "coast(line)*"
+   isWeb <- getOption("ursaPngWebCartography")
+   if (!is.logical(isWeb))
+      isWeb <- FALSE
    coastline <- .getPrm(arglist,name=paste0("^(",kwd,"|decor)$")
                        ,class=list("integer","logical","ursaCoastLine")[1:2]
-                       ,default=TRUE)
+                       ,default=TRUE,verbose=FALSE)
+   ##~ decor <- .getPrm(arglist,name="^decor$"
+                   ##~ ,class=list("integer","logical","ursaCoastLine")[1:2]
+                   ##~ ,default=TRUE,verbose=FALSE)
+   ##~ coastline <- .getPrm(arglist,name=paste0("^",kwd,"$")
+                       ##~ ,class=list("integer","logical","ursaCoastLine")[1:2]
+                       ##~ ,default=,verbose=FALSE)
+   ##~ str(arglist)
+   ##~ print(c(coast=coastline,web=isWeb))
+   ##~ q()
    ##~ if (inherits(coastline,"ursaCoastLine")) {
       ##~ obj <- coastline
       ##~ coastline <- TRUE

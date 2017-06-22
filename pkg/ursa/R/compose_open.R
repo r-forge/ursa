@@ -22,6 +22,15 @@
    background <- .getPrm(arglist,name="(background|nodata)",default="white")
    dev <- .getPrm(arglist,name="^dev$",default=FALSE)
    verbose <- .getPrm(arglist,name="verb(ose)*",kwd="open",default=FALSE)
+   options(ursaPngWebCartography=FALSE)
+   if (is.ursa(mosaic)) {
+      cr <- attr(mosaic,"copyright")
+      if ((is.character(cr))&&(nchar(cr)>1)) {
+         mosaic <- compose_design(layout=c(1,1),legend=NULL)
+         options(ursaPngWebCartography=TRUE)
+         scale <- 1
+      }
+   }
    if ((is.character(mosaic))&&(mosaic=="rgb"))
       mosaic <- compose_design(layout=c(1,1),legend=NULL)
    else if (!inherits(mosaic,"ursaLayout"))
