@@ -6,7 +6,7 @@
   # if (verbose)
   #    .elapsedTime("rgdal has been loaded")
    opW <- options(warn=0-!verbose) ## to prevent 'GeoTransform values not available'
-   on.exit(optison(opW))
+   on.exit(options(opW))
    a <- try(rgdal::GDALinfo(fname,returnStats=FALSE,returnRAT=FALSE
                 ,returnColorTable=TRUE,returnCategoryNames=TRUE),silent=TRUE)
    if (inherits(a,"try-error")) {

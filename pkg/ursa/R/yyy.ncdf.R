@@ -54,6 +54,57 @@
       ncdf4::nc_close(nc)
       return(b)
    }
+   con <- .con.skeleton()
+   dima <- nc$var[[varName]]$size
+   str(b)
+   q()
+   con$driver <- "NCDF"
+   con$offset <- dima
+   con$seek <- FALSE
+   bname <- names(b)
+   isColRow <- !((.lgrep("^(x|y)$",names(b))==2) |
+                 (.lgrep("^(lon|lat)",names(b))==2) |
+                 (.lgrep("^(west.+east|south.+north)",names(b))==2) |
+                 (.lgrep("^(east|north)",names(b))==2))
+  # print(isColRow)
+  # att <- ncdf4::ncatt_get(nc,varName,attname=NA,verbose=FALSE)
+  # str(att)
+   b2 <- b[[2]]
+   if ((is.numeric(b2))&&((all(diff(b2)<0))||(isColRow))) {
+      dima[2] <- -dima[2]
+      b[[2]] <- rev(b2)
+      ##~ if (length(dima)==2)
+         ##~ res[] <- res[,rev(seq(dima[2])),drop=FALSE]
+      ##~ else if (length(dima)==3)
+         ##~ res[] <- res[,rev(seq(dima[2])),,drop=FALSE]
+      ##~ else if (length(dima)==4)
+         ##~ res[] <- res[,rev(seq(dima[2])),,,drop=FALSE]
+      ##~ else
+         ##~ stop(dima)
+   }
+   if ((.lgrep("^(lat|y$|south.+north|north)",bname[1]))&&
+       (.lgrep("^(lon|x$|west.+east|east)",bname[2]))) {
+      print("transpose coordinates")
+      names(b)[c(1,2)] <- bname[c(2,1)]
+      b[c(1,2)] <- b[c(2,1)]
+      con$swap <- TRUE
+      str(b)
+      q()
+      ##~ if (length(dima)==2)
+         ##~ res <- aperm(res,c(2,1))
+      ##~ else if (length(dima)==3)
+         ##~ res <- aperm(res,c(2,1,3))
+      ##~ else if (length(dima)==4)
+         ##~ res <- aperm(res,c(2,1,3,4))
+      ##~ else
+         ##~ stop(dima)
+   }
+   else
+      con$swap <- FALSE
+  # con$handle <- nc ## temporal hiding
+   str(con)
+   q()
+  # res <- ncdf4::ncvar_get(nc,varName,collapse_degen=FALSE)
    str(b)
    q()
    a1 <- as.numeric(a)
