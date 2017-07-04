@@ -1,15 +1,48 @@
-'open_ncdf' <- function(fname,verbose=FALSE) {
+'open_gdal' <- function(fname,verbose=FALSE) {
+  ## 20170116 removed '...' argument
    if (!is.character(fname))
       return(NULL)
-   requireNamespace("ncdf4",quietly=.isPackageInUse())
+   requireNamespace("rgdal",quietly=.isPackageInUse())
+  # if (verbose)
+  #    .elapsedTime("rgdal has been loaded")
    opW <- options(warn=0-!verbose) ## to prevent 'GeoTransform values not available'
-   nc <- try(ncdf4::nc_open(fname))
+   on.exit(optison(opW))
+   a <- try(rgdal::GDALinfo(fname,returnStats=FALSE,returnRAT=FALSE
+                ,returnColorTable=TRUE,returnCategoryNames=TRUE),silent=TRUE)
    if (inherits(a,"try-error")) {
-     # cat(geterrmessage())
+      cat(geterrmessage())
+     # * using R version 3.4.0 Patched (2017-05-16 r72684)
+     # * using platform: x86_64-pc-linux-gnu (64-bit)
+     # > ### Name: open_gdal
+     # > ### Title: Open GDAL file
+     # > ### Aliases: open_gdal
+     # > ### Keywords: connection
+     # > 
+     # > ### ** Examples
+     # > 
+     # > session_grid(NULL)
+     # > fname1 <- system.file("pictures/cea.tif",package="rgdal")
+     # > message(fname1)
+     # /tmp/RtmpdrKt9J/RLIBS_310d3548ed74/rgdal/pictures/cea.tif
+     # > a1 <- open_gdal(fname1)
+     # > print(a1)
+     # NULL
+     # > print(a1[])
+     # NULL
+     # > close(a1)
+     # Error in UseMethod("close") : 
+     #   no applicable method for 'close' applied to an object of class "NULL"
+     # Calls: close
+     ## 20170529 patch for failure with 'rgdal' at r-forge
+      if (.Platform$OS.type=="zzzunix"){
+         message(paste("Unable to open GDAL file. Failure for"
+                      ,"R-forge buildig machine (Unix OS) since May 2017"))
+         if ((!.lgrep("\\.(rds)$",fname))&&(file.exists(fname))) {## 20170529
+            return(ursa_new())
+         }
+      } 
       return(NULL) 
    }
-   else
-      isFail <- FALSE
    a1 <- as.numeric(a)
    g1 <- regrid()
    g1$rows <- as.integer(a1[1])
