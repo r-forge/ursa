@@ -27,11 +27,15 @@
          indX <- .grep("^x$",mname)
       if (!length(indX))
          indX <- .grep("^lon",mname)
+      if (!length(indX))
+         indX <- .grep("^east",mname)
       indY <- .grep("^coords.x2$",mname)
       if (!length(indY))
          indY <- .grep("^y$",mname)
       if (!length(indY))
          indY <- .grep("^lat",mname)
+      if (!length(indY))
+         indY <- .grep("^north",mname)
       ind <- c(indX[1],indY[1])
       if ((any(is.na(ind)))||(length(ind)!=2))
          stop("unable to detect 'x' and 'y' coordinates")
@@ -123,6 +127,7 @@
       maxy <- max(y)+resy/2
       g0 <- regrid(minx=minx,miny=miny,maxx=maxx,maxy=maxy,resx=resx,resy=resy
                   ,columns=(maxx-minx)/resx,rows=(maxy-miny)/resy,proj4=proj4)
+     # g0 <- regrid(setbound=)
       session_grid(g0)
    }
    res <- ursa_new(bandname=lname,ignorevalue=nodata)

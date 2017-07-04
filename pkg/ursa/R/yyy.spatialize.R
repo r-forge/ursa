@@ -1,4 +1,4 @@
-'.read_ogr' <- function(dsn,engine=c("native","sp","sf"),layer=".*",attr=".+"
+'.spatialize' <- function(dsn,engine=c("native","sp","sf"),layer=".*",attr=".+"
                        ,geocode="",place=""
                        ,grid=NULL,size=NA,expand=1,border=27
                        ,lat0=NA,lon0=NA,resetProj=FALSE,style="auto"#,zoom=NA
@@ -141,7 +141,7 @@
       if (!file.exists(dsn)) {
          aname <- paste0(dsn,".zip")
          if (isZip <- file.exists(aname)) {
-            ziplist <- unzip(aname);on.exit(file.remove(ziplist))
+            ziplist <- unzip(aname,exdir=tempdir());on.exit(file.remove(ziplist))
             dsn <- .grep("\\.shp$",ziplist,value=TRUE)
          }
          else {
@@ -178,7 +178,7 @@
       }
       else {
          if (isZip <- .lgrep("\\.zip$",dsn)>0) {
-            ziplist <- unzip(dsn);on.exit(file.remove(ziplist))
+            ziplist <- unzip(dsn,exdir=tempdir());on.exit(file.remove(ziplist))
             dsn <- .grep("\\.shp$",ziplist,value=TRUE)
          }
       }

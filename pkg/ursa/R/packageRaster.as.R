@@ -62,7 +62,9 @@
    }
    raster::extent(res) <- with(g1,c(minx,maxx,miny,maxy))
    raster::crs(res) <- ursa_proj4(g1)
-   raster::NAvalue(res) <- sapply(obj,ursa_nodata)
+   nodata <- sapply(obj,ursa_nodata)
+   if (!anyNA(nodata))
+      raster::NAvalue(res) <- nodata
    names(res) <- names(obj)
    res
 }

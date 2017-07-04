@@ -3,22 +3,29 @@
   # if (!nchar(style))
   #    style <- "google static"
    geocodeList <- eval(as.list(args(.geocode))$service)
+   tileList <- .tileService()
    if (!nchar(geocode))
       geocode <- if (.lgrep("google",style)) "google" else "nominatim"
    geocode <- match.arg(geocode,geocodeList)
-   if (!nchar(style))
+   if (!sum(nchar(style)))
       style <- paste(switch(geocode,nominatim="openstreetmap",google="google"
                            ,"mapnik"),"color")
    if (is.na(zoom))
       zoom <- "0"
    staticMap <- c("openstreetmap","google","sputnikmap")
-   tilePatt <- paste0("(",paste0(unique(c(staticMap,.tileService()))
+   tilePatt <- paste0("(",paste0(unique(c(staticMap,tileList))
                                 ,collapse="|"),")")
+   tilePatt <- .gsub("\\.","\\\\.",tilePatt)
    if (!.lgrep(tilePatt,style))
       art <- "none"
    else {
-      art <- .gsub2(tilePatt,"\\1",style)
-      proj <- "merc"
+     # print(style)
+      if (style %in% tileList)
+         art <- style
+      else
+         art <- .gsub2(tilePatt,"\\1",style)
+     # print(art);q()
+     # proj <- "merc"
    }
    isStatic <- .lgrep("static",style)>0
   # if ((!isStatic)&&("ursa" %in% loadedNamespaces())) {
@@ -39,8 +46,9 @@
    if (isStatic) {
       len[len>mlen] <- mlen
    }
+   isUrl <- .lgrep("^http(s)*://",style)>0
   # canTile <- .lgrep(art,eval(as.list(args(".tileService()"))$server))>0
-   canTile <- .lgrep(art,.tileService())>0
+   canTile <- isUrl | .lgrep(art,.tileService())>0
    isTile <- .lgrep("tile",style)>0 & canTile
    if ((!isStatic)&&(!isTile)) {
       if (art %in% staticMap)
@@ -50,13 +58,15 @@
       else
          art <- "none"
    }
-   isColor <- .lgrep("colo(u)*r",style)>0
+  # else if (isUrl)
+  #    style <- "custom"
+   isColor <- if (isUrl) TRUE else .lgrep("colo(u)*r",style)>0
    isGrey <- ifelse(isColor,FALSE,.lgrep("gr[ae]y(scale)*",style)>0)
    if (isGrey)
       isColor <- FALSE
-   isWeb <- .lgrep(tilePatt,art)
+   isWeb <- .lgrep(tilePatt,art)>0 | isUrl
    if (verbose)
-      print(data.frame(proj=proj,art=art,color=isColor,grey=isGrey,static=isStatic
+      print(data.frame(art=art,color=isColor,grey=isGrey,static=isStatic
                       ,canTile=canTile,tile=isTile,web=isWeb))
    geocodeStatus <- FALSE
    if (inherits(loc,"Spatial")) {
@@ -70,6 +80,12 @@
       proj4 <- attr(loc,"crs")$proj4string
       loc <- c(.project(matrix(loc,ncol=2,byrow=TRUE),proj4
                        ,inv=TRUE))[c(1,3,2,4)]
+   }
+   if (is.null(loc)) {
+      border <- 0
+      g0 <- session_grid()
+      loc <- with(g0,.project(rbind(c(minx,miny),c(maxx,maxy)),proj4,inv=TRUE))
+      loc <- c(loc)[c(1,3,2,4)]
    }
    if (!((is.numeric(loc))&&(length(loc) %in% c(4,2)))) {
       loc <- try(.geocode(loc,service=geocode,area="bounding"
@@ -247,18 +263,27 @@
          if (j==1)
             v <- unique(tX[,2])
       }
-      if (verbose) {
-         colnames(t0) <- c("x","y")
-         print(cbind(t0,z=zoom))
-      }
       tgr <- expand.grid(z=zoom,y=v,x=h)
       igr <- expand.grid(y=seq_along(v)-1,x=seq_along(h)-1)
+      n <- 2^zoom
+      lon1 = (tgr[,"x"]+0)/n*360-180
+      lon2 = (tgr[,"x"]+1)/n*360-180
+      lat1 = atan(sinh(pi*(1-2*(tgr[,"y"]+1)/n)))*180/pi
+      lat2 = atan(sinh(pi*(1-2*(tgr[,"y"]+0)/n)))*180/pi
+      xy1 <- .project(cbind(lon1,lat1),epsg3857)
+      xy2 <- .project(cbind(lon2,lat2),epsg3857)
+      tgr <- cbind(tgr,lon1=lon1,lat1=lat1,lon2=lon2,lat2=lat2
+                 ,minx=xy1[,1],miny=xy1[,2],maxx=xy2[,1],maxy=xy2[,2])
+      if (verbose) {
+         print(tgr)
+      }
       img <- array(0L,dim=c(256*length(v),256*length(h),3))
-     # print(tgr)
-     # print(igr)
-      tile <- .tileService(art)
+      tile <- if (isUrl) .tileService(style) else .tileService(art)
       for (i in seq(nrow(tgr))) {
-         img2 <- .tileGet(z=zoom,x=tgr[i,"x"],y=tgr[i,"y"],url=tile$url
+         img2 <- .tileGet(z=zoom,x=tgr[i,"x"],y=tgr[i,"y"]
+                         ,minx=tgr[i,"minx"],miny=tgr[i,"miny"]
+                         ,maxx=tgr[i,"maxx"],maxy=tgr[i,"maxy"]
+                         ,url=tile$url
                          ,fileext=tile$fileext,verbose=verbose)
          img[igr[i,"y"]*256L+seq(256),igr[i,"x"]*256+seq(256),] <- img2[,,1:3]
       }
@@ -379,7 +404,7 @@
                         ,"\u0421\u043F\u0443\u0442\u043D\u0438\u043A","\uA9"
                         ,"\u0420\u043E\u0441\u0442\u0435\u043B\u0435\u043A\u043E\u043C")
    else
-      attr(basemap,"copyright") <- " "
+      attr(basemap,"copyright") <- "   "
    }
    session_grid(g0)
    ursa(basemap,"nodata") <- NA

@@ -4,6 +4,7 @@
 # try(Sys.setenv(R_PLASTER_TEMPLATE=system.file("inst","template",package="ursa")
 
 .onLoad <- function(lib, pkg) {
+   compiler::enableJIT(0) ## speed up if 'ByteCompile: no' in "DESCRIPTION"
   # print("ursa -- .onLoad")
    p <- proc.time()
    options(ursaTimeStart=p,ursaTimeDelta=p)

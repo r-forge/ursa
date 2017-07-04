@@ -15,6 +15,26 @@
                           ,colortable=NULL
                           ,verbose=FALSE,...)
 {
+   rel <- as.list(match.call())
+   fun <- "colorize" #"colorize" ## as.character(rel[1])
+   if (TRUE) { ## ++ 20170629
+     # .elapsedTime("---")
+     # print(c('as.character(rel[[1]])'=as.character(rel[[1]])))
+     # print(c(isPackageInUse=.isPackageInUse()))
+     # print(c('rel[[1]]'=rel[[1]]))
+     # try(print(c(a=head(names(as.list(args(rel[[1]]))))),quote=FALSE))
+     # try(print(c(b=head(names(as.list(args(as.character(rel[[1]])))))),quote=FALSE))
+     # try(print(c(c=head(names(as.list(args(colorize))))),quote=FALSE))
+     # try(print(c(d=head(names(as.list(args(ursa::colorize))))),quote=FALSE))
+      argname <- names(as.list(args(colorize)))
+      rname <- names(rel)
+      for (i in seq_along(rel)[-c(1,2)]) {
+         if ((is.language(rel[[i]]))&&(rname[i] %in% argname))
+            rel[[i]] <- eval.parent(rel[[i]])
+      }
+     # str(rel)
+     # .elapsedTime("===")
+   }
    if (is.numeric(alpha)) {
       if (all(alpha<=1))
          alpha <- round(alpha*255)
@@ -41,8 +61,6 @@
    }
    isList <-  .is.ursa_stack(obj)
    if (isList) { ## recursive!!!
-      rel <- as.list(match.call())
-      fun <- as.character(rel[1])
       res <- vector("list",length(obj))
       oname <- names(obj)
       for (i in seq_along(obj)) {
@@ -71,12 +89,10 @@
             oname <- as.character(obj)
             obj <- seq_along(obj)
          }
-         res <- ursa_new(matrix(rev(obj),nrow=1)) ## rev()?
+         res <- ursa_new(matrix(rev(obj),nrow=1),verbose=FALSE) ## rev()?
          if (isChar) {
             res <- reclass(res,src=seq_along(oname),dst=oname)
          }
-         rel <- as.list(match.call())
-         fun <- as.character(rel[1])
          rel[["obj"]] <- quote(res)
          if (length(ind <- .grep("lazy",names(rel))))
             rel[[ind]] <- FALSE
@@ -104,7 +120,6 @@
       class(obj$value) <- "ursaNumeric"
    }
    if (.is.colortable(obj$colortable)) {
-      rel <- as.list(match.call())
       ct <- obj$colortable
       if (all(!is.na(ct))) {
          if (.is.category(obj)) ## attr(obj$value,"category")
@@ -144,7 +159,7 @@
             rel$value <- seq(length(ct))-1L
             rel$stretch <- ".onetoone"
          }
-         res <- do.call(as.character(rel[1]),rel[-1])
+         res <- do.call(fun,rel[-1])
          names(res$colortable) <- names(ct)
       }
       else { ## dev

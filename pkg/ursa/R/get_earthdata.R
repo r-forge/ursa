@@ -67,7 +67,7 @@
       date <- as.Date(date)
    }
    if (is.character(bbox)) {
-      g0 <- attr(.read_ogr(bbox,geocode=geocode,expand=expand,border=border
+      g0 <- attr(.spatialize(bbox,geocode=geocode,expand=expand,border=border
                           ,verbose=verbose),"grid")
       xy <- with(g0,cbind(c(minx,maxx),c(miny,maxy)))
       ll <- with(g0,.project(xy,proj4,inv=TRUE))

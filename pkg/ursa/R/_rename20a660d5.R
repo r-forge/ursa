@@ -11,16 +11,17 @@
       }
    }
    if (!FALSE) {
-      src <- "_gridline"
-      dst <- "_graticule"
+      src <- ".read_ogr"
+      dst <- ".spatialize"
       ind <- as.character(c(1,2,3,4,5))
-      toWrite <- !FALSE
+      toWrite <- FALSE
       dpath1 <- c('1'="C:/platt/R/ursa-package/ursa/R"
                  ,'2'="C:/platt/R/ursa-package/ursa/man"
-                 ,'3'="C:/platt/R")
-      dpath2 <- c('4'="D:/RAS2017",'5'="D:/RAS2016")
-      ind1 <- which(c("1","2","3") %in% ind)
-      ind2 <- which(c("4","5") %in% ind)
+                 ,'3'="C:/platt/R/ursa-package/ursa/inst/example"
+                 ,'4'="C:/platt/R")
+      dpath2 <- c('5'="D:/RAS2017",'5'="D:/RAS2016")
+      ind1 <- which(c("1","2","3","4") %in% ind)
+      ind2 <- which(c("5","6") %in% ind)
       list1 <- list.files(path=dpath1[ind1],pattern="^[a-z].+\\.(R|Rd)$"
                        ,ignore.case=TRUE,recursive=FALSE,full.names=TRUE)
       list2 <- list.files(path=dpath2[ind2],pattern=".+\\.R$"

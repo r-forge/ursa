@@ -24,11 +24,13 @@
       if (envi_exists(arglist[[1]])) {
          return(do.call("display",arglist))
       }
-      else if (.lgrep("\\.(tif|tiff|img|png|bmp|dat)$",arglist[[1]]))
+      else if (.lgrep("\\.(tif|tiff|img|png|bmp|dat)$",arglist[[1]])) {
          return(do.call("display",arglist))
+      }
       else if (.lgrep("\\.(gpkg|tab|json|geojson|mif|sqlite|shp|shp\\.zip)$"
-                     ,arglist[[1]]))
+                     ,arglist[[1]])) {
          return(do.call(".glance",arglist))
+      }
       else {
          if (.lgrep("\\.rds$",basename(arglist[[1]]))) {
             obj <- readRDS(arglist[[1]])
@@ -48,7 +50,8 @@
                return(do.call("display",arglist))
             }
          }
-         b <- open_gdal(arglist[[1]])
+         
+         b <- if (file.exists(arglist[[1]])) open_gdal(arglist[[1]]) else NULL
          if (!is.null(b)) {
             close(b)
             do.call("display",arglist)
@@ -98,13 +101,13 @@
    feature <- match.arg(feature)
    engine <- match.arg(engine)
   # print(c(dsn=class(dsn)))
-  # obj <- .read_ogr(dsn)
+  # obj <- .spatialize(dsn)
    S4 <- isS4(dsn)
    if (S4) {
       .require("methods",quietly=.isPackageInUse())
      # requireNamespace("methods",quietly=.isPackageInUse())
    }
-   obj <- .read_ogr(dsn=dsn,engine=engine,layer=layer,attr=attr,geocode=geocode
+   obj <- .spatialize(dsn=dsn,engine=engine,layer=layer,attr=attr,geocode=geocode
                    ,place=place,grid=grid,size=size
                   # ,expand=expand,border=border
                    ,expand=expand,border=0
@@ -131,7 +134,7 @@
        ((isSF)&&(inherits(obj,"sfc"))) |
        ((isSP)&&(!inherits(obj,paste0("Spatial",c("Points","Lines","Polygons")
                                      ,"DataFrame"))))
-   toColor <- ((is.numeric(dsn))||(noAttr))
+   toColor <- ((is.numeric(dsn))||(noAttr))||(TRUE)
    if ((toColor)&&(!.lgrep("(colo(u)*r|gr[ae]y(scale)*)",style)))
       style <- paste(style,"color")
    else if ((!toColor)&&(!.lgrep("(colo(u)*r|gr[ae]y(scale)*)",style)))
@@ -145,14 +148,24 @@
       s2 <- strsplit(style,split="\\s+")
       s <- expand.grid(s1,s2)
    }
+   isUrl <- .lgrep("http(s)*://",style)
+   if (isUrl) {
+      ind <- .grep("http(s)*://",style)
+      style[ind] <- unlist(strsplit(style[ind],split="\\s+"))[1]
+   }
    if (!.lgrep(tilePatt,style)) {
-      art <- "none"
+      if (isUrl) {
+         art <- style
+         proj <- "merc"
+      }
+      else
+         art <- "none"
    }
    else {
       art <- .gsub2(tilePatt,"\\1",style)
       proj <- "merc"
    }
-   isWeb <- .lgrep(tilePatt,art)
+   isWeb <- .lgrep(tilePatt,art) | isUrl
   # proj <- match.arg(proj)
   # attr(obj,"grid") <- NULL
   # attr(obj,"toUnloadMethods") <- NULL
@@ -162,35 +175,34 @@
       bbox <- with(g0,c(minx,miny,maxx,maxy))
       lim <- c(.project(matrix(bbox,ncol=2,byrow=TRUE)
                                                ,g0$proj4,inv=TRUE))[c(1,3,2,4)]
-      ostyle <- style
-      for (i in seq(3)) {
-         if ((style!=ostyle)||(i==1))
-            basemap <- try(.geomap(lim,style=style,size=size,zoom=zoom
-                          ,border=border,verbose=verbose))
+      ostyle <- unlist(strsplit(style,split="\\s+"))
+      isStatic <- ostyle[1] %in% staticMap
+      ustyle <- ""#ostyle[1]
+      if (isStatic)
+         nextStyle <- .grep(ostyle[1],staticMap
+                           ,invert=TRUE,value=TRUE)
+      else
+         nextStyle <- .grep(ostyle[1],c("mapnik","mapsurfer","cartoDB","opentopomap")
+                           ,invert=TRUE,value=TRUE)[seq(3)]
+      nsize <- length(nextStyle)+1
+      for (i in seq(nsize)) {
+         basemap <- try(.geomap(lim,style=style,size=size,zoom=zoom
+                       ,border=border,verbose=verbose))
          if (!inherits(basemap,"try-error"))
             break
+         message(geterrmessage())
+         if (i==nsize)
+            break
          .style <- style
-         if (.lgrep("sputnikmap",style)) #&&(.lgrep("static",style)))
-            style <- .gsub("sputnikmap","openstreetmap",style)
-         else if (.lgrep("sputnik",style)) #&&(.lgrep("tile",style)))
-            style <- .gsub("sputnik","mapnik",style)
-         else if (.lgrep("openstreetmap",style))
-            style <- .gsub("openstreetmap","mapnik",style)
-         else if (.lgrep("google",style))
-            style <- .gsub("google","openstreetmap",style)
-         else if (.lgrep("mapsurfer",style))
-            style <- .gsub("mapsurfer","mapnik",style)
-         else if (.lgrep("mapnik",style))
-            style <- .gsub("mapnik","mapsurfer",style)
-         else
-            style <- "mapnik"
-         if (style==ostyle)
-            next
-         message(paste("failed to get map; trying another service:"
-                      ,.style,"->",style))
+         style <- paste(nextStyle[1],ostyle[-1],collapse=" ")
+         nextStyle <- nextStyle[-1]
+         message(paste("failed to get map; change service:"
+                      ,.sQuote(.style),"->",.sQuote(style)))
       }
-      if (inherits(basemap,"try-error"))
+      if (inherits(basemap,"try-error")) {
+         message(paste("failed to get map; cancel"))
          basemap <- NULL
+      }
       else
          g0 <- ursa(basemap,"grid") ## 0605 TODO
      # print(g0)
@@ -397,14 +409,15 @@
                                 ,g0$proj4,inv=TRUE)[,2]*pi/180)
            # x <- 0#ifelse(((isWeb)&&(isStatic)&&(isGoogle)),0.5,0)
            # print(art)
-            x <- ifelse(art %in% "google",0.5,0)
+            x <- ifelse(any(art %in% "google"),0.5,0)
             if (max(sc)/min(sc)>1.2) {
                y <- (y-g0$miny)/(g0$maxy-g0$miny)
                panel_scalebar(pos=c(x,min(y)),...)
                panel_scalebar(pos=c(x,max(y)),...)
             }
-            else # if (isWeb)
-               panel_scalebar(pos=c(x,0),...)
+            else { # if (isWeb)
+               panel_scalebar(pos=c(x[1],0),...)
+            }
            # else
            #    panel_scalebar(pos="bottomleft",...)
          }

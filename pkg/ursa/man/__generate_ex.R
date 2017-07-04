@@ -1,7 +1,7 @@
 require(plutil)
 invisible({
-   rd <- filelist("\\.Rd$")
-   ex <- mygsub("\\.Rd$",".ex.R",rd)
+   rd <- filelist(path=".",pattern="\\.Rd$",full.names=TRUE)
+   ex <- file.path("../inst/example",mygsub("\\.Rd$",".ex.R",basename(rd)))
    ind <- which(!file.exists(ex))
    if (length(ind))
       for (i in ind)

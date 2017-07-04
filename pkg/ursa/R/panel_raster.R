@@ -14,6 +14,7 @@
    interpolate <- .getPrm(arglist,name="interp(olate)*",kwd=kwd,default=FALSE)
    alpha <- .getPrm(arglist,name="(alpha|transp(aren(cy)*)*)"
                    ,kwd=kwd,class=list("numeric","character"),default=NA)
+   attribution <- .getPrm(arglist,name="(ann(otat)*|attr)",kwd=kwd,default="bottomright")
    verbose <- .getPrm(arglist,name="verb(ose)*",kwd=kwd,default=FALSE)
    if (verbose)
       str(list(obj=class(obj),useRaster=useRaster,interpolate=interpolate
@@ -40,8 +41,8 @@
       with(ursa_grid(obj),rasterImage(as.raster(obj),minx,miny,maxx,maxy
                                       ,interpolate=interpolate))
       ann <- attr(obj,"copyright")
-      if ((is.character(ann))&&(nchar(ann)>1))
-         panel_annotation(ann,pos="bottomright",cex=0.7,font="Arial Narrow"
+      if ((is.character(ann))&&(nchar(.gsub("\\s","",ann))>1))
+         panel_annotation(ann,pos=attribution,cex=0.7,font="Arial Narrow"
                          ,fg=sprintf("#000000%s","4F"))
       return(invisible(NULL))
    }

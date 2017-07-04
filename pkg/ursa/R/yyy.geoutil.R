@@ -19,94 +19,133 @@
 # https://leaflet-extras.github.io/leaflet-providers/preview/
 # https://leaflet-extras.github.io/leaflet-providers/leaflet-providers.js
 '.tileService' <- function(server="") {
-   s <- list()
-   s$mapnik <- "http://{abc}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-   s$cycle <- "http://{abc}.tile.opencyclemap.org/cycle/{z}/{x}/{y}.png"
-   s$osmfr <- "http://{abc}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png"
-   s$transport <- "http://{abc}.tile2.opencyclemap.org/transport/{z}/{x}/{y}.png"
-   s$mapsurfer <- "http://korona.geog.uni-heidelberg.de/tiles/roads/x={x}&y={y}&z={z}"
-   s$sputnik <- "https://tilessputnik.ru/{z}/{x}/{y}.png"
-  # s$sputnik <- "http://tiles.maps.sputnik.ru/tiles/kmt2/{z}/{x}/{y}.png"
-   s$carto <- "http://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
-   s$kosmosnimki <- "http://{abcd}.tile.osm.kosmosnimki.ru/kosmo/{z}/{x}/{y}.png"
-   s$Esri.Ocean <- "https://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}.jpg"
-   s$Esri.Topo <- "http://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}.jpg"
-   s$Esri.Street <- "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}.jpg"
-   s$Esri.Terrain <- "http://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}.jpg"
+   osmCr <- "\uA9 OpenStreetMap contributors"
    optHERE <- getOption("HEREapp")
-   s$HERE.Aerial <- paste0("https://{1234}.aerial.maps.cit.api.here.com/maptile"
+   TFkey <- getOption("ThunderforestApiKey")
+   BingKey <- getOption("BingMapsKey")
+   s <- list()
+   s$mapnik <- c("http://{abc}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                ,osmCr) ## # http://{abc}.tile.osm.org/{z}/{x}/{y}.png
+   s$osmbw <- c("http://{abc}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png"
+               ,osmCr)
+   s$cycle <- c("http://{abc}.tile.opencyclemap.org/cycle/{z}/{x}/{y}.png"
+               ,paste(osmCr,"(Cycle)"))
+   s$osmfr <- c("http://{abc}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png"
+               ,paste("\uA9 Openstreetmap France",osmCr))
+   s$transport <- c("http://{abc}.tile2.opencyclemap.org/transport/{z}/{x}/{y}.png"
+                   ,osmCr)
+  # copyright["transport"] <- paste0("Maps \xA9 Thunderforest, Data ",osmCr)
+   s$mapsurfer <- c("http://korona.geog.uni-heidelberg.de/tiles/roads/x={x}&y={y}&z={z}"
+                   ,paste0(osmCr,", GIScience Research Group @ Heidelberg University")
+                   ,"png")
+   s$mapsurfer.grayscale <- c("http://korona.geog.uni-heidelberg.de/tiles/roadsg/x={x}&y={y}&z={z}"
+                             ,paste0(osmCr,", GIScience Research Group @ Heidelberg University")
+                             ,"png")
+  # s$sputnik <- "http://tiles.maps.sputnik.ru/tiles/kmt2/{z}/{x}/{y}.png"
+   s$sputnik <- c("https://tilessputnik.ru/{z}/{x}/{y}.png"
+                 ,paste0(osmCr,", \u0421\u043F\u0443\u0442\u043D\u0438\u043A \uA9 \u0420\u043E\u0441\u0442\u0435\u043B\u0435\u043A\u043E\u043C"))
+   s$CartoDB <- c("http://{abcd}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
+                 ,paste0(osmCr,", \uA9 CartoDB"))
+   s$kosmosnimki <- c("http://{abcd}.tile.osm.kosmosnimki.ru/kosmo/{z}/{x}/{y}.png"
+                     ,paste0(osmCr,", \uA9 ScanEx"))
+   s$Esri.Ocean <- c("https://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}.jpg"
+                    ,"\uA9 Esri: GEBCO, NOAA, CHS, OSU, UNH, CSUMB, National Geographic, DeLorme, NAVTEQ, and Esri")
+   s$Esri.Topo <- c("http://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}.jpg"
+                   ,"\uA9 Esri - contributors to Esri World Topo Map")
+   s$Esri.Street <- c("http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}.jpg"
+                     ,"\uA9 Esri - contributors to Esri Street Topo Map")
+   s$Esri.Terrain <- c("http://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}.jpg"
+                      ,"\uA9 Esri: USGS, Esri, TANA, DeLorme, and NPS")
+   s$HERE.Aerial <- c(paste0("https://{1234}.aerial.maps.cit.api.here.com/maptile"
                           ,"/2.1/maptile/newest/satellite.day/{z}/{x}/{y}/256/png8?"
                           ,"app_id=",optHERE$id,"&app_code=",optHERE$code,"&lg=eng")
-   s$'2gis' <- "https://tile{0123}.maps.2gis.com/tiles?x={x}&y={y}&z={z}&v=1.2"
-   TFkey <- getOption("ThunderforestApiKey")
-   s$TF.Outdoors <- paste0("https://{abc}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png?apikey=",TFkey)
-   s$TF.Landscape <- paste0("https://{abc}.tile.thunderforest.com/landscape/{z}/{x}/{y}.png?apikey=",TFkey)
-   BingKey <- getOption("BingMapsKey")
-   s$Bing.Map <- paste0("https://t{0123}.ssl.ak.dynamic.tiles.virtualearth.net/comp/ch/{q}"
-                   ,"?mkt=en-us&it=G,L&shading=hill&og=80&n=z&key=",BingKey)
-   s$Bing.Satellite <- paste0("http://ecn.t{0123}.tiles.virtualearth.net/tiles/a{q}.jpeg?g=0&dir=dir_n'&n=z&key=",BingKey)
-   osmCr <- "\uA9 OpenStreetMap contributors"
-   copyright <- rep(osmCr,length(s))
-   names(copyright) <- names(s)
-   copyright["mapnik"] <- paste0(osmCr)
-   copyright["cycle"] <- paste(osmCr,"(Cycle)")
-  # copyright["transport"] <- paste0("Maps \xA9 Thunderforest, Data ",osmCr)
-   copyright["mapsurfer"] <- paste0(osmCr
-           ,", GIScience Research Group @ Heidelberg University")
-   copyright["sputnik"] <- paste0(osmCr,", \u0421\u043F\u0443\u0442\u043D\u0438\u043A \uA9 \u0420\u043E\u0441\u0442\u0435\u043B\u0435\u043A\u043E\u043C")
-  # copyright["thunderforest"] <- paste0("Maps \uA9 Thunderforest, Data ",osmCr)
-   copyright["carto"] <- paste0(osmCr,", \uA9 CARTO")
-   copyright["kosmosnimki"] <- paste0(osmCr,", \uA9 ScanEx")
-   copyright["Esri.Ocean"] <- "\uA9 Esri: GEBCO, NOAA, CHS, OSU, UNH, CSUMB, National Geographic, DeLorme, NAVTEQ, and Esri"
-   copyright["Esri.Topo"] <- "\uA9 Esri - contributors to Esri World Topo Map"
-   copyright["Esri.Street"] <- "\uA9 Esri - contributors to Esri Street Topo Map"
-   copyright["Esri.Terrain"] <- "\uA9 Esri: USGS, Esri, TANA, DeLorme, and NPS"
-   copyright["HERE.Aerial"] <- "Map \uA9 1987-2014 HERE"
-   copyright["osmfr"] <- paste("\uA9 Openstreetmap France",osmCr)
-   copyright["2gis"] <- paste0(osmCr,", API 2GIS")
-   copyright["TF.Outdoors"] <- paste0("Maps \uA9 Thunderforest, Data ",osmCr)
-   copyright["TF.Landscape"] <- paste0("Maps \uA9 Thunderforest, Data ",osmCr)
-   copyright["Bing.Map"] <- paste0("Bing \uA9 Microsoft and its suppliers")
-   copyright["Bing.Satellite"] <- paste0("Bing \uA9 Microsoft and its suppliers")
-   if (!nchar(server))
+                     ,"Map \uA9 1987-2014 HERE")
+   s$'2gis' <- c("https://tile{0123}.maps.2gis.com/tiles?x={x}&y={y}&z={z}&v=1.2"
+                ,paste0(osmCr,", API 2GIS")
+                ,"png")
+   s$TF.Outdoors <- c(paste0("https://{abc}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png?apikey=",TFkey)
+                     ,paste0("Maps \uA9 Thunderforest, Data ",osmCr))
+   s$TF.Landscape <- c(paste0("https://{abc}.tile.thunderforest.com/landscape/{z}/{x}/{y}.png?apikey=",TFkey)
+                      ,paste0("Maps \uA9 Thunderforest, Data ",osmCr))
+   s$Bing.Map <- c(url=paste0("https://t{0123}.ssl.ak.dynamic.tiles.virtualearth.net/comp/ch/{q}"
+                         ,"?mkt=en-us&it=G,L&shading=hill&og=80&n=z&key=",BingKey)
+                  ,cite=paste0("Bing \uA9 Microsoft and its suppliers")
+                  ,ext="jpg")
+   s$Bing.Satellite <- c(paste0("http://ecn.t{0123}.tiles.virtualearth.net/tiles/a{q}.jpeg?g=0&dir=dir_n'&n=z&key=",BingKey)
+                        ,paste0("Bing \uA9 Microsoft and its suppliers")
+                        ,"jpg")
+   s$opentopomap <- c("http://{abc}.tile.opentopomap.org/{z}/{x}/{y}.png"
+                     ,paste0(osmCr,", \uA9 OpenTopoMap"))
+   if (!sum(nchar(server)))
      return(names(s))
-   if (!(server %in% names(s))) {
+   if (!(server[1] %in% names(s))) {
       for (i in seq_along(s)) {
-         ind <- .lgrep(server,s[[i]])
+         ind <- .lgrep(server[1],s[[i]])
          if (ind>0)
             break
       }
       if (!ind) {
-         ret <- names(s)
-        # attr(ret,"copyright") <- copyright
-         return(ret)
+         if (TRUE)
+            style <- server
+         else { 
+            ret <- names(s)
+           # attr(ret,"copyright") <- copyright
+            return(ret)
+         }
       }
-      server <- s[[ind[1]]]
+      else
+         style <- s[[ind[1]]]
    }
+   else
+      style <- s[[server]]
    if ((.lgrep("HERE",server))&&(is.null(optHERE)))
       message("'options(HEREapp=list(id=<app_id>,code=<app_code>))' is required")
    if ((.lgrep("^TF\\.",server))&&(is.null(TFkey)))
       message("'options(ThunderforestApiKey=<api_key>)' is required")
-   url <- s[[server]]
-   burl <- basename(url)
-   fext <- .gsub("^.+\\.(.+)($|\\?.+)","\\1",burl)
-   if (!(fext %in% c("png","jpg","jpeg"))) {
-      if ((.lgrep("png8",burl))||
-             (server %in% c("mapsurfer","2gis"))||
-             (.lgrep("^TF\\.",server)))
-         fext <- "png"
-      else if (server %in% c("Bing.Map","Bing.Satellite"))
-         fext <- "jpg"
-      else {
-         cat(paste("Unable to detect either 'png' or 'jpg' format of tile:"
-                  ,url,"\n"))
-         stop()
-      }
+   if ((.lgrep("^Bing\\.",server))&&(is.null(BingKey)))
+      message("'options(BingMapsKey=<api_key>)' is required")
+  # if (length(server)==1)
+  #    style <- unlist(strsplit(server,split="\\s+"))
+   tile <- list(name="custom",url="",copyright="   ",fileext="___")
+   if (server[1] %in% names(s))
+      tile$name <- server
+   indUrl <- .grep("^http(s)*://",style)
+   if (!length(indUrl))
+      return(names(s))
+   indExt <- .grep("(png|jpg|jpeg)",style)
+   indCite <- seq(style)[-unique(c(indUrl,indExt))]
+   if (!length(indCite)) {
+      opW <- options(warn=1)
+      warning("Cannot identify citation/copyright/attribution for tile service")
+      options(opW)
    }
-   list(name=server,url=url,copyright=unname(copyright[server]),fileext=fext)
+   tile$url <- style[indUrl]
+   if (length(indExt)>1)
+      pattExt <- paste0(".",style[indExt[indExt!=indUrl]])
+   else if (indExt==indUrl)
+      pattExt <- style[indExt]
+   else 
+      pattExt <- paste0(".",style[indExt])
+   if (.lgrep("\\.(jpg|jpeg)",pattExt))
+      tile$fileext <- "jpg"
+   else if (.lgrep("\\.png",pattExt))
+      tile$fileext <- "png"
+   else {
+      cat(paste("Unable to detect either 'png' or 'jpg' format in url:"
+               ,url,"\n"))
+      stop()
+   }
+   if (length(indCite))
+      tile$copyright <- style[indCite]
+  # str(tile);q()
+   tile
 }
-'.tileGet' <- function(z=4,x=10,y=3,url,fileext,ursa=FALSE,verbose=FALSE) {
+'.tileGet' <- function(z=4,x=10,y=3,minx=-2e7,miny=-2e7,maxx=2e7,maxy=2e7
+                      ,w=256,h=256,url,fileext,ursa=FALSE,verbose=FALSE) {
    tile <- .gsub("{z}",z,.gsub("{y}",y,.gsub("{x}",x,url)))
+   tile <- .gsub("{h}",h,.gsub("{w}",w,tile))
+   tile <- .gsub("{maxy}",maxy,.gsub("{maxx}",maxx
+          ,.gsub("{miny}",miny,.gsub("{minx}",minx,tile))))
    if (.lgrep("{q}",tile)) {
       b1 <- b2 <- rep(0,z)
       for (i in seq(z)) {

@@ -1,3 +1,7 @@
+# version 3.7-14
+
+* fixed export to Raster(Layer|Brick|Stack) with NA nodata
+
 # version 3.7-13
 
 * gentle requirements to "chessboard" grid in 'panel_new()'

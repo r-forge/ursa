@@ -4,14 +4,20 @@
    arglist <- list(...)
    verbose <- .getPrm(arglist,name="verb(ose)*",default=FALSE)
   # obj <- .getPrm(arglist,name=".*",class=list("character","ursaVectorExternal"))
-   if (is.character(obj)) {
+   external <- is.character(obj)
+   if (external) {
+      dsnE <- obj
       if (verbose)
          .elapsedTime("read vector -- start")
-      obj <- .read_ogr(obj,...)
+      obj <- .spatialize(obj,...)
       if (verbose)
          .elapsedTime("read vector -- finish")
    }
-   dsn <- attr(obj,"dsn")
+   if (external)
+      dsn <- dsnE
+   else
+      dsn <- attr(obj,"dsn")
+  # print(c(dsn=dsn,dsnE=dsnE))
    g0 <- attr(obj,"grid")
    dname <- attr(obj,"colnames")
   # attr <- .getPrm(arglist,name="attr",default=".+")
@@ -31,9 +37,9 @@
       dsn <- fname1
    else if (cond2 | cond3) {
       if (cond2)
-         ziplist <- unzip(fname2)
+         ziplist <- unzip(fname2,exdir=tempdir())
       if (cond3)
-         ziplist <- unzip(fname3)
+         ziplist <- unzip(fname3,exdir=tempdir())
       on.exit(file.remove(ziplist),add=TRUE)
       dsn <- .grep("\\.shp$",ziplist,value=TRUE)
    }
@@ -50,11 +56,15 @@
    proj4 <- .gsub("'","",proj4)
    proj4 <- .gsub("(^\\s|\\s$)","",proj4)
    ftemp <- .maketmp() # .maketmp() #tempfile(pattern="") # ".\\tmp1"
-   lname <- system(paste("ogrinfo","-q",.dQuote(dsn)),intern=TRUE)
+   cmd <- paste("ogrinfo","-q",.dQuote(dsn))
+   if (verbose)
+      message(cmd)
+   lname <- system(cmd,intern=TRUE)
    lname <- .gsub("(\\s\\(.+\\))*$","",lname)
    lname <- .gsub("^\\d+:\\s(.+)$","\\1",lname)
    if (proj4!=g0$proj4) {
-      print("REPROJECT")
+     # if (verbose)
+     #   message("REPROJECT")
       shpname <- .maketmp()
       cmd <- paste("ogr2ogr","-t_srs",.dQuote(g0$proj4)
               ,"-sql",.dQuote(paste("select FID,* from",.dQuote(.dQuote(lname))))
@@ -62,7 +72,7 @@
               ,"-select FID"
               ,"-f",.dQuote(c("ESRI Shapefile","SQLite")[1])
               ,ifelse(verbose,"-progress","")
-              ,paste0(shpname,".shp"),dsn
+              ,.dQuote(paste0(shpname,".shp")),.dQuote(dsn)
               )
       if (verbose)
          message(cmd)

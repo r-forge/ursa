@@ -257,8 +257,8 @@
          arglist <- list(...)
          fname <- tempfile()
         # download.file(obj,fname,...)
-         ind <- .grep("(method|mode|cache|extra|quiet)",names(arglist))
-         args2 <- c(url=obj,destfile=fname,arglist[ind])
+         ind <- .grep("(method|cache|extra|quiet)",names(arglist)) ## -- "|mode|"
+         args2 <- c(url=obj,destfile=fname,mode="wb",arglist[ind])
          do.call("download.file",args2)
          return(read_gdal(fname,...))
       }

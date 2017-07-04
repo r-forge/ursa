@@ -219,6 +219,8 @@
                   if ((length(label)+1)*height<mheight)
                      break
                   labels <- labels-1
+                  if (labels<1)
+                     break
                })
             }
             else {

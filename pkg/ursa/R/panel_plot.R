@@ -106,6 +106,9 @@
       return(NULL)
    if (is.null(obj))
       return(obj)
+   ##~ arglist <- list(...)
+   ##~ str(obj)
+   ##~ str(arglist)
   ## WARNING: here not only plot
   # pkg <- attr(class(obj),"package")
   # print(class(obj))

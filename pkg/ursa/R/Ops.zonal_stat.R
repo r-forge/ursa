@@ -41,6 +41,8 @@
    }
   # a <- na.omit(names(ursa_colortable(by)))
    if (table) { ## 'table' is agrument, is not a function
+      if (!nrow(z))
+         return(z)
       nameBy <- names(ursa_colortable(by))
       if ((isCategory)&&(!is.null(nameBy))&&(length(na.omit(nameBy)))) {
          ind <- z[,1]+1

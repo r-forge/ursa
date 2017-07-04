@@ -39,7 +39,9 @@
    if (is.null(value))
       value <- character(0)
    myname <- names(x$colortable)
-   if ((length(myname)==length(value))&&(is.null(names(value))))
+   if ((length(myname)==length(value))&&
+       (is.null(names(value)))&&
+       (!inherits(value,"ursaColorTable")))
       names(value) <- myname
    class(value) <- "ursaColorTable"
    x$colortable <- value
