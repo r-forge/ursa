@@ -99,8 +99,14 @@
    if (isChar)
       label <- names(ct)
    if ((isChar)&&(abbrev>0)) {
-      a <- .try(label <- abbreviate(label,minlength=abbrev,strict=TRUE))
-     ## 20170304 'abbreviate' terminates on "geocoded.sqlite". Patch is 'abbrev=0'
+      if (.isRscript())
+         a <- .try(label <- abbreviate(label,minlength=abbrev,strict=TRUE))
+      else {
+         encdng <- Encoding(label)
+         Encoding(label) <- "UTF-8"
+         a <- .try(label <- abbreviate(label,minlength=abbrev,strict=TRUE))
+         Encoding(label) <- encdng
+      }
       if (!a) {
          ind <- which(nchar(label)>abbrev)
          label <- substr(label,1,abbrev)

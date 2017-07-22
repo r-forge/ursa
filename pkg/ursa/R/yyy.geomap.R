@@ -81,118 +81,143 @@
       loc <- c(.project(matrix(loc,ncol=2,byrow=TRUE),proj4
                        ,inv=TRUE))[c(1,3,2,4)]
    }
-   if (is.null(loc)) {
-      border <- 0
-      g0 <- session_grid()
-      loc <- with(g0,.project(rbind(c(minx,miny),c(maxx,maxy)),proj4,inv=TRUE))
-      loc <- c(loc)[c(1,3,2,4)]
-   }
-   if (!((is.numeric(loc))&&(length(loc) %in% c(4,2)))) {
-      loc <- try(.geocode(loc,service=geocode,area="bounding"
-                           ,select="top",verbose=verbose))
-      if (inherits(loc,"try-error")) {
-         geocode <- switch(geocode,google="nominatim",nominatim="google")
+   isWMS <- isUrl & .is.wms(style)
+   notYetGrid <- TRUE
+   if ((TRUE)||(isWMS)) {
+      if (is.null(loc)) {
+         border <- 0
+         g0 <- getOption("ursaSessionGrid")#session_grid()
+         notYetGrid <- is.null(g0)
+         if (is.null(g0))
+            loc <- c(-179,-82,179,82)
+         else {
+            loc <- with(g0,.project(rbind(c(minx,miny),c(maxx,maxy)),proj4,inv=TRUE))
+            loc <- c(loc)[c(1,3,2,4)]
+         }
+      }
+      if (!((is.numeric(loc))&&(length(loc) %in% c(4,2)))) {
          loc <- try(.geocode(loc,service=geocode,area="bounding"
                               ,select="top",verbose=verbose))
+         if (inherits(loc,"try-error")) {
+            geocode <- switch(geocode,google="nominatim",nominatim="google")
+            loc <- try(.geocode(loc,service=geocode,area="bounding"
+                                 ,select="top",verbose=verbose))
+         }
+         if (!inherits(loc,"try-error"))
+            geocodeStatus <- TRUE
       }
-      if (!inherits(loc,"try-error"))
+      if ((is.numeric(loc))&&(length(loc) %in% c(2)))
          geocodeStatus <- TRUE
-   }
-   if ((is.numeric(loc))&&(length(loc) %in% c(2)))
-      geocodeStatus <- TRUE
-  # copyright <- attr(.tileService()(),"copyright")[art]
-  # str(unname(loc),digits=8)
-   if (length(loc)==2)
-      bbox <- c(loc,loc)
-   else
-      bbox <- loc
-  # size <- c(640,640)
-   B0 <- 6378137
-   B <- B0*pi
-   x <- B*bbox[c(1,3)]/180
-   cross180 <- x[1]>x[2]
-   if (cross180)
-      x[1] <- x[1]-2*B
-   lon_0 <- round(180*mean(x)/B,6)
-   proj4 <- paste("","+proj=merc +a=6378137 +b=6378137"
-                 ,"+lat_ts=0.0",paste0("+lon_0=",lon_0)
-                 ,"+x_0=0.0 +y_0=0 +k=1.0"
-                 ,"+units=m +nadgrids=@null +wktext +no_defs")
-   bbox <- matrix(bbox,ncol=2,byrow=TRUE)
-   bbox <- .project(bbox,proj4)
-   bbox <- c(xmin=bbox[1,1],ymin=bbox[1,2],xmax=bbox[2,1],ymax=bbox[2,2])
-   res <- max(c((bbox["xmax"]-bbox["xmin"])/size[1]
-        ,(bbox["ymax"]-bbox["ymin"])/size[2]))
-   s <- 2*6378137*pi/(2^(1:21+8))
-   zman <- zoom
-   zoom <- which.min(abs(s-res))
-   for (i in seq(zoom,1,by=-1)) {
-      if (i<1)
-         break
-      res <- s[i]
-      g0 <- regrid(ursa_grid(),res=res,proj4=proj4,border=border
-                  ,setbound=unname(bbox[c("xmin","ymin","xmax","ymax")]))
-     # if (isTile)
-     #    break
-      if ((g0$columns<=size[1])&&(g0$rows<=size[2]))
-         break
-   }
-   if ((art=="sputnikmap")&&(!isTile))
-      g0 <- regrid(regrid(g0,mul=1/2),mul=2,border=-1) ## even cols/rows
-   zoom <- i
-   if ((is.numeric(zman))&&(zman<=0))
-      zman <- as.character(zman)
-   if (is.numeric(zman))
-      zman <- round(zman)
-   else if (is.character(zman)) { ## "+1" "---"
-      if (.lgrep("^(\\+|\\-)\\d$",zman)) {
-         zman <- eval(parse(text=paste0(zoom,zman)))
+     # copyright <- attr(.tileService()(),"copyright")[art]
+     # str(unname(loc),digits=8)
+      if (length(loc)==2)
+         bbox <- c(loc,loc)
+      else
+         bbox <- loc
+     # size <- c(640,640)
+      B0 <- 6378137
+      B <- B0*pi
+      x <- B*bbox[c(1,3)]/180
+      cross180 <- x[1]>x[2]
+      if (cross180)
+         x[1] <- x[1]-2*B
+      lon_0 <- round(180*mean(x)/B,6)
+      proj4 <- paste("","+proj=merc +a=6378137 +b=6378137"
+                    ,"+lat_ts=0.0",paste0("+lon_0=",lon_0)
+                    ,"+x_0=0.0 +y_0=0 +k=1.0"
+                    ,"+units=m +nadgrids=@null +wktext +no_defs")
+      bbox <- matrix(bbox,ncol=2,byrow=TRUE)
+      bbox <- .project(bbox,proj4)
+      bbox <- c(xmin=bbox[1,1],ymin=bbox[1,2],xmax=bbox[2,1],ymax=bbox[2,2])
+      res <- max(c((bbox["xmax"]-bbox["xmin"])/size[1]
+           ,(bbox["ymax"]-bbox["ymin"])/size[2]))
+      s <- 2*6378137*pi/(2^(1:21+8))
+      if (!notYetGrid)
+         res0 <- with(g0,sqrt(resx*resy))
+      zman <- zoom
+      zoom <- which.min(abs(s-res))
+      fixRes <- FALSE
+      for (i in seq(zoom+1,1,by=-1)) {
+         if (i<1)
+            break
+         res <- s[i]
+         g0 <- regrid(ursa_grid(),res=res,proj4=proj4,border=border
+                     ,setbound=unname(bbox[c("xmin","ymin","xmax","ymax")]))
+         if ((!notYetGrid)&&(identical(res0,res))) {
+            fixRes <- TRUE
+            break
+         }
+        # if (isTile)
+        #    break
+         if ((g0$columns<=size[1])&&(g0$rows<=size[2]))
+            break
       }
-      else {
-         zman <- round(as.numeric(zman))
-         if (zman==0)
+      if ((art=="sputnikmap")&&(!isTile))
+         g0 <- regrid(regrid(g0,mul=1/2),mul=2,border=-1) ## even cols/rows
+      zoom <- i
+      if ((is.numeric(zman))&&(zman<=0))
+         zman <- as.character(zman)
+      if (is.numeric(zman))
+         zman <- round(zman)
+      else if (is.character(zman)) { ## "+1" "---"
+         if (.lgrep("^(\\+|\\-)\\d$",zman)) {
+            zman <- eval(parse(text=paste0(zoom,zman)))
+         }
+         else {
+            zman <- round(as.numeric(zman))
+            if (zman==0)
+               zman <- zoom
+         }
+         if (zman>18)
+            zman <- 18
+      }
+      if (FALSE) {
+         pattZoom <- "(zoom=(\\d+))"
+         if (.lgrep(pattZoom,style))
+            zman <- as.integer(.gsub2(pattZoom,"\\2",style))
+         else
             zman <- zoom
       }
-      if (zman>18)
-         zman <- 18
-   }
-   if (FALSE) {
-      pattZoom <- "(zoom=(\\d+))"
-      if (.lgrep(pattZoom,style))
-         zman <- as.integer(.gsub2(pattZoom,"\\2",style))
-      else
-         zman <- zoom
-   }
-   if (zman!=zoom) {
-      if (verbose)
-         print(c(zoomAuto=zoom,zoomManual=zman))
-      m <- 2^(zoom-zman)
-      if (FALSE)
-         g0 <- regrid(g0,mul=1/m,expand=m)
-      else {
-         bbox <- with(g0,c(minx,miny,maxx,maxy))
-         m2 <- if (m<1) 1 else with(g0,sqrt((maxx-minx)*(maxy-miny)))/2
-        # print(c(m=m,m2=m2,expand=m*m2))
-         g0 <- regrid(g0,mul=1/m,bbox=bbox+c(-1,-1,1,1)*m*m2)
+      if (zman!=zoom) {
+         if (verbose)
+            print(c(zoomAuto=zoom,zoomManual=zman))
+         m <- 2^(zoom-zman)
+         if (!fixRes) {
+            if (FALSE)
+               g0 <- regrid(g0,mul=1/m,expand=m)
+            else {
+               bbox <- with(g0,c(minx,miny,maxx,maxy))
+               m2 <- if (m<1) 1 else with(g0,sqrt((maxx-minx)*(maxy-miny)))/2
+              # print(c(m=m,m2=m2,expand=m*m2))
+               g0 <- regrid(g0,mul=1/m,bbox=bbox+c(-1,-1,1,1)*m*m2)
+            }
+         }
+         else {
+            g0 <- regrid(g0,mul=1/m)
+         }
+         zoom <- zman
       }
-      zoom <- zman
+      if ((TRUE)&&(geocodeStatus)) { ## <-- is this good feature to expand to 640x640?
+         x0 <- (g0$minx+g0$maxx)/2
+         y0 <- (g0$miny+g0$maxy)/2
+         minx <- x0-g0$resx*size[1]/2
+         maxx <- x0+g0$resx*size[1]/2
+         miny <- y0-g0$resy*size[2]/2
+         maxy <- y0+g0$resy*size[2]/2
+         g0 <- regrid(g0,minx=minx,maxx=maxx,miny=miny,maxy=maxy)
+      }
+      B <- 6378137*pi*(0.95+1*0.05)
+      if (g0$maxy>(+B))
+         g0 <- regrid(g0,maxy=+B)
+      if (g0$miny<(-B))
+         g0 <- regrid(g0,miny=-B)
+     # if (border>0)
+     #    g0 <- regrid(g0,border=border)
    }
-   if ((TRUE)&&(geocodeStatus)) { ## <-- is this good feature to expand to 640x640?
-      x0 <- (g0$minx+g0$maxx)/2
-      y0 <- (g0$miny+g0$maxy)/2
-      minx <- x0-g0$resx*size[1]/2
-      maxx <- x0+g0$resx*size[1]/2
-      miny <- y0-g0$resy*size[2]/2
-      maxy <- y0+g0$resy*size[2]/2
-      g0 <- regrid(g0,minx=minx,maxx=maxx,miny=miny,maxy=maxy)
+   else {
+      g0 <- session_grid()
+      proj4 <- g0$proj4
    }
-   B <- 6378137*pi*(0.95+1*0.05)
-   if (g0$maxy>(+B))
-      g0 <- regrid(g0,maxy=+B)
-   if (g0$miny<(-B))
-      g0 <- regrid(g0,miny=-B)
-  # if (border>0)
-  #    g0 <- regrid(g0,border=border)
    cxy <- with(g0,c(minx+maxx,miny+maxy)/2)
    center <- c(.project(cxy,proj4,inv=TRUE))
    bound <- .project(with(g0,rbind(c(minx,miny),c(maxx,maxy))),g0$proj4
@@ -277,7 +302,6 @@
       if (verbose) {
          print(tgr)
       }
-      img <- array(0L,dim=c(256*length(v),256*length(h),3))
       tile <- if (isUrl) .tileService(style) else .tileService(art)
       for (i in seq(nrow(tgr))) {
          img2 <- .tileGet(z=zoom,x=tgr[i,"x"],y=tgr[i,"y"]
@@ -285,7 +309,12 @@
                          ,maxx=tgr[i,"maxx"],maxy=tgr[i,"maxy"]
                          ,url=tile$url
                          ,fileext=tile$fileext,verbose=verbose)
-         img[igr[i,"y"]*256L+seq(256),igr[i,"x"]*256+seq(256),] <- img2[,,1:3]
+         if (i==1) {
+            nb <- dim(img2)[3]
+            img <- array(0L,dim=c(256*length(v),256*length(h),nb))
+         }
+         ##~ img[igr[i,"y"]*256L+seq(256),igr[i,"x"]*256+seq(256),] <- img2[,,1:3]
+         img[igr[i,"y"]*256L+seq(256),igr[i,"x"]*256+seq(256),] <- img2[,,seq(nb)]
       }
       basemap <- as.ursa(img,aperm=TRUE,flip=TRUE)
       ursa(basemap,"grid") <- g1

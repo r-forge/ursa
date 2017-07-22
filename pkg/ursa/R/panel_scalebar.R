@@ -85,7 +85,7 @@
       options(opW)
       return(invisible(NULL))
    }
-   isLonLat <- .lgrep("\\+proj=longlat",g1$proj4)>0
+   isLonLat <- .lgrep("(\\+proj=longlat|epsg:4326)",g1$proj4)>0
    if (isLonLat)
       return(invisible(NULL))
    isGeo <- nchar(g1$proj4)>0

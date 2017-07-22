@@ -111,18 +111,23 @@
    }
    if (isArray)
    {
-      dimx <- dim(x)
-      if (length(dimx)==2)
+      dimx <- dim0 <- dim(x)
+     # if (length(dimx)==2)
+     #    return(x)
+      if (length(dimx)==3)
+         dimx <- c(dimx[1]*dimx[2],dimx[3])
+      if (length(dimx)!=2)
          return(x)
-      dimx <- c(dimx[1]*dimx[2],dimx[3])
       if (is.null(weight))
          weight <- rep(1,dimx[2])
       weight <- weight/sum(weight)
       a <- .Cursa("makemap4"
-             ,x=as.numeric(x),dim=as.integer(dimx),cover=as.numeric(cover)
+             ,x=as.numeric(x),bg=-1e34
+             ,dim=as.integer(dimx),cover=as.numeric(cover)
              ,weight=weight,sum=as.integer(sum)
              ,res=numeric(dimx[1]*1L),NAOK=TRUE)$res
-      dim(a) <- dim(x)[1:2]
+     # dim(a) <- dim(x)[1:2]
+      dim(a) <- head(dim0,-1)
       return(a)
    }
    stop(paste0(fun,": Non-supported class of data"))

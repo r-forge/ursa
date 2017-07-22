@@ -61,7 +61,15 @@
             if (length(obj$name[i])==length(value$name[seq(i)]))
                obj$name[i] <- value$name[seq(i)]
          }
+         posR <- value$con$posR
+         posZ <- value$con$posZ
          value <- value$value ## length(dim(val))==2 should be!
+         isUrsa <- TRUE
+      }
+      else {
+         posR <- NA
+         posZ <- NA
+         isUrsa <- FALSE
       }
       if (TRUE) { ## added 20160327
          bg <- ignorevalue(x)
@@ -70,14 +78,20 @@
       }
       if (is.array(value))
       {
-         d <- prod(obj$dim)/prod(dim(value))
-         d2 <- prod(dim(value))==prod(c(obj$dim[1],obj$dim[1]/prod(dim(value))))
-        ## 2013-02-25 added '&&(prod(dim(value))==prod(obj$dim))'
-        ## 2013-10-07 added '&&(d==round(d))'
-        ## 2013-11-07 added '&&(d2)'
-         if ((dim(value)[1]!=obj$dim[1])&&(d==round(d))&&(d2))
-            dim(value) <- c(obj$dim[1],obj$dim[1]/prod(dim(value)))
+         if (!isUrsa) { ## 20170712 ++
+            d <- prod(obj$dim)/prod(dim(value))
+            d2 <- prod(dim(value))==prod(c(obj$dim[1],obj$dim[1]/prod(dim(value))))
+           ## 2013-02-25 added '&&(prod(dim(value))==prod(obj$dim))'
+           ## 2013-10-07 added '&&(d==round(d))'
+           ## 2013-11-07 added '&&(d2)'
+            if ((dim(value)[1]!=obj$dim[1])&&(d==round(d))&&(d2))
+               dim(value) <- c(obj$dim[1],obj$dim[1]/prod(dim(value)))
+         }
          j2 <- if (!missingJ) .expandLineIndex(x,j) else j
+        # print(range(j))
+        # print(range(j2))
+        # print(i)
+        # str(value)
          for (m in seq(along=i))
          {
            # obj$data[j,i[m]] <- value[,m]
@@ -139,13 +153,13 @@
       message("**************************** Not debugged *********************************")
       message("** 'is.array(v)'. Try 'x[] <- ursa_new(value=v)' or 'ursa_value(x) <- v' **")
       message("**************************** Not debugged *********************************")
-      value <- ursa_new(value=value) ## introduced 2012-10-14
+      value <- ursa_new(value=value,flip=FALSE,permute=FALSE) ## introduced 2012-10-14
      # val <- value
      # value <- x
      # print(str(x))
    }
    else if ((!is.ursa(value))&&((is.numeric(value))||(all(is.na(value))))) {
-      value <- ursa_new(value=value)
+      value <- ursa_new(value=value,flip=FALSE,permute=FALSE)
    }
    if (is.ursa(value))
    {

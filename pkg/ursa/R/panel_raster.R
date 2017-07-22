@@ -35,10 +35,19 @@
    }
    isRGB <- nband(obj) %in% c(2,3,4) & all(band_nNA(obj)>=0) # '==0' is NA used for RGB?
    if (isRGB) {
+      if ((nband(obj)==4)&&(all(band_stat(obj)$sd[1:3]==0))) { ## ++ 20170718
+         if (TRUE)
+            obj <- c(obj[1:3]*obj[4]/255,obj[4])
+         else {
+            obj <- obj[4]
+         }
+         if ((is.numeric(alpha))&&(alpha<1))
+            obj <- round(obj*alpha)
+      }
       if ((is.numeric(alpha))&&(alpha<1)&&(nband(obj) %in% c(1,3))) {
          obj <- c(obj,ursa_new(round(alpha*255),bandname=paste("Band",nband(obj)+1)))
       }
-      with(ursa_grid(obj),rasterImage(as.raster(obj),minx,miny,maxx,maxy
+      a <- with(ursa_grid(obj),rasterImage(as.raster(obj),minx,miny,maxx,maxy
                                       ,interpolate=interpolate))
       ann <- attr(obj,"copyright")
       if ((is.character(ann))&&(nchar(.gsub("\\s","",ann))>1))
@@ -182,8 +191,9 @@
       session_grid(g2)
    col1 <- col2rgb(obj$colortable,alpha=TRUE)/255
    isAlpha <- any(col1[4,]!=1)
-   panel_annotation(attr(obj,"copyright")
-                   ,pos="bottomright",cex=0.7,font="Arial Narrow"
+   ann <- attr(obj,"copyright")
+   if ((is.character(ann))&&(nchar(.gsub("\\s","",ann))>1))
+   panel_annotation(ann,pos="bottomright",cex=0.7,font="Arial Narrow"
                    ,fg=sprintf("#000000%s",ifelse(isAlpha,alpha,"4F")))
    if (!isAlpha)
       return(invisible(obj$colortable))

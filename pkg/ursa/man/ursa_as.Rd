@@ -80,14 +80,15 @@ session_grid(NULL)
 b <- ursa_dummy(mul=1/16,bandname=format(Sys.Date()+seq(3)-1,"\%A"))
 print(b)
 
-c1 <- as.list(b[1])
+c1 <- b[[1]] ## equal to 'c1 <- as.matrix(b[1],coords=TRUE)'
 str(c1)
 b1a <- as.ursa(c1)
 print(c(original=b[1],imported=b1a))
+print(c(projection.b1a=ursa_proj(b1a)))
 session_grid(NULL)
 b1b <- as.ursa(c1$z)
-print(c(projection=ursa_proj(b1b)))
 print(b1b)
+print(c(projection.b1b=ursa_proj(b1b)))
 
 c2 <- as.data.frame(b)
 str(c2)
@@ -96,12 +97,12 @@ b2a <- as.ursa(c2)
 print(b2a)
 
 session_grid(NULL)
-attr(c2,"proj") <- NULL
+attr(c2,"proj4") <- NULL
 b2b <- as.ursa(c2)
 print(b2b)
 print(ursa_grid(b2b))
 
-c3 <- unclass(as.matrix(b))
+c3 <- unclass(as.matrix(b,coords=TRUE))
 str(c3)
 session_grid(b)
 b3a <- as.ursa(c3)

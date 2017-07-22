@@ -19,7 +19,7 @@
       res <- vector("list",ncol(obj@data))
       names(res) <- colnames(obj@data)
       for (i in seq_along(ncol(obj@data)))
-         res[[i]] <- ursa_new(obj@data[,i])#,bandname=names(res)[i])
+         res[[i]] <- ursa_new(obj@data[,i],flip=FALSE,permute=FALSE)#,bandname=names(res)[i])
       return(res)
    }
    if (inherits(obj,c("SpatialPointsDataFrame","SpatialPixelsDataFrame"))) {
@@ -68,19 +68,21 @@
          res <- vector("list",dim(obj)[3])
          for (i in seq_along(res)) {
             res[[i]] <- ursa_new(value=raster::values(obj[[i]])
-                                ,bandname=names(obj[[i]]))
+                                ,bandname=names(obj[[i]])
+                                ,flip=FALSE,permute=FALSE)
             ursa_colortable(res[[i]]) <- ct[[i]]
          }
       }
       else if (inherits(obj,"RasterBrick")) {
-         res <- ursa_new(value=raster::values(obj))
+         res <- ursa_new(value=raster::values(obj),flip=FALSE,permute=FALSE)
          ursa_colortable(res) <- ct
       }
       else if (inherits(obj,"RasterLayer")) {
          if (length(ct))
-            res <- ursa_new(raster::values(obj),colortable=ct)
+            res <- ursa_new(raster::values(obj),colortable=ct
+                           ,flip=FALSE,permute=FALSE)
          else
-            res <- ursa_new(raster::values(obj))
+            res <- ursa_new(raster::values(obj),flip=FALSE,permute=FALSE)
       }
       return(res)
    }
@@ -102,9 +104,9 @@
                    ,"Try to change 'tolerance'",paste0("(",tolerance,")")))
       g$columns <- as.integer(round(g$columns))
       g$rows <- as.integer(round(g$rows))
-      p <- attr(obj,"proj")
+      p <- attr(obj,"proj4")
       if ((is.character(p))&&(nchar(p)))
-         g$proj4 <- attr(obj,"proj")
+         g$proj4 <- p
       g2 <- getOption("ursaSessionGrid")
       session_grid(g)
       arglist <- list(...)
@@ -114,7 +116,7 @@
       else
          resetGrid <- FALSE
      # res <- ursa_new(value=obj$z[,rev(seq(ncol(obj$z)))],bandname="z")
-      res <- ursa_new(value=obj$z,bandname="z")
+      res <- ursa_new(value=obj$z,bandname="z",flip=FALSE,permute=FALSE)
       ursa_grid(res) <- g
       if ((.is.grid(g2))&&(resetGrid))
          session_grid(g2)
@@ -182,7 +184,7 @@
       class(v1) <- "ursaColorTable"
       a1 <- as.integer(a1)-1
       dim(a1) <- rev(dim(obj))
-      res <- ursa_new(value=a1[,rev(seq(dim(a1)[2]))])
+      res <- ursa_new(value=a1[,rev(seq(dim(a1)[2]))],flip=FALSE,permute=FALSE)
       res$colortable <- v1
       class(res$value) <- "ursaCategory"
       return(res)
@@ -190,11 +192,11 @@
    if (inherits(obj,"cimg")) { ## require(imager)
       dima <- dim(obj)
       if (dima[3]==1) {
-         res <- ursa_new(value=obj[,rev(seq(dima[2])),1,])
+         res <- ursa_new(value=obj[,rev(seq(dima[2])),1,],flip=FALSE,permute=FALSE)
          return(res)
       }
       if (dima[4]!=1) {
-         res <- ursa_new(value=obj[,rev(seq(dima[2])),,1])
+         res <- ursa_new(value=obj[,rev(seq(dima[2])),,1],flip=FALSE,permute=FALSE)
          return(res)
       }
    }

@@ -22,6 +22,8 @@
    dname <- attr(obj,"colnames")
   # attr <- .getPrm(arglist,name="attr",default=".+")
    feature <- .getPrm(arglist,name="feature",valid=c("attribute","geometry"))
+   where <- .getPrm(arglist,name="subset",default="")
+   ogropt <- .getPrm(arglist,name="ogropt",default="")
    isZip <- .lgrep("\\.zip$",dsn)>0
    fname1 <- .gsub("\\.zip$","",dsn)
    fname2 <- paste0(fname1,".zip")
@@ -49,6 +51,25 @@
    isSP <- !isSF
   # print(dsn)
   # str(obj)
+   if ((nchar(ogropt)>1)||(nchar(where)>0)) {
+      shpname <- .maketmp()
+      cmd <- paste("ogr2ogr"
+              ,ogropt 
+              ,"-where",dQuote(where)
+              ,"-f",.dQuote(c("ESRI Shapefile","SQLite")[1])
+             # ,ifelse(verbose,"-progress","")
+              ,.dQuote(paste0(shpname,".shp")),.dQuote(dsn)
+              )
+      if (verbose)
+         message(cmd)
+      system(cmd)
+      list3 <- .dir(path=dirname(shpname)
+                   ,pattern=paste0(basename(shpname),"\\.(cpg|dbf|prj|shp|shx)")
+                   ,recursive=FALSE,full.names=TRUE)
+      on.exit(file.remove(list3),add=TRUE)
+      lname <- basename(shpname)
+      dsn <- .grep("\\.shp$",list3,value=TRUE)
+   }
    cmd <- paste("gdalsrsinfo -o proj4",.dQuote(dsn))
    if (verbose)
       message(cmd)
@@ -103,6 +124,7 @@
               ,"-init -1 -a_nodata -1"
               ,"-a_srs",.dQuote(proj4)
               ,"-tr",resx,resy
+             # ,"-where",dQuote(subset)
               ,"-te",minx,miny,maxx,maxy
               ,"-of ENVI -ot Int32",ifelse(verbose,"","-q")
               ,.dQuote(shpname),ftemp))
@@ -158,8 +180,29 @@
 }
 '.gdalwarp' <- function(src,dst=NULL,grid=NULL,resample="near",nodata=NA
                        ,resetGrid=FALSE,verbose=1L) {
-  if (!nchar(Sys.which("gdalwarp")))
-     return(NULL)
+   if (is.null(grid)) {
+      grid <- getOption("ursaSessionGrid")
+   }
+   else
+      grid <- ursa_grid(grid)
+  if (!nchar(Sys.which("gdalwarp"))) {
+      withRaster <- requireNamespace("raster",quietly=.isPackageInUse())
+      if (withRaster) {
+         r1 <- as.Raster(src)
+         session_grid(grid)
+         r2 <- as.Raster(ursa_new(0L))
+         r3 <- try(raster::resample(r1,r2,method=c("bilinear","ngb")[1]))
+         if (inherits(r3,"try-error")) {
+            if (verbose)
+               message('reprojection is failed')
+            return(src)
+         }
+      }
+      else if (verbose)
+         message(paste("'gdalwarp' is not found; package 'raster' is not found."
+                      ,"Reprojection is failed."))
+      return(src)
+  }
   # a <- open_envi(src)
   # ct <- ursa_colortable(a)
   # close(a)
@@ -177,11 +220,6 @@
    inMemory <- is.null(dst)
    if (inMemory)
       dst <- .maketmp(ext=".")
-   if (is.null(grid)) {
-      grid <- getOption("ursaSessionGrid")
-   }
-   else
-      grid <- ursa_grid(grid)
    if (verbose)
       print(c(inMemory=inMemory,removeSrc=removeSrc,isNullGrid=is.null(grid)))
    if (is.null(grid))

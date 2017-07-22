@@ -40,8 +40,9 @@
    if (verbose)
       .elapsedTime("as.raster -- start")
    s <- ursa_value(!is.na(sum(obj,cover=1)))
-   if (nb %in% c(3,4))
+   if (nb %in% c(3,4)) {
       a <- ursa_value(obj)
+   }
    else if (nb==1)
       a <- ursa_value(obj[rep(1,3)])
    else if (nb==2)

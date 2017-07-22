@@ -55,11 +55,12 @@
       return(dim(obj))
    if (.lgrep("(extent|bbox)",attr))
       return(with(ursa_grid(obj),c(xmin=minx,ymin=miny,xmax=maxx,ymax=maxy)))
-   if (.lgrep("(ncol|columns|samples)",attr)) {
+   if (.lgrep("(ncol|columns|samples)",attr))
       return(ursa_grid(obj)$columns)
-   }
    if (.lgrep("(nrow|rows|lines)",attr))
       return(ursa_grid(obj)$rows)
+   if (.lgrep("(nband|bands|nlayer|layers)",attr))
+      return(nband(obj))
    if (.lgrep("(info|meta(data)*)",attr))
       return(ursa_info(obj))
    return(NULL)

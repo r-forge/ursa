@@ -1,7 +1,6 @@
 ## "http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames", license?
 # https://gist.github.com/Yago/05d479de169a21ba9fff
 
-
 '.deg2num' <- function(lat,lon,zoom,verbose=FALSE) {
    lat_rad <- lat*pi/180
    n <- 2^zoom
@@ -44,6 +43,8 @@
   # s$sputnik <- "http://tiles.maps.sputnik.ru/tiles/kmt2/{z}/{x}/{y}.png"
    s$sputnik <- c("https://tilessputnik.ru/{z}/{x}/{y}.png"
                  ,paste0(osmCr,", \u0421\u043F\u0443\u0442\u043D\u0438\u043A \uA9 \u0420\u043E\u0441\u0442\u0435\u043B\u0435\u043A\u043E\u043C"))
+  # http://cartodb-basemaps-c.global.ssl.fastly.net/light_all/6/37/21.png   
+  # http://a.basemaps.cartocdn.com/light_only_labels/6/39/18.png
    s$CartoDB <- c("http://{abcd}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
                  ,paste0(osmCr,", \uA9 CartoDB"))
    s$kosmosnimki <- c("http://{abcd}.tile.osm.kosmosnimki.ru/kosmo/{z}/{x}/{y}.png"
@@ -76,6 +77,7 @@
                         ,"jpg")
    s$opentopomap <- c("http://{abc}.tile.opentopomap.org/{z}/{x}/{y}.png"
                      ,paste0(osmCr,", \uA9 OpenTopoMap"))
+  # http://a.maps.owm.io/map/precipitation_new/6/37/19?appid=b1b15e88fa797225412429c1c50c122a1   
    if (!sum(nchar(server)))
      return(names(s))
    if (!(server[1] %in% names(s))) {
@@ -122,21 +124,29 @@
    tile$url <- style[indUrl]
    if (length(indExt)>1)
       pattExt <- paste0(".",style[indExt[indExt!=indUrl]])
-   else if (indExt==indUrl)
+   else if ((length(indExt)==1)&&(indExt==indUrl))
       pattExt <- style[indExt]
-   else 
+   else
       pattExt <- paste0(".",style[indExt])
-   if (.lgrep("\\.(jpg|jpeg)",pattExt))
+   if (.lgrep("(\\.|image/)(jpg|jpeg)",pattExt))
       tile$fileext <- "jpg"
-   else if (.lgrep("\\.png",pattExt))
+   else if (.lgrep("(\\.|image/)png",pattExt))
       tile$fileext <- "png"
    else {
       cat(paste("Unable to detect either 'png' or 'jpg' format in url:"
-               ,url,"\n"))
+               ,tile$url,"\n"))
       stop()
    }
    if (length(indCite))
       tile$copyright <- style[indCite]
+   if (tile$name=="custom") {
+      if (.is.wms(tile$url)) {
+         s <- .grep("^(request=|service=WMS)",s,value=TRUE,invert=TRUE)
+         tile$url <- paste0(paste(s,collapse="&")
+                           ,"&width=256&height=256"
+                           ,"&service=WMS&request=GetMap")
+      }
+   }
   # str(tile);q()
    tile
 }

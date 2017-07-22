@@ -63,7 +63,7 @@
    proj4 <- g1$proj4
    isProj <- nchar(proj4)>0
    projClass <- if (isProj) .gsub(".*\\+proj=(\\S+)\\s.+","\\1",proj4) else ""
-   isLonLat <- .lgrep("\\+proj=longlat",proj4)>0
+   isLonLat <- .lgrep("(\\+proj=longlat|epsg:4326)",proj4)>0
    isMerc <- .lgrep("\\+proj=merc",proj4)>0
    minx <- g1$minx
    miny <- g1$miny
@@ -168,7 +168,7 @@
       if (!isLonLat) {
          xy <- .project(xy,g1$proj4,inv=TRUE)
          if (is.null(xy)) {
-            cat("Likely, reprojection by external utils is failed.\n")
+            cat("Likely, reprojection is failed.\n")
             res <- list(gridline=NULL,margin=NULL)
             class(res) <- "ursaGridLine"
             return(res)

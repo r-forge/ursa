@@ -56,7 +56,8 @@
          con$handle <- NA
          bname <- args[[i]]$name
         # if (FALSE) {
-         if ((TRUE)&&(!is.na(bname[1]))) {
+         standardname <- paste("Band",seq_along(bname))
+         if ((TRUE)&&(!is.na(bname[1]))&&(!identical(standardname,bname))) {
             metafile <- paste0(con$fname,".aux.xml")
             if (!is.na(con$posZ[1]))
                bname <- bname[con$posZ]

@@ -100,7 +100,7 @@
       }
    }
    g1 <- session_grid()
-   isLongLat <- .lgrep("\\+proj=longlat",g1$proj4)>0
+   isLongLat <- .lgrep("(\\+proj=longlat|epsg:4326)",g1$proj4)>0
    isMerc <- .lgrep("\\+proj=merc",g1$proj4)>0
    isUTM <- .lgrep("\\+proj=utm",g1$proj4)>0
    proj <- g1$proj4
@@ -438,8 +438,9 @@
          if ((is.na(angle[1]))||(is.na(density[1]))) {
             if (inherits(coast_xy,"SpatialPolygonsDataFrame"))
                plot(coast_xy,border=col,col=fill,lwd=lwd,add=TRUE)
-            else
+            else {
                polygon(coast_xy[,1],coast_xy[,2],border=col,col=fill,lwd=lwd)
+            }
          }
          else {
             for (an in angle) {

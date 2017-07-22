@@ -1,12 +1,13 @@
 '.spatialize' <- function(dsn,engine=c("native","sp","sf"),layer=".*",attr=".+"
                        ,geocode="",place=""
-                       ,grid=NULL,size=NA,expand=1,border=27
+                       ,grid=NULL,size=NA,cell=NA,expand=1,border=NA
                        ,lat0=NA,lon0=NA,resetProj=FALSE,style="auto"#,zoom=NA
-                       ,verbose=FALSE,...) {
+                       ,subset="",verbose=FALSE,...) {
    engine <- match.arg(engine)
   # print(c(expand=expand,border=border))
   # geocode <- match.arg(geocode)
    geocodeStatus <- FALSE
+   hasOpened <- FALSE
    toUnloadMethods <- FALSE
    if (is.na(resetProj))
       resetProj <- TRUE
@@ -23,16 +24,27 @@
       isSF <- NA
       isSP <- NA
    }
+   isEPSG <- FALSE
+   if (length(style)) {
+      if (is.numeric(style))
+         isEPSG <- TRUE
+      else if ((is.character(style))&&(!nchar(.gsub("\\d","",style))))
+         isEPSG <- TRUE
+   }
+   if ((isEPSG)&&(is.numeric(style)))
+      style <- as.character(style)
    isNative <- engine=="native"
    if (!((is.character(dsn))&&(length(dsn)==1))) {
       spcl <- paste0("Spatial",c("Points","Lines","Polygons"))
       spcl <- c(spcl,paste0(spcl,"DataFrame"))
       if (inherits(dsn,spcl)) {
          if ((!toUnloadMethods)&&(!("package:methods" %in% search()))) {
-           # .require("methods")
-            opW <- options(warn=1)
-            warning("Package 'methods' is required for S4 object coercion.")
-            options(opW)
+            if (FALSE) {
+              # .require("methods")
+               opW <- options(warn=1)
+               warning("Package 'methods' is required for S4 object coercion.")
+               options(opW)
+            }
             toUnloadMethods <- TRUE
          }
          if ((!isNative)&&(isSF))
@@ -76,6 +88,16 @@
             }
             else if (length(dsn)==4) { ## boundary
                obj <- matrix(dsn[c(1,2,1,4,3,4,3,2,1,2)],ncol=2,byrow=TRUE)
+               if (TRUE) {
+                  x <- obj[,1]
+                  y <- obj[,2]
+                  n <- 256
+                  x <- c(seq(x[1],x[2],len=n),seq(x[2],x[3],len=n)
+                        ,seq(x[3],x[4],len=n),seq(x[4],x[5],len=n))
+                  y <- c(seq(y[1],y[2],len=n),seq(y[2],y[3],len=n)
+                        ,seq(y[3],y[4],len=n),seq(y[4],y[5],len=n))
+                  obj <- cbind(x,y)
+               }
               # colnames(obj) <- c("lon","lat")
                ##~ obj <- sf::st_sf(sf::st_sfc(sf::st_polygon(list(obj)))
                                ##~ ,coords=c("lon","lat"),crs=4326)
@@ -114,6 +136,16 @@
             }
             else if (length(dsn)==4) { ## boundary
                obj <- matrix(dsn[c(1,2,1,4,3,4,3,2,1,2)],ncol=2,byrow=TRUE)
+               if (TRUE) {
+                  x <- obj[,1]
+                  y <- obj[,2]
+                  n <- 256
+                  x <- c(seq(x[1],x[2],len=n),seq(x[2],x[3],len=n)
+                        ,seq(x[3],x[4],len=n),seq(x[4],x[5],len=n))
+                  y <- c(seq(y[1],y[2],len=n),seq(y[2],y[3],len=n)
+                        ,seq(y[3],y[4],len=n),seq(y[4],y[5],len=n))
+                  obj <- cbind(x,y)
+               }
                obj <- sp::SpatialLines(list(sp::Lines(sp::Line(obj),1L))
                                       ,proj4string=sp::CRS("+init=epsg:4326"))
             }
@@ -166,6 +198,16 @@
             else
                da <- da[,c("minx","miny","maxx","maxy")]
             da <- matrix(da[c(1,2,1,4,3,4,3,2,1,2)],ncol=2,byrow=TRUE)
+            if (TRUE) {
+               x <- da[,1]
+               y <- da[,2]
+               n <- 256
+               x <- c(seq(x[1],x[2],len=n),seq(x[2],x[3],len=n)
+                     ,seq(x[3],x[4],len=n),seq(x[4],x[5],len=n))
+               y <- c(seq(y[1],y[2],len=n),seq(y[2],y[3],len=n)
+                     ,seq(y[3],y[4],len=n),seq(y[4],y[5],len=n))
+               da <- cbind(x,y)
+            }
             if (isSF) {
                obj <- sf::st_sfc(sf::st_multilinestring(list(da)),crs=4326)
             }
@@ -174,6 +216,7 @@
                                       ,proj4string=sp::CRS("+init=epsg:4326"))
             }
             geocodeStatus <- TRUE
+            hasOpened <- TRUE
          }
       }
       else {
@@ -181,8 +224,36 @@
             ziplist <- unzip(dsn,exdir=tempdir());on.exit(file.remove(ziplist))
             dsn <- .grep("\\.shp$",ziplist,value=TRUE)
          }
+         if (isCDF <- .lgrep("\\.(nc|hdf)$",dsn)>0) {
+            obj <- .read_ncdf(dsn,".+")
+            if (!inherits(obj,"data.frame"))
+               obj <- as.data.frame(as.ursa(obj[sapply(obj,is.ursa)]))
+            else {
+               indX <- .grep("^(lon|x$|west|east)",colnames(obj))
+               indY <- .grep("^(lat|y$|south|north)",colnames(obj))
+               if (!length(indX))
+                  indX <- 1L
+               if (!length(indY))
+                  indY <- 2L
+               colnames(obj)[c(indX,indY)] <- c("x","y")
+            }
+            p4s <- attr(obj,"proj4")
+            if (isSF) {
+               if (!is.null(p4s))
+                  obj <- sf::st_as_sf(obj,coords=c("x","y"),crs=attr(obj,"proj4"))
+               else
+                  obj <- sf::st_as_sf(obj,coords=c("x","y"))
+            }
+            if (isSP) {
+               sp::coordinates(obj) <- ~x+y
+               if (!is.null(p4s))
+                  sp::proj4string(obj) <- sp::CRS(p4s)
+            }
+            hasOpened <- TRUE
+           # display(a)
+         }
       }
-      if ((!geocodeStatus)||(file.exists(dsn))) {
+      if ((!hasOpened)&&((!geocodeStatus)||(file.exists(dsn)))) {
          opW <- options(warn=0)
          if (isSF)
             lname <- try(sf::st_layers(dsn)$name)
@@ -221,6 +292,9 @@
    }
    if (verbose)
       print(c('engine.sf'=isSF,'engine.sp'=isSP))
+   if (nchar(subset)) {
+      obj <- do.call("subset",list(obj,parse(text=subset)))
+   }
    if ((geocodeStatus)&&(style=="auto")) {
       style <- switch(geocode,nominatim="openstreetmap color"
                              ,google="google terrain color")
@@ -280,8 +354,20 @@
      # Sys.setlocale("LC_CTYPE",lc)
      # str(asf)
    }
-   if (isSF)
-      geoType <- unique(as.character(sf::st_geometry_type(obj)))
+   if (isSF) {
+      if (TRUE) { ## not tested for multiple geometries POLYGON/MULTIPOLYGON
+         if (inherits(obj,"sfc"))
+            geoType <- .grep("^sfc_.+$",class(obj),value=TRUE)
+         else
+            geoType <- .grep("^sfc_.+$",class(obj[[attr(obj,"sf_column")]]),value=TRUE)
+         geoType <- .gsub("^sfc_","",geoType)
+         if (geoType=="GEOMETRY")
+            geoType <- unique(as.character(sf::st_geometry_type(obj)))
+      }
+      else { ## low perfomance for long geometry
+         geoType <- unique(as.character(sf::st_geometry_type(obj)))
+      }
+   }
    if (isSP)
       geoType <- switch(class(sp::geometry(obj))
                        ,SpatialPolygons="POLYGON"
@@ -310,8 +396,16 @@
    if (is.numeric(size))
       len <- as.integer(round(max(size)))
    g2 <- getOption("ursaSessionGrid")
+   if (is.na(border)) {
+      if ((!is.null(g2))||(!is.null(grid)))
+         border <- 0L
+      else
+         border <- 27L
+   }
    if (!.lgrep("auto",style))
       resetProj <- TRUE
+   if (isEPSG)
+      resetProj <- FALSE
   # if ((proj=="internal")&&(!is.na(keepProj))) {
   #    g2 <- NULL
   # }
@@ -350,6 +444,7 @@
       else
          art <- "none"
    }
+   toZoom <- isTile | isStatic | style=="web"
   # isColor <- .lgrep("colo(u)*r",style)>0
    isWeb <- .lgrep(tilePatt,art)
    if (verbose)
@@ -370,8 +465,8 @@
          resetProj <- TRUE
          proj4 <- "auto"
       }
-      isLonLat <- .lgrep("\\+proj=longlat",proj4)>0
-      if ((proj %in% c("auto"))&&(isLonLat)) { ## added 2016-08-09
+      isLonLat <- .lgrep("(\\+proj=longlat|epsg:4326)",proj4)>0
+      if ((proj %in% c("auto"))&&(isLonLat)&&(!isEPSG)) { ## added 2016-08-09
          resetProj <- TRUE
          proj4 <- "auto"
       }
@@ -471,8 +566,12 @@
          if (verbose)
             print(c(lon0=lon_0,lat0=lat_0,lat_ts=lat_ts))
          if (proj=="auto") {
-            if ((any(lat2<0))&&(any(lat2>0)))
+            if (style=="web")
                proj <- "merc"
+            else if ((any(lat2<0))&&(any(lat2>0)))
+               proj <- "merc"
+            else if (isEPSG)
+               proj <- "epsg"
             else
                proj <- "stere"
          }
@@ -496,8 +595,9 @@
                           ,"+lat_ts=0.0",paste0("+lon_0=",lon_0)
                           ,"+x_0=0.0 +y_0=0 +k=1.0"
                           ,"+units=m +nadgrids=@null +wktext +no_defs")
-         else if (proj %in% c("longlat"))
+         else if ((proj %in% c("longlat"))||(isLonLat)) {
             t_srs <- "+proj=longlat +datum=WGS84 +no_defs"
+         }
          else if (proj %in% c("zzzgoogle")) {
             if (FALSE)#(selection %in% c(1000L,3L))
                t_srs <- paste("","+proj=merc +a=6378137 +b=6378137"
@@ -519,6 +619,14 @@
         # xy <- .project(xy,t_srs)
         # print(summary(xy))
       }
+      else if (isEPSG) {
+         t_srs <- .epsg2proj4(style)
+         if (isSF)
+            obj <- sf::st_transform(obj,t_srs)
+         if (isSP) {
+            obj <- sp::spTransform(obj,t_srs)
+         }
+      }
    }
   # else if (((isSF)&&(is.ursa(a,"grid")))||((isSP)&&(is.ursa(asp,"grid")))) {
    else if (is.ursa(g0,"grid")) {
@@ -531,7 +639,11 @@
    }
    if (isSF) {
       obj_geom <- sf::st_geometry(obj)
-      bbox <- c(sf::st_bbox(obj))
+     # bbox <- c(sf::st_bbox(obj_geom)) ## low performance sp<=0.5-2
+      if (inherits(obj,"sfc"))
+         bbox <- c(sf::st_bbox(obj_geom))
+      else
+         bbox <- attr(obj[[attr(obj,"sf_column")]],"bbox") ## ~ sf::st_bbox
       proj4 <- sf::st_crs(obj)$proj4string
    }
    if (isSP) {
@@ -554,14 +666,27 @@
       bbox <- bbox+c(-1,-1,1,1)*.sc
    }
    if (is.null(g0)) {
-      res <- max(c(bbox["xmax"]-bbox["xmin"]),(bbox["ymax"]-bbox["ymin"]))/len
-      p <- pretty(res)
-      res <- p[which.min(abs(res-p))]
-      g1 <- ursa_grid()
-      g1$resx <- g1$resy <- res
-      g1$proj4 <- proj4
-      g0 <- regrid(g1,bbox=unname(bbox[c("xmin","ymin","xmax","ymax")])
-                  ,border=0) ## border=border
+      if (!is.na(cell)) {
+         res <- rep(cell,length=2)
+         g0 <- regrid(bbox=unname(bbox[c("xmin","ymin","xmax","ymax")]),res=res
+                     ,proj4=proj4,border=0)
+      }
+      else {
+         res <- max(c(bbox["xmax"]-bbox["xmin"]),(bbox["ymax"]-bbox["ymin"]))/len
+         p <- pretty(res)
+         res <- p[which.min(abs(res-p))]
+         g1 <- ursa_grid()
+         g1$resx <- g1$resy <- res
+         g1$proj4 <- proj4
+         g0 <- regrid(g1,bbox=unname(bbox[c("xmin","ymin","xmax","ymax")])
+                     ,border=0) ## border=border
+      }
+   }
+   if (toZoom) {
+      res <- with(g0,sqrt(resx*resy))
+      s <- 2*6378137*pi/(2^(1:21+8))
+      zoom <- which.min(abs(s-res))
+      g0 <- regrid(g0,res=s[zoom])
    }
    if (border>0) {
       g0 <- regrid(g0,border=border)
@@ -573,6 +698,8 @@
       g0 <- ursa(basemap,"grid")
       attr(obj,"basemap") <- basemap
    }
+   if (is.null(g2))
+      session_grid(g0)
    attr(obj,"grid") <- g0
    attr(obj,"toUnloadMethods") <- toUnloadMethods
    attr(obj,"colnames") <- dname

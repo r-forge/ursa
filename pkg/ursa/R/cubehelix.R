@@ -36,8 +36,10 @@
    value <- unname(sort(value))
    if (missing(n))
       n <- if (length(value)) length(value) else 256L
+   if (is.na(verbose))
+      verbose <- FALSE #is.na(rich) || is.na(r) || is.na(hue)
    k <- round(1/(exp(n^0.5)),6)
-   divergent <- length(value)>0
+   divergent <- length(value)>0 ## 20170705 -- length(value)>0
    if (divergent) {
       isCategory <- length(value)==n
       isInterval <- length(value)==n-1
@@ -69,8 +71,9 @@
             }
             rest <- n-max(npos,nneg)#-as.integer(isInterval)
             n <- n-rest
-           # print(c(pos=npos,neg=nneg,z1=nzer1,z2=nzer2,n=n,rest=rest,indZ=indZ
-           #        ,int=isInterval,cat=isCategory))
+            if (verbose)
+               print(c(pos=npos,neg=nneg,z1=nzer1,z2=nzer2,n=n,rest=rest,indZ=indZ
+                      ,int=isInterval,cat=isCategory))
          }
       }
    }
@@ -87,6 +90,10 @@
       if (length(indZ)==1) {
          lambda <- c(lambda[rev(1+seq(rest))],lambda)
          n <- n+rest
+         if (anyNA(lambda)) {
+            lambda <- rev(seq(dark,light,length.out=n))
+            divergent <- FALSE
+         }
       }
       else {
          if (TRUE) { #(length(lambda)>2) {
@@ -105,8 +112,6 @@
          lambda <- rev(lambda)
      # print(round(lambda*255,1))
    }
-   if (is.na(verbose))
-      verbose <- FALSE #is.na(rich) || is.na(r) || is.na(hue)
    if ((!is.na(rich))&&(!is.na(weak))) {
       r <- rich-weak
    }

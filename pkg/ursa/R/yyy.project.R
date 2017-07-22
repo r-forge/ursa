@@ -9,7 +9,11 @@
    a <- FALSE
   # print(summary(xy))
   # proj4 <- requireNamespace("proj4",quietly=.isPackageInUse())
-  # print(proj4)
+  # print(loadedNamespaces())
+   if (.lgrep("^\\s*\\+init=epsg:\\d+\\s*$",proj)) {
+     # proj <- .epsg2proj4(proj,force=TRUE,verbose=TRUE)
+     # requireNamespace("rgdal",quietly=.isPackageInUse())
+   }
   # if ((!FALSE)&&(!("package:rgdal" %in% search()))&&
    if ((!FALSE)&&(!("rgdal" %in% loadedNamespaces()))&&
        (requireNamespace("proj4",quietly=.isPackageInUse()))) {
@@ -36,15 +40,19 @@
          res <- matrix(NA,ncol=2,nrow=nrow(xy))
          a <- .try(res[-ind,] <- rgdal::project(xy=xy[-ind,],proj=proj,inv=inv))
       }
-      else
+      else {
          a <- .try(res <- rgdal::project(xy=xy,proj=proj,inv=inv))
+      }
       if (!a) {
          .epsg3411 <- paste("","+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1"
                            ,"+x_0=0 +y_0=0 +a=6378273 +b=6356889.449 +units=m +no_defs")
          if (requireNamespace("proj4",quietly=.isPackageInUse())) {
-            res <- proj4::project(xy=xy,proj=.epsg3411)
-            res <- proj4::ptransform(res,.epsg3411,proj)
-            return(res)
+            a <- .try(res <- proj4::project(xy=xy,proj=.epsg3411))
+            if (a) {
+               a <- .try(res <- proj4::ptransform(res,.epsg3411,proj))
+               if (a)
+                  return(res)
+            }
          }
       }
    }
@@ -64,4 +72,50 @@
    if (!exists("res"))
       return(NULL)
    return(res)
+}
+'.epsg2proj4' <- function(code,force=FALSE,verbose=FALSE) {
+  ## 'proj4::project' doesnot understand pure EPSG
+  # a <- try(as.integer(code),silent=TRUE)
+   if (!.lgrep("\\D",code))
+      p4epsg <- paste0("+init=epsg:",code)
+   else if (.lgrep("^epsg:\\d+",code))
+      p4epsg <- paste0("+init=",code)
+   else if (.lgrep("^(\\s+)*\\+init=epsg:\\d+",code))
+      p4epsg <- .gsub("^\\s+","",code)
+   else
+      stop(code)
+   if (!force) {
+      if (verbose)
+         message("force to use 'rgdal'")
+      requireNamespace(c("sp","rgdal")[2],quietly=.isPackageInUse())
+      p4s <- p4epsg
+   }
+   else {
+      loaded <- loadedNamespaces()
+      if (any(c("sp","rgdal") %in% loaded)) {
+         if (verbose)
+            message("'sp' loaded + 'rgdal' for reprojection")
+         p4s <- methods::slot(sp::CRS(p4epsg),"projargs")
+         if (!("rgdal" %in% loaded))
+            requireNamespace("rgdal",quietly=.isPackageInUse())
+      }
+      else if ("sf" %in% loaded) {
+         if (verbose)
+            message("'sf' loaded")
+         p4s <- sf::st_crs(p4epsg)$proj4string
+      }
+      else if ((FALSE)&&(requireNamespace("sf",quietly=.isPackageInUse()))) {
+         if (verbose)
+            message("force to load 'sf'")
+         p4s <- sf::st_crs(p4epsg)$proj4string
+      }
+      else {
+         if (verbose)
+            message("Otherwise, use 'sp' + 'rgdal' for reprojection")
+         p4s <- methods::slot(sp::CRS(p4epsg),"projargs")
+         if (!("rgdal" %in% loaded))
+            requireNamespace("rgdal",quietly=.isPackageInUse())
+      }
+   }
+   p4s
 }

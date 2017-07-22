@@ -1,3 +1,13 @@
+# version 3.7-15
+
+* added possibility of image annotation;
+  argument 'label' in 'panel_annotation' can be object of class 'array'
+
+* fixed divergent coloring for (only) two values in 'cubehelix()'
+
+* 'ggmap', 'foreign' are removed from the list of suggested packages;
+  'ncdf4' is added to the list of suggested packages.
+
 # version 3.7-14
 
 * fixed export to Raster(Layer|Brick|Stack) with NA nodata

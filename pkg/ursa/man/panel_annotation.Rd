@@ -15,7 +15,8 @@ panel_annotation(...)
 .panel_annotation(label = expression(), position = "bottomright",
                   lon = NA, lat = NA, x = NA, y = NA, cex = 1.0, adjust = 0.5,
                   fg = "#000000", bg = "#FFFFFF1F", buffer = 1, fill = "#FFFFFF7F",
-                  font = par("family"), verbose = FALSE, ...)
+                  font = par("family"), alpha = 1, interpolate = FALSE,
+                  verbose = FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -36,10 +37,12 @@ panel_annotation(...)
       \cr \code{buf(fer)*} \tab \code{buffer} \tab \emph{See below}.
       \cr \code{fill} \tab \code{fill} \tab \emph{See below}.
       \cr \code{font} \tab \code{font} \tab \emph{See below}.
+      \cr \code{(alpha|transp(aren(cy)*)*)} \tab \code{alpha} \tab \emph{See below}.
+      \cr \code{interp(olate)*} \tab \code{interpolate} \tab \emph{See below}.
       \cr \code{verb(ose)*} \tab \code{verbose} \tab \emph{See below}.
       }
    }
-   \item{label}{Character or \link[grDevices:plotmath]{expression}. Text or symbols for displaying on image panel. Multi-row characters are allowed with delimiter \code{"\\n"}. Default is \code{expression()}.}
+   \item{label}{Character, \link[grDevices:plotmath]{expression}, or objects of classes \code{array} or \code{matrix}. Text, symbols or logo for displaying on image panel. Multi-row characters are allowed with delimiter \code{"\\n"}. Default is \code{expression()}.}
    \item{position}{Character keyword or numeric of length 2 in the interval [0,1]. Defines the location of scale bar. If character, then one of the "bottomleft", "bottomright", "topleft", "topright", "left", "right", "bottom", "top", or "center". If numeric then relative position on panel is defined using shift on horizontal and vertical axes from origin in the bottom-left corner. Default is \code{"bottomright"}.}
    \item{lon}{Numeric. Longitude for center of annotation's position. Default is \code{NA}.}
    \item{lat}{Numeric. Latitude for center of annotation's position. Default is \code{NA}.}
@@ -52,6 +55,8 @@ panel_annotation(...)
    \item{buffer}{Numeric. The relative width of buffer around label's elements. Default is \code{1}.}
    \item{fill}{Character. Color name or code for circumscribed rectangle around labels. Default is \code{NA}, which is interpeted as \code{"#FFFFFF7F"} for \emph{captions} and as \code{"transparent"} for \emph{annotations}.}
    \item{font}{Character. Font family. Default is \code{par("family")}}
+   \item{interpolate}{Logical. Passed as argument \code{interpolate} to function \code{\link[graphics:rasterImage]{rasterImage}} for logo annotation.}
+   \item{alpha}{Numeric or character. Level of transparency for logos. If numeric, the either \verb{0 <= alpha <= 1} or \code{0 <= alpha <= 255}. If character, then one byte of hexadecimal value \verb{"00" <= alpha <= "FF"}. Default is \code{1}.}
    \item{verbose}{Logical. Value \code{TRUE} may provide some additional information on console. Default is \code{FALSE}.}
 }
 \details{

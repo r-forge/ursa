@@ -87,7 +87,8 @@
    if (verbose>2)
       .elapsedTime(paste0("start:nodata-assing:",fun))
    nodata <- x$con$nodata
-   if (is.na(nodata))
+   missedNodata <- is.na(nodata)
+   if (missedNodata)
      # nodata <- max(x$value,na.rm=TRUE)+1
       nodata <- .optimal.nodata(x$value)
    x$value[is.na(x$value)] <- nodata
@@ -157,6 +158,8 @@
    }
   # if ((.is.colortable(x$colortable))&&(length(unique(y$value))==length(x$colortable)))
   #    y$colortable <- x$colortable
+   if (missedNodata)
+      y$con$nodata <- NA
    if (!resetGrid)
       session_grid(g1)
    y
@@ -171,7 +174,7 @@
 {
   # print("regrid")
   # verbose <- TRUE
-   mtol <- 1e2
+   mtol <- 1e5 # [1e2->1e5 20170720]
    etol <- 1e-14
    zero <- match.arg(zero)
    if (missing(grid)) {
@@ -235,6 +238,14 @@
       if (toDefine) {
          g$resx <- with(g,(maxx-minx)/columns)
          g$resy <- with(g,(maxy-miny)/rows)
+      }
+      if (zero=="node") {
+         if (verbose)
+            print("setbound:zero:node")
+         g$minx <- round(g$minx/g$resx)*g$resx
+         g$maxx <- round(g$maxx/g$resx)*g$resx
+         g$miny <- round(g$miny/g$resy)*g$resy
+         g$maxy <- round(g$maxy/g$resy)*g$resy
       }
    }
    ##~ if (verbose) {
@@ -355,8 +366,23 @@
       g$maxy <- maxy
    if ((!step2)&&(any(!is.na(c(minx,miny,maxx,maxy)))))
       step2 <- TRUE
+   if ((FALSE)&&(!is.na(columns))&&(!is.na(rows))) { ## ++ 20170719
+      message("Not a good idea to define cell size from image dimension")
+      g$columns <- columns
+      g$rows <- rows
+      g$resx <- with(g,(maxx-minx)/columns)
+      g$resy <- with(g,(maxy-miny)/rows)
+   }
    if (step2)
    {
+      if (zero=="node") {
+         if (verbose)
+            print("step2:zero:node")
+         g$minx <- round(g$minx/g$resx)*g$resx
+         g$maxx <- round(g$maxx/g$resx)*g$resx
+         g$miny <- round(g$miny/g$resy)*g$resy
+         g$maxy <- round(g$maxy/g$resy)*g$resy
+      }
       c0 <- with(g,(maxx-minx)/resx)
       r0 <- with(g,(maxy-miny)/resy)
       if (is.na(tolerance)) {
@@ -427,6 +453,8 @@
          if (verbose) {
             print(g,digits=15)
          }
+         print(c(dc=g$columns-round(g$columns),dr=g$rows-round(g$rows)
+                ,tolx=tolx,toly=toly))
          stop(paste("#3. Unable to calculate integer dim size."
                    ,"Try to change 'tolerance'"
                    ,paste0("(",format(tolerance,digits=1),")")))

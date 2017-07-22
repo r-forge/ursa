@@ -1,3 +1,7 @@
+## graphics::image
+## graphics::filled.contour
+## fields::image.plot
+## lattice::levelplot
 'plot.ursaRaster' <- function(x,...) {
    ct <- ursa_colortable(x)
    if (!.is.colortable(ct))

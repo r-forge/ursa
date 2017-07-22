@@ -11,15 +11,15 @@
       }
    }
    if (!FALSE) {
-      src <- ".read_ogr"
-      dst <- ".spatialize"
-      ind <- as.character(c(1,2,3,4,5))
+      src <- "ursa_new"
+      dst <- "ursa_new"
+      ind <- as.character(c(1))
       toWrite <- FALSE
       dpath1 <- c('1'="C:/platt/R/ursa-package/ursa/R"
                  ,'2'="C:/platt/R/ursa-package/ursa/man"
-                 ,'3'="C:/platt/R/ursa-package/ursa/inst/example"
+                 ,'3'="C:/platt/R/ursa-package/ursa/example"
                  ,'4'="C:/platt/R")
-      dpath2 <- c('5'="D:/RAS2017",'5'="D:/RAS2016")
+      dpath2 <- c('5'="D:/RAS2017",'6'="D:/RAS2016")
       ind1 <- which(c("1","2","3","4") %in% ind)
       ind2 <- which(c("5","6") %in% ind)
       list1 <- list.files(path=dpath1[ind1],pattern="^[a-z].+\\.(R|Rd)$"

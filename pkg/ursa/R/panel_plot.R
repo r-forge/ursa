@@ -20,26 +20,30 @@
       ret <- panel_raster(obj,...)
    }
    else if (inherits(obj,"Spatial")) {
-      oprj <- sp::proj4string(obj)
       sprj <- session_proj4()
-      oprj2 <- .gsub("\\+wktext\\s","",oprj)
-      sprj2 <- .gsub("\\+wktext\\s","",sprj)
+      if (nchar(sprj)>2) {
+         oprj <- sp::proj4string(obj)
+         oprj2 <- .gsub("\\+wktext\\s","",oprj)
+         sprj2 <- .gsub("\\+wktext\\s","",sprj)
+         if (!identical(oprj2,sprj2))
+            obj <- sp::spTransform(obj,sprj)
+      }
      # arglist <- list(...) ## remove dupe of 'add=TRUE'
      # str(arglist)
-      if (!identical(oprj2,sprj2))
-         ret <- sp::plot(sp::spTransform(obj,sprj),add=TRUE,...)
-      else
-         ret <- sp::plot(obj,add=TRUE,...)
+      ret <- sp::plot(obj,add=TRUE,...)
    }
    else if (inherits(obj,c("sf","sfc"))) {
       oprj <- sf::st_crs(obj)$proj4string
       sprj <- session_proj4()
-      oprj2 <- .gsub("\\+wktext\\s","",oprj)
-      sprj2 <- .gsub("\\+wktext\\s","",sprj)
-      oprj2 <- .gsub("(^\\s|\\s$)","",oprj2)
-      sprj2 <- .gsub("(^\\s|\\s$)","",sprj2)
-      if (!identical(oprj2,sprj2))
-         obj <- sf::st_transform(obj,sprj)
+      if (nchar(sprj)>2) {
+         oprj2 <- .gsub("\\+wktext\\s","",oprj)
+         sprj2 <- .gsub("\\+wktext\\s","",sprj)
+         oprj2 <- .gsub("(^\\s|\\s$)","",oprj2)
+         sprj2 <- .gsub("(^\\s|\\s$)","",sprj2)
+         if (!identical(oprj2,sprj2)) {
+            obj <- sf::st_transform(obj,sprj)
+         }
+      }
       if (inherits(obj,"sfc")) {
          ret <- plot(obj,add=TRUE,...)
       }

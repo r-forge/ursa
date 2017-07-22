@@ -219,6 +219,7 @@
    }
    '.modal3' <- function(x) {
       res <- NA
+     ## 'locfit' is not in 'suggests', 'depends'
       if (requireNamespace("locfit",quietly=.isPackageInUse()))
          try(res <- x[which.max(predict(locfit::locfit(~x),newdata=x))])
       res
@@ -333,6 +334,8 @@
 }
 '.argv0' <- function() basename(.argv0path())
 '.argv0dir' <- function() dirname(.argv0path())
+'.argv0name' <- function() .gsub("^(.+)(\\.)(.+)*$","\\1",.argv0())
+'.argv0ext' <- function() .gsub("^(.+)(\\.)(.+)*$","\\2\\3",.argv0())
 '.dQuote' <- function(ch) paste0("\"",ch,"\"")
 '.sQuote' <- function(ch) paste0("'",ch,"'")
 '.require' <- function(pkg,quietly=TRUE) do.call("require",list(pkg,quietly=quietly))

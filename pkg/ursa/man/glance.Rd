@@ -17,7 +17,7 @@ glance(...)
         feature = c("auto", "attribute", "geometry"), alpha = NA,
         basemap.order = c("after", "before"), basemap.alpha = NA,
         engine = c("native", "sp", "sf"), geocode = "",
-        place="", zoom = NA, rasterize = FALSE,verbose = FALSE, ...)
+        place="", zoom = NA, gdal_rasterize = FALSE,verbose = FALSE, ...)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -97,7 +97,7 @@ Character. Type of geographical object (river, island) in the geocoding request.
    \item{zoom}{
 Positive integer or character. Zooming if web-cartography is applied for basemap. If integer, then value of zoom for tile services and staticmap. If character, then \code{"0"} means zoom by default (defined internally), \code{"+1"} means increment on 1 of default zoom, \code{"+2"} means zoom increment on 2, \code{"-1"} means zoom decrement on 1, \code{"-2"} means zoom decrement on 2, \emph{etc}. Default is \code{NA}; zoom is defined internally.
 }
-   \item{rasterize}{
+   \item{gdal_rasterize}{
 Logical. If \code{TRUE} and GDAL utilities are in the system search path, then overlay for panels is formed via rastetization of vector file. GDAL utility "gdal_rasterize" is used. Note, that GDAL (system level) is optional for this package. Default is \code{FALSE}.
 }
   \item{verbose}{

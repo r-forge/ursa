@@ -57,6 +57,154 @@
       session_grid(NULL)
    res
 }
+'.write_ogr' <- function(obj,fname,driver=NA
+                        ,compress="",zip=NULL,verbose=TRUE) {
+  # obj <- head(obj,100)
+   wait <- 60
+   isSF <- inherits(obj,c("sf","sfc"))
+   isSP <- !isSF
+   driverList <- c(shp="ESRI Shapefile"
+                  ,sqlite="SQLite",json="GeoJSON",gpkg="GPKG"
+                  ,tab="Mapinfo File",kml="KML")
+   driver0 <- driverList["shp"]
+   if (verbose)
+      print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
+   bname <- basename(fname)
+   dname <- dirname(fname)
+   fext <- .gsub("^.+\\.(.+)$","\\1",bname)
+   if (!nchar(compress)) {
+      packPatt <- "^(zip|bz(ip)*2|gz(ip)*|xz)$"
+      if (.lgrep(packPatt,fext)>0) {
+         compress <- .gsub(packPatt,"\\1",fext)
+         bname <- gsub(paste0("\\.",compress),"",bname)
+         fext <- .gsub("^(.+)\\.(.+)$","\\2",bname)
+         fname <- file.path(dname,bname)
+      }
+   }
+   lname <- .gsub("^(.+)\\.(.+)$","\\1",bname)
+   if (!is.character(driver)) {
+      driver <- switch(fext,shp="ESRI Shapefile",sqlite="SQLite"
+                      ,json="GeoJSON",geojson="GeoJSON",gpkg="GPKG"
+                      ,mif="MapInfo File",kml="KML",NA)
+      if (is.na(driver)) {
+         driver <- driverList[1]
+         fext <- names(driver)
+         lname <- bname
+         bname <- paste0(lname,".",fext)
+         fname <- file.path(dname,bname)
+      }
+   }
+   if ((is.logical(compress))&&(compress)) {
+      compress <- if (driver %in% c("GeoJSON","SQLite","GPKG","KML")) "gz" 
+                  else "zip"
+   }
+   if (verbose)
+      print(data.frame(fname=fname,pack=compress,bname=bname,layer=lname
+                      ,ext=fext,driver=driver))
+   suppressWarnings({
+      first <- TRUE
+      op <- options(warn=2)
+      for (i in seq(wait)) {
+         if (!file.exists(fname))
+            break
+         if (file.remove(fname))
+            break
+         if (first) {
+            cat(paste("Waiting for permitted writting",.sQuote(bname)))
+            first <- FALSE
+         }
+         cat(".")
+         Sys.sleep(1)
+      }
+      options(op)
+      if (!first) {
+         if (i==wait)
+            cat(" FAILURE!\n")
+         else
+            cat(" ok!\n")
+      }
+   })
+   ext <- switch(driver,'ESRI Shapefile'="(cpg|dbf|prj|qpj|shp|shx)"
+                       ,'MapInfo File'="(mif|mid)",fext)
+   dopt <- character()
+   lopt <- character()
+   if (driver=="MapInfo File")
+      dopt <- c(dopt,"FORMAT=MIF")
+   if (driver=="SQLite") {
+     # dopt <- c(dopt,"SPATIALITE=yes")
+      lopt <- c(lopt,"LAUNDER=NO")#,"SPATIAL_INDEX=YES")
+   }
+   if (isSP) {
+      if (driver %in% c("GeoJSON","KML","GPX")) {
+         obj <- sp::spTransform(obj,sp::CRS("+init=epsg:4326"))
+      }
+      opW <- options(warn=1)
+     # dsn <- if (driver %in% c("zzzESRI Shapefile")) dname else fname
+      rgdal::writeOGR(obj,dsn=fname,layer=lname,driver=driver
+                     ,dataset_options=dopt,layer_options=lopt
+                   # ,encoding=encoding
+                     ,overwrite_layer=TRUE
+                     ,verbose=verbose)
+      options(opW)
+   }
+   else if (isSF) {
+      if (FALSE) {
+         f <- .dir(path=dname
+                  ,pattern=paste0("^",lname,"\\.",ext,"$")
+                  ,full.names=TRUE)
+         file.remove(f)
+      }
+      if (driver %in% c("GeoJSON","KML","GPX")) {
+         obj <- sf::st_transform(obj,4326)
+      }
+      opW <- options(warn=1)
+      sf::st_write(obj,dsn=fname,layer=lname,driver=driver
+                  ,dataset_options=dopt,layer_options=lopt
+                  ,delete_layer=file.exists(fname)
+                  ,delete_dsn=file.exists(fname)
+                  ,quiet=!verbose)
+      options(opW)
+   }
+   if (driver=="ESRI Shapefile")
+      writeLines("1251",file.path(dname,paste0(lname,".cpg")))
+   if (!nchar(compress))
+      return(NULL)
+   if ((.lgrep("gz",compress))&&(nchar(Sys.which("gzip"))))
+      system2("gzip",list(fname))
+   else if (.lgrep("bz(ip)*2",compress)&&(nchar(Sys.which("bzip2"))))
+      system2("bzip2",list(fname))
+   else if (.lgrep("xz",compress)&&(nchar(Sys.which("xz"))))
+      system2("xz",list(fname))
+   else if (compress=="zip") {
+      f <- .dir(path=dname
+               ,pattern=paste0("^",lname,"\\.",ext,"$")
+               ,full.names=TRUE)
+      z <- paste0(fname,".zip")
+      opW <- options(warn=-1)
+      first <- TRUE
+      for (i in seq(wait)) {
+         if (!file.exists(z))
+            break
+         if (file.remove(z))
+            break
+         if (first) {
+            cat(paste("Waiting for deleting",.sQuote(z)))
+            first <- FALSE
+         }
+         cat(".")
+         Sys.sleep(1)
+      }
+      if (!first) {
+         if (i==wait)
+            cat(" FAILURE!\n")
+         else
+            cat(" ok!\n")
+      }
+      options(opW)
+      utils::zip(z,f,flags="-qm9j") ## verbose output ## 'myzip(z,f,keys="-m -9 -j")'
+   }
+   NULL
+}
 '.shp.write' <- function(obj,fname,compress=FALSE,zip=NULL)
 {
    requireNamespace("methods",quietly=.isPackageInUse()) 

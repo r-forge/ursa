@@ -204,6 +204,75 @@
          res$value <- rgdal::getRasterData(con$handle)
          dim(res$value) <- with(con,c(samples,lines,bands))
       }
+      else if (con$driver=="NCDF") { ## read full
+        # stop("NCDF -- read full")
+         nc <- ncdf4::nc_open(con$fname)
+         varName <- con$handle
+         flip <- attr(varName,"flip")
+         permute <- attr(varName,"permute")
+         indT <- attr(varName,"temporal")
+         indS <- attr(varName,"spatial")
+         indV <- c(indS,indT)
+         indL <- seq_along(con$offset)[-indV]
+         w <- attr(varName,"weight")
+        # level <- attr(varName,"level")
+         attributes(varName) <- NULL
+        # print(data.frame(var=varName,flip=flip,permute=permute,time="???"))
+         nc.start <- rep(1,length(con$offset))
+         nc.count <- con$offset
+         if (length(w)) {
+            ind <- which(w>0)
+            isW <- all(diff(ind))==1
+            if (isW) {
+               nc.start[indL] <- ind[1]
+               nc.count[indL] <- length(ind)
+               w <- w[ind]
+            }
+         }
+         else
+            isW <- FALSE
+         res$value <- ncdf4::ncvar_get(nc,varName,start=nc.start,count=nc.count
+                                ,collapse_degen=!FALSE)
+         if (length(dim(res$value))==1)
+            return(res$value)
+         dim(res$value) <- nc.count
+         if (length(indL)==1) {
+            if (nc.count[indL]>1) { #(con$offset[indL]>1)
+               if (FALSE)
+                  res$value <- apply(res$value,indV,function(x) sum(x*w))
+               else {
+                  val <- aperm(res$value,c(indV,indL))
+                  dima <- dim(val)
+                  dim(val) <- c(prod(dima[1:3]),dima[4])
+                  val <- .average(val,weight=w)
+                  dim(val) <- nc.count[indV]
+                  res$value <- val
+                  rm(val)
+               }
+            }
+            else
+               dim(res$value) <- con$offset[indV]
+         }
+         if (permute) {
+            dima <- length(dim(res$value))
+            if (dima==2)
+               res$value <- aperm(res$value,c(2,1))
+            else if (dima==3)
+               res$value <- aperm(res$value,c(2,1,3))
+            else if (dima==4)
+               res$value <- aperm(res$value,c(2,1,3,4))
+            else
+               stop(paste("NCDF: transpose is not implemented for dimension:",dima))
+         }
+         if (flip) {
+            if (length(dim(res$value))>2)
+               res$value <- res$value[,rev(seq(dim(res$value)[2])),,drop=FALSE]
+            else
+               res$value <- res$value[,rev(seq(dim(res$value)[2])),drop=FALSE]
+         }
+         dim(res$value) <- with(con,c(samples,lines,bands))
+         ncdf4::nc_close(nc)
+      }
       else
          stop(paste("unknown driver:",con$driver))
       if ((con$samples!=res$grid$columns)||(con$lines!=res$grid$rows))
@@ -348,6 +417,101 @@
          val <- rgdal::getRasterData(con$handle,band=i)
          dim(val) <- with(con,c(samples,nline,nb))
       }
+      else if (con$driver=="NCDF") { ## read band
+        # stop("NCDF -- read band")
+        # str(con)
+        # print(c(i=i))
+         di <- diff(i)
+         isC <- ((!length(di))||(abs(unique(di))==1))
+         nc <- ncdf4::nc_open(con$fname)
+         varName <- con$handle
+         flip <- attr(varName,"flip")
+         permute <- attr(varName,"permute")
+         indT <- attr(varName,"temporal")
+         indS <- attr(varName,"spatial")
+         indV <- c(indS,indT)
+         indL <- seq_along(con$offset)[-indV]
+         w <- attr(varName,"weight")
+         attributes(varName) <- NULL
+         nc.start <- rep(1,length(con$offset))
+         nc.count <- con$offset
+         if (length(w)) {
+            ind <- which(w>0)
+            isW <- all(diff(ind))==1
+            if (isW) {
+               nc.start[indL] <- ind[1]
+               nc.count[indL] <- length(ind)
+               w <- w[ind]
+            }
+         }
+         else
+            isW <- FALSE
+        # level <- attr(varName,"level")
+        # print(data.frame(var=varName,flip=flip,permute=permute,time=time))
+         if (isC) { #(isC) {
+            nc.start[indT] <- min(i)
+            nc.count[indT] <- length(i)
+            val <- ncdf4::ncvar_get(nc,varName,start=nc.start,count=nc.count
+                                   ,collapse_degen=FALSE)
+           # if (length(indL)==1)
+           #    val <- apply(val,c(1,2,indT),mean)
+         }
+         else {
+            nc.count[indT] <- 1
+            dima <- con$offset
+            dima[indT] <- length(i)
+            val <- array(NA_real_,dim=dima)
+            for (i2 in seq_along(i)) {
+               nc.start[indT] <- i[i2]
+               if (length(indL)==1) {
+                  if (indT==4)
+                     val[,,,i2] <- ncdf4::ncvar_get(nc,varName,start=nc.start
+                                           ,count=nc.count,collapse_degen=FALSE)
+                  else
+                     stop("NCDF column 'time' index?")
+               }
+               else { 
+                  val[,,i2] <- ncdf4::ncvar_get(nc,varName,start=nc.start
+                                           ,count=nc.count,collapse_degen=FALSE)
+               }
+            }
+         }
+         if (length(indL)==1) {
+            if (nc.count[indL]>1) { ## con$offset[indL]>1
+               if (FALSE)
+                  val <- apply(val,indV,function(x) sum(x*w))
+               else {
+                  val <- aperm(val,c(indV,indL))
+                  dima <- dim(val)
+                  dim(val) <- c(prod(dima[1:3]),dima[4])
+                  val <- .average(val,weight=w)
+                  dim(val) <- nc.count[indV]
+               }
+            }
+            else {
+               dim(val) <- nc.count[indV]
+            }
+         }
+         if (permute) {
+            dima <- length(dim(val))
+            if (dima==2)
+               val <- aperm(val,c(2,1))
+            else if (dima==3)
+               val <- aperm(val,c(2,1,3))
+            else if (dima==4)
+               val <- aperm(val,c(2,1,3,4))
+            else
+               stop(paste("NCDF: transpose is not implemented for dimension:",dima))
+         }
+         if (flip) {
+            if (length(dim(val))>2)
+               val <- val[,rev(seq(dim(val)[2])),,drop=FALSE]
+            else
+               val <- val[,rev(seq(dim(val)[2])),drop=FALSE]
+         }
+         dim(val) <- with(con,c(samples,nline,nb))
+         ncdf4::nc_close(nc)
+      }
       if (!is.na(con$indexC[1]))
          res$value <- val[con$indexC,,,drop=FALSE]
       else
@@ -448,6 +612,103 @@
          val <- rgdal::getRasterData(con$handle,offset=c(minJ,0)
                                ,region.dim=c(nline,con$samples))
          dim(val) <- with(con,c(samples,nline,bands))
+      }
+      else if (con$driver=="NCDF") { ## read line
+         nc <- ncdf4::nc_open(con$fname)
+         varName <- con$handle
+        # str(con$offset)
+         flip <- attr(varName,"flip")
+         permute <- attr(varName,"permute")
+         indT <- attr(varName,"temporal")
+         indS <- attr(varName,"spatial")
+         indV <- c(indS,indT)
+         indL <- seq_along(con$offset)[-indV]
+         indC <- indS[ifelse(permute,2,1)]
+         indR <- indS[ifelse(permute,1,2)]
+        # indR <- ifelse(permute,1L,2L)
+        # indC <- 3L-indR
+         w <- attr(varName,"weight")
+         if (flip)
+            j <- rev(rev(seq(con$offset[[indR]]))[j])
+         nline <- length(j)
+         dj <- diff(j)
+         isC <- ((!length(dj))||(abs(unique(dj))==1))
+        # level <- attr(varName,"level")
+         attributes(varName) <- NULL
+         nc.start <- rep(1,length(con$offset))
+         nc.count <- con$offset
+         ##~ print(nc.start)
+         ##~ print(nc.count)
+         if (isC) { #(isC) {
+            nc.start[indR] <- min(j)
+            nc.count[indR] <- length(j)
+           # print(c(start=nc.start))
+           # print(c(count=nc.count))
+            val <- ncdf4::ncvar_get(nc,varName,start=nc.start,count=nc.count
+                                   ,collapse_degen=FALSE)
+         }
+         else { ## slow!
+            nc.count[indR] <- 1
+            dima <- con$offset
+            dima[indR] <- length(j)
+            val <- array(NA_real_,dim=dima)
+            for (j2 in seq_along(j)) {
+               nc.start[indR] <- j[j2]
+              # print(nc.start)
+              # print(nc.count)
+               if (length(indL)==1) {
+                  if (indR==2)
+                     val[,j2,,] <- ncdf4::ncvar_get(nc,varName,start=nc.start
+                                           ,count=nc.count,collapse_degen=FALSE)
+                  else
+                     stop("NCDF column 'line' index? (multi-level)")
+               }
+               else {
+                 # print(indV)
+                  if (indR==2)
+                     val[,j2,] <- ncdf4::ncvar_get(nc,varName,start=nc.start
+                                              ,count=nc.count,collapse_degen=FALSE)
+                  else
+                     stop("NCDF column 'line' index? (single-level)")
+               }
+            }
+         }
+         if (length(indL)==1) {
+            if (con$offset[indL]>1) {
+              # val <- apply(val,indV,mean)
+               if (FALSE)
+                  val <- apply(val,indV,function(x) sum(x*w))
+               else {
+                  val <- aperm(val,c(indV,indL))
+                  dima <- dim(val)
+                  dim(val) <- c(prod(dima[1:3]),dima[4])
+                  val <- .average(val,weight=w)
+                  dim(val) <- nc.count[indV]
+               }
+            }
+            else {
+               dim(val) <- nc.count[indV] # con$offset[indV]
+            }
+         }
+         if (permute) {
+            dima <- length(dim(val))
+            if (dima==2)
+               val <- aperm(val,c(2,1))
+            else if (dima==3)
+               val <- aperm(val,c(2,1,3))
+            else if (dima==4)
+               val <- aperm(val,c(2,1,3,4))
+            else
+               stop(paste("NCDF: transpose is not implemented for dimension:",dima))
+         }
+         if (flip) {
+            if (length(dim(val))>2)
+               val <- val[,rev(seq(dim(val)[2])),,drop=FALSE]
+            else
+               val <- val[,rev(seq(dim(val)[2])),drop=FALSE]
+         }
+         dim(val) <- with(con,c(samples,nline,bands))
+         ncdf4::nc_close(nc)
       }
       else
          stop("read ENVI: Error in input header file ",con$interleave

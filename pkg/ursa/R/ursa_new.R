@@ -18,8 +18,8 @@
    datatype <- .getPrm(arglist,name="datatype",default=NA_integer_)
    colorTable <- .getPrm(arglist,name="(colortable|category)"
                         ,class="ursaColorTable",default=NULL)
-   permute <- .getPrm(arglist,name="perm(ute)*",default=FALSE)
-   flip <- .getPrm(arglist,name="flip",default=FALSE)
+   permute <- .getPrm(arglist,name="perm(ute)*",default=FALSE) ## -- 20170720 TRUE
+   flip <- .getPrm(arglist,name="flip",default=FALSE) ## -- 20170720 TRUE
    crs <- .getPrm(arglist,name="ref",class=list("ursaGrid","character")
                  ,default=NULL)
    verbose <- .getPrm(arglist,name="verbose",default=FALSE)
@@ -44,7 +44,7 @@
       dimb <- dima <- dim(value)
       if (length(dima)==2) {
          if ((TRUE)&&(dima[1]!=with(grid,columns*rows))) {## added 20160201
-            value <- value[,rev(seq(dima[2]))]
+            value <- value[,rev(seq(dima[2])),drop=FALSE]
          }
          if (permute) {
             value <- t(value)

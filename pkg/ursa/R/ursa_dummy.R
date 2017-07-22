@@ -13,7 +13,7 @@
       nband <- length(bandname)
    d <- with(g2,c(columns,rows,nband))
    b <- array(runif(prod(d),min=minvalue,max=maxvalue),dim=d)
-   b <- as.ursa(b)
+   b <- as.ursa(b,flip=FALSE,permute=FALSE)
    if (is.character(bandname))
       bandname(b) <- bandname
    else {

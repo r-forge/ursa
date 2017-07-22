@@ -85,7 +85,7 @@
    }
    if (is.character(col.names))
       colnames(res) <- rep(col.names,length=ncol(res))
-   attr(res,"proj") <- g1$proj[which.max(nchar(g1$proj))]
+   attr(res,"proj4") <- g1$proj[which.max(nchar(g1$proj))]
    attr(res,"colortable") <- ursa_colortable(obj)
    res
 }

@@ -62,6 +62,8 @@
          return(invisible(do.call("display_brick",c(list(obj),arglist))))
       }
       else if (isBlank) {
+         if (verbose)
+            print("display blank")
          compose_open(legend=NULL,...)
          panel_new(...)
          panel_decor(...)

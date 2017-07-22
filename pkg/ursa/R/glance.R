@@ -9,6 +9,41 @@
    if (!length(arglist)) {
       return(display())
    }
+   if (inherits(arglist[[1]],c("list","character"))) {
+      isWMS <- FALSE
+      if ((is.list(arglist[[1]]))&&(all(sapply(arglist[[1]],.is.wms)))) {
+         s1 <- unlist(arglist[[1]])
+         isWMS <- TRUE
+         sname <- names(s1)
+      }
+      else if (.is.wms(arglist[[1]])) {
+         s1 <- arglist[[1]]
+         isWMS <- TRUE
+         sname <- ""
+      }
+      if (isWMS) {
+        # session_grid(NULL)
+         s2 <- unlist(sapply(s1,.compose_wms,extend=FALSE))
+         compose_open(length(s2),legend=NULL,scale=0.7,fileout="res1.png")
+         pb <- ursaProgressBar(min=0,max=length(s2))
+         for (i in seq_along(s2)) {
+            arglist[[1]] <- s2[i]
+            do.call("panel_new",arglist[-1])
+            arglist$extend <- FALSE
+            arglist$verbose <- TRUE
+           # .panel_wms(s2[i],tile=1e5,legend=TRUE,verbose=!TRUE)
+            try(do.call(".panel_wms",arglist))
+            arglist$verbose <- FALSE
+            if (length(sname))
+               panel_annotation(sname[i],pos="bottomright")
+            do.call("panel_decor",arglist[-1])
+            setUrsaProgressBar(pb,i)
+         }
+         close(pb)
+         compose_close()
+         return(invisible(0L))
+      }
+   }
    if (!is.character(arglist[[1]])) {
       a <- do.call(".glance",arglist)
       return(invisible(a))
@@ -32,6 +67,39 @@
          return(do.call(".glance",arglist))
       }
       else {
+         if ((!.isPackageInUse())&&
+              (.lgrep("\\.(nc|hdf)$",basename(arglist[[1]])))) { ## dev
+           # obj <- .open_ncdf(arglist[[1]])
+            obj <- .read_ncdf(arglist[[1]],".+")
+            if (!inherits(obj,"data.frame")) {
+               obj <- obj[sapply(obj,is.ursa)]
+               if (length(arglist)==1)
+                  return(display(obj))
+               return(do.call("display",list(obj,arglist[-1])))
+            }
+            else {
+               indX <- .grep("^(lon|x$|west|east)",colnames(obj))
+               indY <- .grep("^(lat|y$|south|north)",colnames(obj))
+               if (!length(indX))
+                  indX <- 1L
+               if (!length(indY))
+                  indY <- 2L
+               colnames(obj)[c(indX,indY)] <- c("x","y")
+            }
+            stop("Development has been stoped")
+            ##~ p4s <- attr(obj,"proj4")
+            ##~ if (isSF) {
+               ##~ if (!is.null(p4s))
+                  ##~ obj <- sf::st_as_sf(obj,coords=c("x","y"),crs=attr(obj,"proj4"))
+               ##~ else
+                  ##~ obj <- sf::st_as_sf(obj,coords=c("x","y"))
+            ##~ }
+            ##~ if (isSP) {
+               ##~ sp::coordinates(obj) <- ~x+y
+               ##~ if (!is.null(p4s))
+                  ##~ sp::proj4string(obj) <- sp::CRS(p4s)
+            ##~ }
+         }
          if (.lgrep("\\.rds$",basename(arglist[[1]]))) {
             obj <- readRDS(arglist[[1]])
            # print(class(obj))
@@ -76,7 +144,7 @@
                         ,basemap.order=c("after","before"),basemap.alpha=NA
                         ,engine=c("native","sp","sf")
                         ,geocode="",place=""
-                        ,zoom=NA,rasterize=FALSE
+                        ,zoom=NA,gdal_rasterize=FALSE
                         ,verbose=FALSE,...) {
    a <- as.list(match.call())
   # feature <- "geometry"
@@ -256,7 +324,7 @@
       options(opW)
       toUnloadMethods <- TRUE
    }
-   if ((rasterize)&&(nchar(Sys.which("gdal_rasterize")))) {
+   if ((gdal_rasterize)&&(nchar(Sys.which("gdal_rasterize")))) {
       res <- .rasterize(obj,feature=feature,verbose=verbose)
    }
    ##~ print(session_grid())
@@ -308,7 +376,7 @@
         # print(ct[[i]])
         # print("-----------------------------------------")
       }
-      if (!rasterize) {
+      if (!gdal_rasterize) {
          if (length(dname))
             res <- lapply(rep(NA,length(ct)),ursa_new)
          else
@@ -340,7 +408,7 @@
                panel_plot(obj)#,add=TRUE)
             }
          }
-         else if (rasterize){
+         else if (gdal_rasterize){
             ct[[i]] <- panel_raster(colorize(res[[i]]),alpha=alpha)
            # ct[[i]] <- panel_raster(res[[i]],alpha=alpha,verbose=TRUE)
          }
@@ -427,7 +495,7 @@
       }
       close(pb)
       if (length(ct)) {
-         if (!rasterize) {
+         if (!gdal_rasterize) {
             ct <- lapply(ct,function(x) {
                y <- ursa(x,"colortable") ## y <- x$colortable
                if ((TRUE)&&(isWeb)&&(after)) {
@@ -464,7 +532,7 @@
      # print(e)
      # message(e1)
      # q()
-      if (!rasterize)
+      if (!gdal_rasterize)
          res <- ursa_new(nband=n)
       ct <- lapply(seq(n),function(i) colorize(0L))
       compose_open(res,legend=NULL,...)
@@ -481,7 +549,7 @@
          if (before) {
             panel_plot(basemap,alpha=basemap.alpha)
          }
-         if (!rasterize) {
+         if (!gdal_rasterize) {
            # panel_plot(obj_geom[[i]])
             if (!isSP) {
                if (.lgrep("polygon",geoType)) {

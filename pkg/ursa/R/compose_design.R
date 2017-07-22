@@ -1,9 +1,11 @@
 'compose_design' <- function(...) {
    arglist <- list(...)
   # str(lapply(arglist,function(x) list(class=class(x),names=names(x))))
-   obj <- .getPrm(arglist,name="",default=NULL
-                 ,class=list(c("list","ursaRaster"),"ursaRaster"))
+   obj <- .getPrm(arglist,name="^$",default=NULL
+                 ,class=list(c("list","ursaRaster"),"ursaRaster","integer"))
    layout <- .getPrm(arglist,name="layout",default=NA_integer_)
+  # if (identical(obj,layout))
+  #    obj <- NULL
    byrow <- .getPrm(arglist,name="byrow",default=TRUE)
    skip <- .getPrm(arglist,name="skip",class="integer",default=NULL)
    legend <- .getPrm(arglist,name="legend",class="",default=NA)
@@ -69,8 +71,12 @@
                fld <- c(fld,rep(i,nband(obj[[i]])))
          }
       }
-      else
-         fld <- rep(1L,nband(obj))
+      else {
+         if (is.integer(obj))
+            fld <- rep(1L,obj)
+         else
+            fld <- rep(1L,nband(obj))
+      }
       if (is.null(skip))
          skip <- which(!fld)
       else {
