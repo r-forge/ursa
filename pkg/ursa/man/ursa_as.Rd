@@ -39,7 +39,7 @@ This is a high-level function to create \code{ursaRaster} objects. The follwed c
    \code{\link[raster]{raster}} (\pkg{raster})\tab \code{\link[ursa]{ursa_new}}.\cr
    \code{\link[raster]{brick}} (\pkg{raster})\tab \code{\link[ursa]{ursa_new}}.\cr
    \code{\link[raster]{stack}} (\pkg{raster})\tab \code{\link[ursa]{ursa_new}}.\cr
-   \code{\link[magick:edit]{bitmap}} (\pkg{magick})\tab \code{\link[ursa]{ursa_new}}.\cr
+   \code{\link[magick:editing]{bitmap}} (\pkg{magick})\tab \code{\link[ursa]{ursa_new}}.\cr
    \code{\link[base]{character}} (GDAL supported file name) \tab \code{\link[ursa:conn.read_gdal]{read_gdal}}.
 }
 Generally, \code{\link[ursa]{allocate}} is used for objects with non-regular grid, and \code{\link[ursa]{ursa_new}} is used for regular grids. The \link[ursa:classGrid]{raster grid} is defined from object properties or from \link[ursa:session]{sessional grid}.

@@ -15,8 +15,8 @@ panel_annotation(...)
 .panel_annotation(label = expression(), position = "bottomright",
                   lon = NA, lat = NA, x = NA, y = NA, cex = 1.0, adjust = 0.5,
                   fg = "#000000", bg = "#FFFFFF1F", buffer = 1, fill = "#FFFFFF7F",
-                  font = par("family"), alpha = 1, interpolate = FALSE,
-                  verbose = FALSE, ...)
+                  font = par("family"), vertical = FALSE, alpha = 1,
+                  interpolate = FALSE, verbose = FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -37,6 +37,7 @@ panel_annotation(...)
       \cr \code{buf(fer)*} \tab \code{buffer} \tab \emph{See below}.
       \cr \code{fill} \tab \code{fill} \tab \emph{See below}.
       \cr \code{font} \tab \code{font} \tab \emph{See below}.
+      \cr \code{vert(ical)*} \tab \code{vertical} \tab \emph{See below}.
       \cr \code{(alpha|transp(aren(cy)*)*)} \tab \code{alpha} \tab \emph{See below}.
       \cr \code{interp(olate)*} \tab \code{interpolate} \tab \emph{See below}.
       \cr \code{verb(ose)*} \tab \code{verbose} \tab \emph{See below}.
@@ -54,7 +55,8 @@ panel_annotation(...)
    \item{bg}{Character. Color name or code for thin buffer around label's elements. Default is \code{NA}, which is interpeted as \code{"transparent"} for \emph{captions} and as \code{"#FFFFFF1F"} for \emph{annotations}.}
    \item{buffer}{Numeric. The relative width of buffer around label's elements. Default is \code{1}.}
    \item{fill}{Character. Color name or code for circumscribed rectangle around labels. Default is \code{NA}, which is interpeted as \code{"#FFFFFF7F"} for \emph{captions} and as \code{"transparent"} for \emph{annotations}.}
-   \item{font}{Character. Font family. Default is \code{par("family")}}
+   \item{font}{Character. Font family. Default is \code{par("family")}.}
+   \item{vertical}{Logical. Vertical orientation of label. If \code{FALSE}, then horizontal labeling. Default is \code{FALSE}.}
    \item{interpolate}{Logical. Passed as argument \code{interpolate} to function \code{\link[graphics:rasterImage]{rasterImage}} for logo annotation.}
    \item{alpha}{Numeric or character. Level of transparency for logos. If numeric, the either \verb{0 <= alpha <= 1} or \code{0 <= alpha <= 255}. If character, then one byte of hexadecimal value \verb{"00" <= alpha <= "FF"}. Default is \code{1}.}
    \item{verbose}{Logical. Value \code{TRUE} may provide some additional information on console. Default is \code{FALSE}.}

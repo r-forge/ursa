@@ -1,5 +1,5 @@
 # http://geo2tag.org/?page_id=671&lang=en_US
-# https://geocode-maps.yandex.ru/1.x/?geocode=метро Третьяковская&results=100&format=json
+# https://geocode-maps.yandex.ru/1.x/?geocode=metro Tretyakovskaya&results=100&format=json
 
 # geocodeList <- eval(as.list(args(.geocode))$service)
 '.geocode' <- function(loc=NULL,area=c("bounding","point"),place=""
