@@ -1,5 +1,5 @@
 '.compose_wms' <- function(src
-                          ,version=c("1.1.1","1.3.0","1.1.0","1.0.0")
+                          ,version=""
                           ,layers=""
                           ,epsg=""
                           ,format=""
@@ -7,22 +7,39 @@
                           ,styles=""
                           ,transparent=""
                           ,legend="topright",gdalwarp=FALSE,tile=1024L
-                          ,size=800L,fail180=FALSE,transpose=FALSE
+                          ,size=800L,fail180=FALSE
+                          ,transpose=FALSE ## 'rotate' 'reorder' ?
                           ,extend=TRUE
                           ,verbose=FALSE,...) {
    src <- unlist(src)
    dst <- if (!TRUE) tempfile(fileext=".xml") else paste0(.argv0name(),".xml")
    isMetadata <- FALSE
-   version <- match.arg(version)
+   versionList <- c("1.1.1","1.3.0","1.1.0","1.0.0")
+  # if (nchar(version))
+  #    version <- match.arg(version,versionList)
+  # else
+  #    version <- versionList[1]
    if (!.lgrep("\\?",src))
       src <- paste0(src,"?")
+   else if (!.lgrep("\\?&",src))
+      src <- .gsub("\\?","?&",src)
    toStop <- 0L
    multiple <- FALSE
-   multiple <- .lgrep("\\s",layers)>0
-   ind <- .grep("&version=",src)
-   if (!length(ind)) {
-      src <- paste0(src,"&version=",version)
+   multiple <- all(layers==" ") #.lgrep("^\\s.$",layers)>0
+   ind1 <- .lgrep("&version=",src)==0 ## 'version' is not in request
+   ind2 <- nchar(as.character(version))>0 ## 'version' is set manually
+   if (ind2)
+      version <- match.arg(version,versionList)
+   else if (!ind1)
+      version <- .gsub(".+&version=(.+)(&|$)","\\1",src)
+   else
+      version <- "" #versionList[1]
+   if ((!ind1)&&(ind2)) {
+      src <- sapply(strsplit(src,split="&"),function(x)
+         paste(.grep("^version=",x,invert=TRUE,value=TRUE),collapse="&"))
    }
+  # if ((ind2)||(ind1))
+  #    src <- paste0(src,"&version=",as.character(version))
    src1 <- unlist(strsplit(src,split="&"))
    src1 <- .grep("^(bbox|request|service)=",src1,value=TRUE,invert=TRUE)
    src1 <- paste0(paste(src1,collapse="&"),"&service=WMS&request=GetCapabilities")
@@ -36,8 +53,8 @@
             src <- unlist(strsplit(src,split="&"))
             src <- paste(.grep("^layer(s)*=",src,invert=TRUE,value=TRUE),collapse="&")
          }
-        # src <- paste0(src,"&layers=",layerString)
          src <- paste0(src,"&layers=",layers)
+        # src <- paste0(src,"&layers=",URLencode(URLencode(iconv(layers,to="UTF-8"))))
          multiple <- length(layers)>1
       }
       else {
@@ -53,10 +70,10 @@
          ind2 <- .grep("<Name(>|\\s)",md)
          ind3 <- .grep("<Title(>|\\s)",md)
          dist2 <- .dist2(cbind(x=ind1,y=0),cbind(x=ind2,y=0)
-                        ,verbose=FALSE,summarize=verbose)
+                        ,verbose=FALSE,summarize=FALSE)
          ind2a <- ind2[dist2$ind]
          dist3 <- .dist2(cbind(x=ind2a,y=0),cbind(x=ind3,y=0)
-                        ,verbose=!FALSE,summarize=verbose)
+                        ,verbose=FALSE,summarize=FALSE)
          ind3a <- ind3[dist3$ind]
          desc <- data.frame(Layer=md[ind2a+1],Title=md[ind3a+1])
          n1 <- max(nchar(desc$Layer))
@@ -148,6 +165,11 @@
    ind <- .grep("&[cs]rs=",src)
    if (!length(ind)) {
       if (nchar(as.character(epsg))) {
+         if (!nchar(version)) {
+            md <- .parse_wms(dst,verbose=verbose)
+            version <- .gsub("^.+(version=(\")*(\\d\\.\\d\\.\\d)(\")*)\\s.+$","\\3"
+                            ,md[.grep("^<WMS_Capabilities",md)])
+         }
          pref <- switch(version,'1.3.0'="crs",'x.x.x'="xxx","srs")
          src <- paste0(src,"&",pref,"=EPSG:",epsg)
       }
@@ -179,8 +201,9 @@
             if (length(ind1)) {
                indG <- ind1+1L
                ind2 <- .grep("(epsg|[cs]rs):\\d+$",md[indG])
-               if (length(ind2)!=length(indG))
-                  indG <- integer()
+              # if (length(ind2)!=length(indG))
+              #    indG <- integer()
+               indG <- indG[ind2]
             }
          }
          if (length(indG))
@@ -232,8 +255,16 @@
          ind2a <- ind2a[ind2a>ind1a][1]
          md1 <- md[ind1a:(ind2a-1)]
          ind2a <- .grep("<Extent",md1)
-         if (length(ind2a)==1)
-            ind2 <- ind1a+ind2a-1L
+         if (length(ind2a)==1) {
+            if (FALSE) {
+               ind2 <- ind1a+ind2a-1L
+            }
+            else {
+               md <- md1
+               ind1 <- .grep("<Dimension",md)
+               ind2 <- .grep("<Extent",md)
+            }
+         }
       }
       if (length(ind2))
          dname2 <- tail(unlist(strsplit(md[ind2],split="\\s+")),-1)
@@ -255,6 +286,11 @@
             }
             dname <- unname(sapply(dname,strsplit,split="="))
             dname <- sapply(dname,function(x) gsub("(\"|>|/>)","",x))
+            if (is.list(dname)) {
+               dname <- dname[sapply(dname,length)==2]
+               dname <- t(matrix(c(unlist(dname)),ncol=2,byrow=TRUE))
+            }
+           # dname <- do.call("rbind",t(lapply(dname,data.frame)))
             res <- dname[2,,drop=FALSE]
             colnames(res) <- dname[1,]
             rownames(res) <- " "
@@ -316,15 +352,29 @@
             tryGrid <- tryGrid+1L
          }
          else {
-            lim <- .gsub("[\"</>]"," ",md[ind1[1]])
-            minx <- .gsub2("minx\\s*=\\s*(\\S+)\\s","\\1",lim)
-            miny <- .gsub2("miny\\s*=\\s*(\\S+)\\s","\\1",lim)
-            maxx <- .gsub2("maxx\\s*=\\s*(\\S+)\\s","\\1",lim)
-            maxy <- .gsub2("maxy\\s*=\\s*(\\S+)\\s","\\1",lim)
-            a <- as.numeric(c(minx,miny,maxx,maxy))
-            tryGrid <- tryGrid+1L
+            if (length(ind1)>1) {
+               minx <- md[minxI[1L]+1L]
+               maxx <- md[maxxI[1L]+1L]
+               miny <- md[minyI[1L]+1L]
+               maxy <- md[maxyI[1L]+1L]
+               a <- as.numeric(c(minx,miny,maxx,maxy))
+               if (length(na.omit(a))==4)
+                  tryGrid <- tryGrid+1L
+            }
+            if (length(ind1)>1) {
+               lim <- .gsub("[\"</>]"," ",md[ind1[1]])
+               minx <- .gsub2("minx\\s*=\\s*(\\S+)\\s","\\1",lim)
+               miny <- .gsub2("miny\\s*=\\s*(\\S+)\\s","\\1",lim)
+               maxx <- .gsub2("maxx\\s*=\\s*(\\S+)\\s","\\1",lim)
+               maxy <- .gsub2("maxy\\s*=\\s*(\\S+)\\s","\\1",lim)
+               if (!tryGrid) {
+                  a <- as.numeric(c(minx,miny,maxx,maxy))
+                  tryGrid <- tryGrid+1L
+               }
+            }
          }
       }
+      rot <- FALSE
       if ((tryGrid==0)||(toStop)) {
          if (length(epsg)>1) {
             if ("4326" %in% as.character(epsg))
@@ -332,16 +382,21 @@
             else
                epsg <- sample(epsg,1)
          }
-         rot <- FALSE
+         if (!nchar(version)) {
+            version <- .gsub("^.+(version=(\")*(\\d\\.\\d\\.\\d)(\")*)\\s.+$","\\3"
+                            ,md[.grep("^<WMS_Capabilities",md)])
+         }
          if ((version=="1.3.0")&&("4326" %in% as.character(epsg))) {
             ind1 <- .grep(paste0("BoundingBox CRS=\"*CRS:84"),md)
-            lim <- .gsub("[\"</>]"," ",md[ind1[1]])
-            minx3 <- .gsub2("minx\\s*=\\s*(\\S+)\\s","\\1",lim)
-            miny3 <- .gsub2("miny\\s*=\\s*(\\S+)\\s","\\1",lim)
-            maxx3 <- .gsub2("maxx\\s*=\\s*(\\S+)\\s","\\1",lim)
-            maxy3 <- .gsub2("maxy\\s*=\\s*(\\S+)\\s","\\1",lim)
-            a3 <- as.numeric(c(minx3,miny3,maxx3,maxy3))
-            rot <- TRUE
+            if (length(ind1)) {
+               lim <- .gsub("[\"</>]"," ",md[ind1[1]])
+               minx3 <- .gsub2("minx\\s*=\\s*(\\S+)\\s","\\1",lim)
+               miny3 <- .gsub2("miny\\s*=\\s*(\\S+)\\s","\\1",lim)
+               maxx3 <- .gsub2("maxx\\s*=\\s*(\\S+)\\s","\\1",lim)
+               maxy3 <- .gsub2("maxy\\s*=\\s*(\\S+)\\s","\\1",lim)
+               a3 <- as.numeric(c(minx3,miny3,maxx3,maxy3))
+               rot <- TRUE
+            }
          }
         # else
         #    ind1 <- integer()
@@ -354,7 +409,7 @@
             maxx2 <- .gsub2("maxx\\s*=\\s*(\\S+)\\s","\\1",lim)
             maxy2 <- .gsub2("maxy\\s*=\\s*(\\S+)\\s","\\1",lim)
             a2 <- as.numeric(c(minx2,miny2,maxx2,maxy2))
-            if ((rot)&&(any(abs(a2[c(2,4)])>90))) {
+            if ((rot)&&(all(a2[c(2,1,4,3)]==a3))) {
                message(paste("IMPORTANT NOTICE:"
                        ,"It is required to use argument/value 'transpose=TRUE'"
                        ,"or 'bbox={miny},{minx},{maxy},{maxx}'"))
@@ -366,19 +421,40 @@
             tryGrid <- tryGrid+2L
          }
       }
+      if ((FALSE)&&(tryGrid)&&(version %in% c("1.3.0"))) {
+         ind1 <- .grep(paste0("BoundingBox CRS=\"*CRS:84"),md)
+         lim <- .gsub("[\"</>]"," ",md[ind1[1]])
+         minx3 <- .gsub2("minx\\s*=\\s*(\\S+)\\s","\\1",lim)
+         miny3 <- .gsub2("miny\\s*=\\s*(\\S+)\\s","\\1",lim)
+         maxx3 <- .gsub2("maxx\\s*=\\s*(\\S+)\\s","\\1",lim)
+         maxy3 <- .gsub2("maxy\\s*=\\s*(\\S+)\\s","\\1",lim)
+         a4 <- as.numeric(c(minx3,miny3,maxx3,maxy3))
+         ind1 <- .grep(paste0("BoundingBox CRS=\"*EPSG:4326"),md)
+         lim <- .gsub("[\"</>]"," ",md[ind1[1]])
+         minx3 <- .gsub2("minx\\s*=\\s*(\\S+)\\s","\\1",lim)
+         miny3 <- .gsub2("miny\\s*=\\s*(\\S+)\\s","\\1",lim)
+         maxx3 <- .gsub2("maxx\\s*=\\s*(\\S+)\\s","\\1",lim)
+         maxy3 <- .gsub2("maxy\\s*=\\s*(\\S+)\\s","\\1",lim)
+         a5 <- as.numeric(c(minx3,miny3,maxx3,maxy3))
+         rot <- TRUE
+         if (all(a4[c(2,1,4,3)]==a5)) {
+            message(paste("IMPORTANT NOTICE:"
+                    ,"It is required to use argument/value 'transpose=TRUE'"
+                    ,"or 'bbox={miny},{minx},{maxy},{maxx}'"))
+         }
+      }
       if (tryGrid) {
          if (!nchar(epsg)) {
             epsg <- 4326
          }
          code <- .gsub("\\D","",epsg)
          isLonLat <- code %in% "4326"
-         p4s <- .epsg2proj4(code,force=TRUE) # if (!isLonLat)
+         p4s <- .epsg2proj4(code,force=TRUE,verbose=FALSE) # if (!isLonLat)
          if (any(abs(a)>360))
             xy <- matrix(a,ncol=2,byrow=TRUE)
          else {
             n <- 3
-            print(a)
-            if (code %in% c("3857")) {
+            if (code %in% c("3857","900913")) {
                elat <- 85.051129
                a[2][a[2]<(-elat)] <- -elat
                a[4][a[4]>(+elat)] <- +elat
@@ -393,7 +469,6 @@
             }
             if (TRUE) {
                a <- matrix(a[c(1,2,1,4,3,4,3,2,1,2)],ncol=2,byrow=TRUE)
-               print(a)
                x <- a[,1]
                y <- a[,2]
                n <- 256
@@ -447,7 +522,7 @@
       }
       src <- paste0(src,"&bbox=",as.character(bbox))
    }
-   transpose <- transpose & version=="1.3.0" & as.character(epsg)=="4326"
+   transpose <- transpose & version %in% c("","1.3.0") & as.character(epsg)=="4326"
    ind1 <- .lgrep("&bbox=",src)==0
    if ((ind1)&&(!ind2)) {
       bbox <- if (transpose) "{miny},{minx},{maxy},{maxx}"
@@ -458,7 +533,6 @@
    if (length(arglist))
       src <- paste0(src,paste(paste0("&",names(arglist)),as.character(arglist)
                              ,sep="=",collapse=""))
-   
    names(src) <- if (multiple) sname else layers
    as.list(src)
 }
@@ -491,136 +565,154 @@
    g0 <- session_grid()
    res <- vector("list",length(src))
    names(res) <- names(src)
+   src <- sample(srclist,1)[[1]]
+   code <- .gsub(".+&[sc]rs=EPSG\\:(\\d+)(\\&.+|$)","\\1",src)
+   p4epsg <- paste0("+init=epsg:",code)
+   if (is.character(gdalwarp)) {
+      resample <- gdalwarp
+      gdalwarp <- TRUE
+   }
+   else
+      resample <- "lanczos"
+   if ((!FALSE)&&(gdalwarp)) {
+      if (!nchar(Sys.which("gdalwarp")))
+         message("'gdalwarp' is required to be in search paths")
+   }
+   proj4s <- unlist(strsplit(g0$proj4,split="\\s+"))
+   ind <- .grep("\\+(proj=merc|[ab]=6378137|[xy]_0=0|k=1|units=m|lat_ts=0)",proj4s)
+   isMerc <- ((length(ind)==8)&&(!gdalwarp))
+   isLonLat <- .lgrep("\\+proj=longlat",g0$proj4)>0
    sc <- getOption("ursaPngScale")
-   g3 <- if ((is.numeric(sc))&&(sc<0.75)) regrid(g0,mul=sc) else g0
-  # g3 <- if ((is.numeric(sc))&&(sc<1.7)) regrid(g0,mul=sc*1.5) else g0
+   g3 <- g0
+   if ((is.numeric(sc))&&(sc<1e11+0.75)) {
+     # print(g0)
+      g3 <- regrid(g0,mul=sc)
+     # print(g3)
+      if ((TRUE)||(isLonLat))
+         g3 <- regrid(g3,setbound=with(g0,c(minx,miny,maxx,maxy))
+                     ,dim=with(g3,c(rows,columns)))
+     ## ********** NOTICE: generally, g3$resx!=g3$resy   ************** ##
+     # print(g3,digits=15)
+   }
+   if (isMerc) {
+      ind <- .grep("\\+lon_0",proj4s)
+      lon0 <- as.numeric(.gsub(".+=(.+)","\\1",proj4s[ind]))
+      if (lon0==0)
+         isMerc <- FALSE
+      else {
+         B0 <- 6378137
+         B <- B0*pi
+         dx0 <- 6378137*lon0*pi/180
+         proj4s[ind] <- "+lon_0=0.000000"
+         g2 <- g3
+         g3 <- regrid(g2,minx=g2$minx+dx0,maxx=g2$maxx+dx0
+                     ,proj4=paste(proj4s,collapse=" "),zero="keep")
+      }
+   }
+   if (gdalwarp) {
+      if (verbose)
+         print(g3,digits=15)
+      g2 <- g3
+     # .elapsedTime("a")
+      requireNamespace(c("sp","rgdal")[2],quietly=.isPackageInUse())
+      dg <- 16
+      xy <- with(g3,expand.grid(x=seq(minx,maxx,len=dg),y=seq(miny,maxy,len=dg)))
+      ll <- .project(xy,g3$proj4,inv=TRUE)
+      p4s <- .epsg2proj4(p4epsg)
+      xy <- .project(ll,p4s)
+     # .elapsedTime("b")
+      nm <- max(g3$columns,g3$rows)
+      g3 <- regrid(ursa_grid()
+                  ,setbound=c(min(xy[,1]),min(xy[,2]),max(xy[,1]),max(xy[,2]))
+                  ,res=c(1,1)
+                  ,proj4=p4s)
+     # print(g3)
+      sc <- ifelse(isLonLat,3.3,1.5)*nm/max(g3$columns,g3$rows)
+      g3 <- regrid(g3,mul=sc,border=5)
+      if (verbose)
+         print(g3)
+      session_grid(g3)
+   }
+   tc <- seq(0L,g3$columns,by=tile)
+   if (length(tc)==1)
+      nc <- g3$columns
+   else
+      nc <- c(tail(tc,-1),g3$columns)-tc
+   tr <- seq(0L,g3$rows,by=tile)
+   if (length(tr)==1)
+      nr <- g3$rows
+   else
+      nr <- c(tail(tr,-1),g3$rows)-tr
+   x <- c(seq(g3$minx,g3$maxx,by=g3$resx*tile),g3$maxx)
+   if (isLonLat)
+      B <- 180
+   if (isMerc) {
+      xn <- sort(c(x,-B,-2*B,+B,+2*B))
+      x <- unique(xn[xn>=min(x) & xn<=max(x)]) ## 20170723 ++ unique()
+      nc <- diff(x)/g3$resx
+      nc <- ceiling(nc)
+     # if (length(nc)>1)
+     #    nc[length(nc)] <- g3$columns-sum(nc[-length(nc)])
+   }
+   if ((!FALSE)&&(isLonLat)) {
+      if (!fail180)
+         xn <- sort(c(x,-B,-3*B,+B,+3*B))
+      else {
+         xn <- sort(c(x,0,2*B,4*B,-2*B))
+      }
+      x <- unique(xn[xn>=min(x) & xn<=max(x)]) ## 20170723 ++ unique()
+      nc <- diff(x)/g3$resx
+      nc <- ceiling(nc)
+     # if (length(nc)>1)
+     #    nc[length(nc)] <- g3$columns-sum(nc[-length(nc)])
+   }
+   if (length(nc)>1)
+      nc[length(nc)] <- g3$columns-sum(nc[-length(nc)])
+   else
+      nc <- g3$columns
+  # y <- c(seq(g3$miny,g3$maxy,by=g3$resy*tile),g3$maxy)
+   y <- rev(c(seq(g3$maxy,g3$miny,by=-g3$resy*tile),g3$miny))
+   tind <- .expand.grid(c=seq_along(nc),r=rev(seq_along(nr)))-1
+  # tind <- cbind(tind,r2=length(nr)-tind$r-1)
+   tcr <- .expand.grid(width=nc,height=rev(nr))
+   txy1 <- .expand.grid(minx=head(x,-1),miny=head(y,-1))
+   txy2 <- .expand.grid(maxx=tail(x,-1),maxy=tail(y,-1))
+   tg <- cbind(tind,tcr,txy1,txy2)
+   tg <- tg[tg$width>0 & tg$height>0,]
+   if (isMerc | (isLonLat & !fail180)) {
+      ind1 <- which(tg$minx>=B & tg$maxx>=B)
+      ind2 <- which(tg$minx<=-B & tg$maxx<=-B)
+      if (length(ind1)) {
+         tg$minx[ind1] <- tg$minx[ind1]-2*B
+         tg$maxx[ind1] <- tg$maxx[ind1]-2*B
+      }
+      if (length(ind2)) {
+         tg$minx[ind2] <- tg$minx[ind2]+2*B
+         tg$maxx[ind2] <- tg$maxx[ind2]+2*B
+      }
+   }
+   if (isLonLat & fail180) {
+      ind1 <- which(tg$minx>=2*B & tg$maxx>=2*B)
+      ind2 <- which(tg$minx<=0 & tg$maxx<=0)
+      if (length(ind1)) {
+         tg$minx[ind1] <- tg$minx[ind1]-2*B
+         tg$maxx[ind1] <- tg$maxx[ind1]-2*B
+      }
+      if (length(ind2)) {
+         tg$minx[ind2] <- tg$minx[ind2]+2*B
+         tg$maxx[ind2] <- tg$maxx[ind2]+2*B
+      }
+   }
+   cellx <- (tg[,"maxx"]-tg[,"minx"])/tg[,"width"]
+   celly <- (tg[,"maxy"]-tg[,"miny"])/tg[,"height"]
+   if (verbose)
+      print(tg)
    for (k in seq_along(srclist)) {
       src <- srclist[[k]]
-      code <- .gsub(".+&[sc]rs=EPSG\\:(\\d+)(\\&.+|$)","\\1",src)
-      p4epsg <- paste0("+init=epsg:",code)
-      if (is.character(gdalwarp)) {
-         resample <- gdalwarp
-         gdalwarp <- TRUE
-      }
-      else
-         resample <- "lanczos"
-      if ((!FALSE)&&(gdalwarp)) {
-         if (!nchar(Sys.which("gdalwarp")))
-            message("'gdalwarp' is required to be in search paths")
-      }
-      proj4s <- unlist(strsplit(g0$proj4,split="\\s+"))
-      ind <- .grep("\\+(proj=merc|[ab]=6378137|[xy]_0=0|k=1|units=m|lat_ts=0)",proj4s)
-      isMerc <- ((length(ind)==8)&&(!gdalwarp))
-      isLonLat <- .lgrep("\\+proj=longlat",g0$proj4)>0
-      if (isMerc) {
-         ind <- .grep("\\+lon_0",proj4s)
-         lon0 <- as.numeric(.gsub(".+=(.+)","\\1",proj4s[ind]))
-         if (lon0==0)
-            isMerc <- FALSE
-         else {
-            B0 <- 6378137
-            B <- B0*pi
-            dx0 <- 6378137*lon0*pi/180
-            proj4s[ind] <- "+lon_0=0.000000"
-            g2 <- g3
-            g3 <- regrid(g2,minx=g2$minx+dx0,maxx=g2$maxx+dx0
-                        ,proj4=paste(proj4s,collapse=" "),zero="keep")
-         }
-      }
-      if (gdalwarp) {
-         g2 <- g3
-        # .elapsedTime("a")
-         requireNamespace(c("sp","rgdal")[2],quietly=.isPackageInUse())
-         dg <- 16
-         xy <- with(g3,expand.grid(x=seq(minx,maxx,len=dg),y=seq(miny,maxy,len=dg)))
-         ll <- .project(xy,g3$proj4,inv=TRUE)
-         p4s <- .epsg2proj4(p4epsg)
-         xy <- .project(ll,p4s)
-        # .elapsedTime("b")
-         nm <- max(g3$columns,g3$rows)
-         g3 <- regrid(ursa_grid()
-                     ,setbound=c(min(xy[,1]),min(xy[,2]),max(xy[,1]),max(xy[,2]))
-                     ,res=c(1,1)
-                     ,proj4=p4s)
-         g3 <- regrid(g3,mul=nm/max(g3$columns,g3$rows),border=5)
-         session_grid(g3)
-      }
-      tc <- seq(0,g3$columns,by=tile)
-      if (length(tc)==1)
-         nc <- g3$columns
-      else
-         nc <- c(tail(tc,-1),g3$columns)-tc
-      tr <- seq(0,g3$rows,by=tile)
-      if (length(tr)==1)
-         nr <- g3$rows
-      else
-         nr <- c(tail(tr,-1),g3$rows)-tr
-      x <- c(seq(g3$minx,g3$maxx,by=g3$resx*tile),g3$maxx)
-      if (isLonLat)
-         B <- 180
-      if (isMerc) {
-         xn <- sort(c(x,-B,-2*B,+B,+2*B))
-         x <- xn[xn>=min(x) & xn<=max(x)]
-         nc <- diff(x)/g3$resx
-         nc <- ceiling(nc)
-        # if (length(nc)>1)
-        #    nc[length(nc)] <- g3$columns-sum(nc[-length(nc)])
-      }
-      if (isLonLat) {
-         if (!fail180)
-            xn <- sort(c(x,-B,-3*B,+B,+3*B))
-         else {
-            xn <- sort(c(x,0,2*B,4*B,-2*B))
-         }
-         x <- xn[xn>=min(x) & xn<=max(x)]
-         nc <- diff(x)/g3$resx
-         nc <- ceiling(nc)
-        # if (length(nc)>1)
-        #    nc[length(nc)] <- g3$columns-sum(nc[-length(nc)])
-      }
-      if (length(nc)>1)
-         nc[length(nc)] <- g3$columns-sum(nc[-length(nc)])
-      else
-         nc <- g3$columns
-     # y <- c(seq(g3$miny,g3$maxy,by=g3$resy*tile),g3$maxy)
-      y <- rev(c(seq(g3$maxy,g3$miny,by=-g3$resy*tile),g3$miny))
-      tind <- expand.grid(c=seq_along(nc),r=rev(seq_along(nr)))-1
-     # tind <- cbind(tind,r2=length(nr)-tind$r-1)
-      tcr <- expand.grid(width=nc,height=rev(nr))
-      txy1 <- expand.grid(minx=head(x,-1),miny=head(y,-1))
-      txy2 <- expand.grid(maxx=tail(x,-1),maxy=tail(y,-1))
-      tg <- cbind(tind,tcr,txy1,txy2)
-      tg <- tg[tg$width>0 & tg$height>0,]
-      if (isMerc | (isLonLat & !fail180)) {
-         ind1 <- which(tg$minx>=B & tg$maxx>=B)
-         ind2 <- which(tg$minx<=-B & tg$maxx<=-B)
-         if (length(ind1)) {
-            tg$minx[ind1] <- tg$minx[ind1]-2*B
-            tg$maxx[ind1] <- tg$maxx[ind1]-2*B
-         }
-         if (length(ind2)) {
-            tg$minx[ind2] <- tg$minx[ind2]+2*B
-            tg$maxx[ind2] <- tg$maxx[ind2]+2*B
-         }
-      }
-      if (isLonLat & fail180) {
-         ind1 <- which(tg$minx>=2*B & tg$maxx>=2*B)
-         ind2 <- which(tg$minx<=0 & tg$maxx<=0)
-         if (length(ind1)) {
-            tg$minx[ind1] <- tg$minx[ind1]-2*B
-            tg$maxx[ind1] <- tg$maxx[ind1]-2*B
-         }
-         if (length(ind2)) {
-            tg$minx[ind2] <- tg$minx[ind2]+2*B
-            tg$maxx[ind2] <- tg$maxx[ind2]+2*B
-         }
-      }
-      if (verbose)
-         print(tg)
       isPNG <- .lgrep("\\&format=image.+png",src)>0
       isJPEG <- .lgrep("\\&format=image.+(jpg|jpeg)",src)>0
       if (verbose)
-         print(c(png=isPNG,jpg=isJPEG))
+         print(c(png=isPNG,jpg=isJPEG,GDAL=(!isPNG & !isJPEG)))
       i0 <- 0
       for (i in sample(seq(nrow(tg)))) {
          i0 <- i0+1
@@ -680,7 +772,10 @@
          }
          b[br,bc,seq_len(nb)] <- a[seq_along(br),seq_along(bc),seq_len(nb)]
       }
-      d <- if (isPNG | isJPEG) as.ursa(b*255) else as.ursa(b)
+     # b <- aperm(b,c(2,1,3))
+     # d <- if (isPNG | isJPEG) as.ursa(b*255) else as.ursa(b)
+      d <- if (isPNG | isJPEG) ursa_new(b*255,permute=TRUE,flip=TRUE)
+           else as.ursa(b)
      # d <- as.integer(d)
       ursa_grid(d) <- if (isMerc) g2 else g3
       if (gdalwarp) {
@@ -782,7 +877,7 @@
       }
       attr(d,"copyright") <- "   "
       attr(d,"wmslegend") <- logo2
-      res[[i]] <- d
+      res[[k]] <- d
    }
    session_grid(g0)
    res
@@ -837,18 +932,23 @@
    invisible(NULL)
 }
 '.is.wms' <- function(dsn) {
+   if (is.list(dsn))
+      return(FALSE)
    s <- unlist(strsplit(dsn,split="&"))
    ind <- .lgrep("^[sc]rs=",s)+
           .lgrep("^layer(s)*=",s)+
           .lgrep("^version=",s)+
           .lgrep("^format=",s)+
+          .lgrep("^http(s)*\\://",s)+
           0
   # s <- unlist(strsplit(.grep("http(s)*://",dsn,value=TRUE),split="&"))
   # print(.grep("^(version=|format=|[cs]rs=|layer(s)*=)",s))
-   ind==4
+   ind>=4
 }
 '.parse_wms' <- function(dst,verbose=FALSE) {
+   opW <- options(warn=1)
    md <- readLines(dst)
+   options(opW)
    md <- paste(md,collapse=" ")
    md <- .gsub("\\<","___<<",md)
    md <- .gsub("\\>",">>___",md)

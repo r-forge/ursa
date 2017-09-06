@@ -44,15 +44,21 @@
          if ((is.numeric(alpha))&&(alpha<1))
             obj <- round(obj*alpha)
       }
-      if ((is.numeric(alpha))&&(alpha<1)&&(nband(obj) %in% c(1,3))) {
-         obj <- c(obj,ursa_new(round(alpha*255),bandname=paste("Band",nband(obj)+1)))
+      if ((is.numeric(alpha))&&(alpha<1)) {
+         if (nband(obj) %in% c(1,3))
+            obj <- c(obj,ursa_new(round(alpha*255),bandname=paste("Band",nband(obj)+1)))
+         else if (nband(obj) %in% c(4)) {
+            obj[4] <- round(obj[4]*alpha)
+         }
       }
       a <- with(ursa_grid(obj),rasterImage(as.raster(obj),minx,miny,maxx,maxy
                                       ,interpolate=interpolate))
       ann <- attr(obj,"copyright")
-      if ((is.character(ann))&&(nchar(.gsub("\\s","",ann))>1))
-         panel_annotation(ann,pos=attribution,cex=0.7,font="Arial Narrow"
-                         ,fg=sprintf("#000000%s","4F"))
+      if ((is.character(ann))&&(nchar(.gsub("\\s","",ann))>1)) {
+         ##~ panel_annotation(ann,pos=attribution,cex=0.7,font="Arial Narrow"
+                         ##~ ,fg=sprintf("#000000%s","4F"))
+         options(ursaPngCopyright=c(getOption("ursaPngCopyright"),ann))
+      }
       return(invisible(NULL))
    }
   # .panel_raster(colorize(obj,...),useRaster=useRaster

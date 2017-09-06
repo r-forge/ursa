@@ -35,9 +35,10 @@
       style <- as.character(style)
    isNative <- engine=="native"
    if (!((is.character(dsn))&&(length(dsn)==1))) {
+      nextCheck <- TRUE
       spcl <- paste0("Spatial",c("Points","Lines","Polygons"))
       spcl <- c(spcl,paste0(spcl,"DataFrame"))
-      if (inherits(dsn,spcl)) {
+      if ((nextCheck)&&(inherits(dsn,spcl))) {
          if ((!toUnloadMethods)&&(!("package:methods" %in% search()))) {
             if (FALSE) {
               # .require("methods")
@@ -55,28 +56,31 @@
             obj <- dsn
          }
          rm(dsn)
+         nextCheck <- FALSE
       }
-      else if (inherits(dsn,"sf")) {
+      if ((nextCheck)&&(inherits(dsn,"sf"))) {
          if (isNative) {
             isSF <- TRUE
             isSP <- !isSF
          }
          obj <- dsn
          rm(dsn)
+         nextCheck <- FALSE
       }
-      else if (is.array(dsn)) {
+      if ((nextCheck)&&(is.array(dsn))) {
          return(display(dsn,...))
       }
-      else if (is.ursa(dsn)) {
+      if ((nextCheck)&&(is.ursa(dsn))) {
          return(display(dsn,...))
       }
-      else if ((isSF)||(isNative)) {
+      if ((nextCheck)&&((isSF)||(isNative))) {
          if (isNative) {
             isSF <- requireNamespace("sf",quietly=.isPackageInUse())
             isSP <- !isSF
          }
-         if (!isSF) # not a good exit
-            return(NULL) ## 31L
+        # nextCheck <- isSP
+      }
+      if ((nextCheck)&&(isSF)) {
          if (is.array(dsn)) {
             message("process 'array' by 'sf' -- TODO (dilemma: raster is array)")
          }
@@ -87,6 +91,8 @@
                                   ,coords=c("lon","lat"),crs=4326)
             }
             else if (length(dsn)==4) { ## boundary
+               if (dsn[1]>dsn[3])
+                  dsn[1] <- dsn[1]-360
                obj <- matrix(dsn[c(1,2,1,4,3,4,3,2,1,2)],ncol=2,byrow=TRUE)
                if (TRUE) {
                   x <- obj[,1]
@@ -125,7 +131,7 @@
             }
          }
       }
-      else {
+      else if ((nextCheck)&&(isSP)) { # if (isSP)
          if (is.array(dsn))
             message("process 'array' by 'sp' -- TODO (dilemma: raster is array)")
          else if (is.numeric(dsn)) {
@@ -135,6 +141,8 @@
                sp::proj4string(obj) <- sp::CRS("+init=epsg:4326")
             }
             else if (length(dsn)==4) { ## boundary
+               if (dsn[1]>dsn[3])
+                  dsn[1] <- dsn[1]-360
                obj <- matrix(dsn[c(1,2,1,4,3,4,3,2,1,2)],ncol=2,byrow=TRUE)
                if (TRUE) {
                   x <- obj[,1]
@@ -222,7 +230,12 @@
       else {
          if (isZip <- .lgrep("\\.zip$",dsn)>0) {
             ziplist <- unzip(dsn,exdir=tempdir());on.exit(file.remove(ziplist))
-            dsn <- .grep("\\.shp$",ziplist,value=TRUE)
+            dsn <- .grep("\\.(shp|sqlite|gpkg|geojson)$",ziplist,value=TRUE)
+         }
+         else if ((nchar(Sys.which("gzip")))&&(isZip <- .lgrep("\\.gz$",dsn)>0)) {
+            dsn0 <- dsn
+            dsn <- tempfile();on.exit(file.remove(dsn))
+            system2("gzip",c("-f -d -c",dsn0),stdout=dsn)
          }
          if (isCDF <- .lgrep("\\.(nc|hdf)$",dsn)>0) {
             obj <- .read_ncdf(dsn,".+")
@@ -444,7 +457,9 @@
       else
          art <- "none"
    }
-   toZoom <- isTile | isStatic | style=="web"
+   tpat <- unlist(gregexpr("\\{[xyz]\\}",style))
+   tpat <- length(tpat[tpat>0])
+   toZoom <- (isTile)||(isStatic)||(style=="web")||(tpat==3)
   # isColor <- .lgrep("colo(u)*r",style)>0
    isWeb <- .lgrep(tilePatt,art)
    if (verbose)
@@ -527,24 +542,56 @@
          lon2 <- xy[,1]
          lat2 <- xy[,2]
          if (nrow(xy)>1) {
+           # x <- cos(lon2*pi/180)
+           # y <- sin(lon2*pi/180)
+           # x <- mean(x)
+           # y <- mean(y)
+           # print(c(x=mean(x),y=mean(y)))
+           # theta <- rep(0,length(x))
+           # ind <- which(x!=0)
+           # theta[-ind] <- pi/2*sign(y[-ind])
+           # theta[ind] <- atan(y[ind]/x[ind])
+           # ind <- which(x<0)
+           # theta[ind] <- pi+theta[ind]
+           # theta <- theta-pi
+           # theta <- theta*180/pi
+           # theta <- mean(theta)
+           # lon2 <- range(lon2)
+           # lon2 <- theta*pi/180
+           # if (theta>180)
+           #    theta <- theta-360
+           # else if (theta<=(-180))
+           #    theta <- theta+360
             lon3 <- lon2
             lon4 <- lon2
             ind3 <- which(lon3<0)
             ind4 <- which(lon4>180)
             lon3[ind3] <- lon3[ind3]+360
             lon4[ind4] <- lon4[ind4]-360
+            lon5 <- lon2+360
             sd2 <- sd(lon2)
             sd3 <- sd(lon3)
             sd4 <- sd(lon4)
+            sd5 <- sd(lon5)
+            dr2 <- diff(range(lon2))
+            dr3 <- diff(range(lon3))
+            dr4 <- diff(range(lon4))
+            dr5 <- diff(range(lon5))
+            dr0 <- min(c(dr2,dr3,dr4,dr5))
             if (verbose)
-               print(data.frame(sd2=sd2,'sd3R'=sd3,'sd4L'=sd4
+               print(data.frame(r2=diff(range(lon2))
+                               ,r3=diff(range(lon3))
+                               ,r4=diff(range(lon4))
+                               ,r5=diff(range(lon5))))
+            if (verbose)
+               print(data.frame(sd2=sd2,'sd3R'=sd3,'sd4L'=sd4,'sd5C'=sd5
                                ,n3=length(ind3),n4=length(ind4)))
-            if ((sd3<=sd2)&&(sd3<=sd4)) {
+            if ((sd3<=sd2)&&(sd3<=sd4)&&(dr3==dr0)) {
               # if (length(ind3))
               #    selection <- 3L
                lon2 <- lon3
             }
-            else if ((sd4<=sd2)&&(sd4<=sd3)) {
+            else if ((sd4<=sd2)&&(sd4<=sd3)&&(dr4==dr0)) {
               # if (length(ind4))
               #    selection <- 4L
                lon2 <- lon4
@@ -560,13 +607,17 @@
          bbox <- c(range(lon2),range(lat2))[c(1,3,2,4)]
         # options(ursaRasterizeSelection=selection)
         # options(ursaRasterizeBbox=bbox)
-         lon_0 <- if (is.numeric(lon0)) lon0 else mean(range(lon2))
-         lat_ts <- if (is.numeric(lat0)) lat0 else mean(lat2)
+         theta2 <- mean(range(lon2))
+        # print(c(old=theta2,new=theta))
+        # lon_0 <- if (is.numeric(lon0)) lon0 else mean(range(lon2))
+         lon_0 <- if (is.numeric(lon0)) lon0 else round(theta2,4)
+         lat_ts <- if (is.numeric(lat0)) lat0 else round(mean(lat2),4)
          lat_0 <- if (lat_ts>=0) 90 else -90
          if (verbose)
             print(c(lon0=lon_0,lat0=lat_0,lat_ts=lat_ts))
          if (proj=="auto") {
-            if (style=="web")
+            if (("web" %in% style)||(tpat==3))
+           # if (style=="web")
                proj <- "merc"
             else if ((any(lat2<0))&&(any(lat2>0)))
                proj <- "merc"
@@ -611,8 +662,9 @@
          else
             t_srs <- NULL
          if (is.character(t_srs)) {
-            if (isSF)
+            if (isSF) {
                obj <- sf::st_transform(obj,t_srs)
+            }
             if (isSP)
                obj <- sp::spTransform(obj,t_srs)
          }
@@ -620,21 +672,42 @@
         # print(summary(xy))
       }
       else if (isEPSG) {
-         t_srs <- .epsg2proj4(style)
-         if (isSF)
-            obj <- sf::st_transform(obj,t_srs)
-         if (isSP) {
-            obj <- sp::spTransform(obj,t_srs)
+         a <- .try({
+            t_srs <- .epsg2proj4(style)
+            if (isSF)
+               obj <- sf::st_transform(obj,t_srs)
+            if (isSP) {
+               obj <- sp::spTransform(obj,t_srs)
+            }
+         })
+         if (!a) {
+            t_srs <- .epsg2proj4(style,force=TRUE)
+            if (isSF)
+               obj <- sf::st_transform(obj,t_srs)
+            if (isSP) {
+               obj <- sp::spTransform(obj,t_srs)
+            }
          }
       }
    }
   # else if (((isSF)&&(is.ursa(a,"grid")))||((isSP)&&(is.ursa(asp,"grid")))) {
    else if (is.ursa(g0,"grid")) {
-      t_srs <- ursa_proj(g0)
-      if (isSF)
+      t_srs <- g0$proj4
+      if (isSF) {
+        # opE <- options(show.error.messages=TRUE)
+        # print(sf::st_bbox(obj))
+        # print(sf::st_crs(obj)$proj4string)
          obj <- sf::st_transform(obj,t_srs)
+        # print(sf::st_crs(obj)$proj4string)
+        # print(sf::st_bbox(obj))
+        # options(opE)
+      }
       if (isSP) {
-         obj <- sp::spTransform(obj,t_srs) ## not testsed
+        # print(sp::proj4string(obj))
+        # print(c(sp::bbox(obj)))
+         obj <- sp::spTransform(obj,t_srs) ## not tested
+        # print(sp::proj4string(obj))
+        # print(c(sp::bbox(obj)))
       }
    }
    if (isSF) {
@@ -676,7 +749,7 @@
          p <- pretty(res)
          res <- p[which.min(abs(res-p))]
          g1 <- ursa_grid()
-         g1$resx <- g1$resy <- res
+         g1$resx <- g1$resy <- as.numeric(res)
          g1$proj4 <- proj4
          g0 <- regrid(g1,bbox=unname(bbox[c("xmin","ymin","xmax","ymax")])
                      ,border=0) ## border=border

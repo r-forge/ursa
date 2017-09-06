@@ -33,25 +33,27 @@
    x <- .getPrm(arglist,name="x$",kwd=kwd,default=NA_real_)
    y <- .getPrm(arglist,name="y$",kwd=kwd,default=NA_real_)
    font <- .getPrm(arglist,name="font",kwd=kwd,default=par("family"))
+   vertical <- .getPrm(arglist,name="vert(ical)*",kwd=kwd,default=FALSE)
    alpha <- .getPrm(arglist,name="(alpha|transp(aren(cy)*)*)",kwd=kwd,default=1)
    interpolate <- .getPrm(arglist,name="interp(olate)*",kwd=kwd,default=FALSE)
    verbose <- .getPrm(arglist,name="verb(ose)*",kwd=kwd,default=FALSE)
    .panel_annotation(label=label,position=position,lon=lon,lat=lat,x=x,y=y
                                    ,cex=cex,adjust=adjust
                                    ,fg=fg,bg=bg,buffer=buffer,fill=fill
-                                   ,font=font,alpha=alpha,verbose=verbose)
+                                   ,font=font,vertical=vertical
+                                   ,alpha=alpha,verbose=verbose)
 }
 '.panel_annotation' <- function(label=expression()#Omega^alpha)
                                ,position="bottomright",lon=NA,lat=NA,x=NA,y=NA
                                ,cex=1,adjust=0.5
                                ,fg="#000000",bg="#FFFFFF1F",buffer=1,fill="#FFFFFF7F"
-                               ,font=par("family")
+                               ,font=par("family"),vertical=FALSE
                                ,alpha=1,interpolate=FALSE
                                ,verbose=FALSE,...) {
 
    if (verbose)
       str(list(label=label,position=position,cex=cex,adjust=adjust,fg=fg,bg=bg
-              ,fill=fill,buffer=buffer,verbose=verbose))
+              ,fill=fill,buffer=buffer,vertical=vertical,verbose=verbose))
    opt <- par(family=font)
    g1 <- session_grid()
    minx <- g1$minx
@@ -63,6 +65,7 @@
    device <- getOption("ursaPngDevice")
    vadj0 <- if ((!is.null(device))&&(device=="windows")) 0.35 else 0.40
    isPicture <- inherits(label,c("array","matrix"))
+   srt <- ifelse(vertical,90,0)
    if (length(adjust)==2) {
       vadj <- adjust[2]
       adjust <- adjust[1]
@@ -145,6 +148,12 @@
       else
          width <- strwidth(paste(label,"|",sep=""),units="user",cex=mycex)
    }
+   if (vertical) {
+      .w <- width
+      width <- height
+      height <- .w*1.05
+      rm(.w)
+   }
    coord <- c(NA,NA,NA,NA)
   # rect(coord[1],coord[2],coord[3],coord[4],col="red")
    coord[1] <- minx+pos[1]*(maxx-minx)-0.5*width
@@ -194,11 +203,11 @@
       w <- seq(-b,b,length=ceiling(b)*2+1)*with(g1,sqrt(resx*resy))/sc
       for (dx in w)
          for (dy in w)
-            text(x=x+dx,y+dy,adj=c(adjust,vadj),label,cex=mycex,col=bg)
+            text(x=x+dx,y+dy,adj=c(adjust,vadj),label,cex=mycex,col=bg,srt=srt)
       if (verbose)
          .elapsedTime("label:finish")
    }
-   text(x=x,y=y,adj=c(adjust,vadj),label,cex=mycex,col=fg)
+   text(x=x,y=y,adj=c(adjust,vadj),label,cex=mycex,col=fg,srt=srt)
    par(opt)
    invisible(NULL)
 }

@@ -1,4 +1,5 @@
 # http://geo2tag.org/?page_id=671&lang=en_US
+# https://geocode-maps.yandex.ru/1.x/?geocode=метро Третьяковская&results=100&format=json
 
 # geocodeList <- eval(as.list(args(.geocode))$service)
 '.geocode' <- function(loc=NULL,area=c("bounding","point"),place=""
@@ -212,6 +213,13 @@
          print(bbox)
       }
       if (area=="point") {
+         if (nrow(pt)==1) {
+            ptype <- rownames(pt)
+            ptname <- colnames(pt)
+            pt <- c(pt)
+            names(pt) <- ptname
+           # attr(pt,"type") <- ptype
+         }
          return(pt)
       }
       else if (area=="bounding") {

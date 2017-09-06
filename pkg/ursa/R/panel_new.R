@@ -13,8 +13,11 @@
       return(invisible(NULL))
    }
    g1 <- session_grid()
-   if ((figN>1)&&(getOption("ursaPngBox")))
-      panel_box()
+   if (figN>1) {
+      .panel_attribution()
+      if (getOption("ursaPngBox"))
+         panel_box()
+   }
    options(ursaPngFigure=figN)
    arglist <- list(...)
    kwd <- "blank"

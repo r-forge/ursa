@@ -24,8 +24,9 @@
       if (isWMS) {
         # session_grid(NULL)
          s2 <- unlist(sapply(s1,.compose_wms,extend=FALSE))
-         compose_open(length(s2),legend=NULL,scale=0.7,fileout="res1.png")
+         compose_open(length(s2),legend=NULL,...)#,fileout="res1.png")
          pb <- ursaProgressBar(min=0,max=length(s2))
+        # print(getOption("ursaPngScale"))
          for (i in seq_along(s2)) {
             arglist[[1]] <- s2[i]
             do.call("panel_new",arglist[-1])
@@ -62,7 +63,7 @@
       else if (.lgrep("\\.(tif|tiff|img|png|bmp|dat)$",arglist[[1]])) {
          return(do.call("display",arglist))
       }
-      else if (.lgrep("\\.(gpkg|tab|json|geojson|mif|sqlite|shp|shp\\.zip)$"
+      else if (.lgrep("\\.(gpkg|tab|kml|json|geojson|mif|sqlite|shp|osm)(\\.(zip|gz))*$"
                      ,arglist[[1]])) {
          return(do.call(".glance",arglist))
       }
@@ -170,6 +171,9 @@
    engine <- match.arg(engine)
   # print(c(dsn=class(dsn)))
   # obj <- .spatialize(dsn)
+   if (missing(dsn)) {
+      dsn <- if (style!="auto") .geomap(style=style) else .geomap()
+   }
    S4 <- isS4(dsn)
    if (S4) {
       .require("methods",quietly=.isPackageInUse())
@@ -254,11 +258,14 @@
                            ,invert=TRUE,value=TRUE)[seq(3)]
       nsize <- length(nextStyle)+1
       for (i in seq(nsize)) {
+         opE <- options(show.error.messages=TRUE)
          basemap <- try(.geomap(lim,style=style,size=size,zoom=zoom
                        ,border=border,verbose=verbose))
+         options(opE)
+        # q()
          if (!inherits(basemap,"try-error"))
             break
-         message(geterrmessage())
+        # message(geterrmessage())
          if (i==nsize)
             break
          .style <- style
@@ -269,6 +276,7 @@
       }
       if (inherits(basemap,"try-error")) {
          message(paste("failed to get map; cancel"))
+         print(lim)
          basemap <- NULL
       }
       else

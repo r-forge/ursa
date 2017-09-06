@@ -72,8 +72,12 @@
          }
       }
       else {
-         if (is.integer(obj))
-            fld <- rep(1L,obj)
+         if (is.integer(obj)) {
+            if (length(obj)==1)
+               fld <- rep(1L,obj)
+            else
+               fld <- rep(1L,length(obj))
+         }
          else
             fld <- rep(1L,nband(obj))
       }

@@ -49,7 +49,9 @@
       }
       else if (inherits(obj,"sf")) {
         # ret <- plot(sf::st_geometry(obj),...)
-         ret <- try(.panel_plot(sf::st_geometry(obj),add=TRUE,...))
+        # opE <- options(show.error.messages=TRUE)
+         ret <- .tryE(.panel_plot(sf::st_geometry(obj),add=TRUE,...))
+        # options(opE)
       }
    }
    else {

@@ -83,8 +83,9 @@
          obj <- if (nchar(format)) format(obj,format) else as.character(obj)
       if ((is.numeric(obj))||(is.character(obj))||(is.factor(obj))) {
          isChar <- is.character(obj) | is.factor(obj)
-         g1 <- session_grid()
-         session_grid(NULL)
+         g1 <- getOption("ursaSessionGrid")
+         if (.is.grid(g1))
+            session_grid(NULL)
          if (isChar) {
             oname <- as.character(obj)
             obj <- seq_along(obj)
@@ -107,7 +108,10 @@
          if (!length(ind <- .grep("stretch",names(rel))))
             rel[["stretch"]] <- s
          img <- do.call(fun,rel[-1])
-         session_grid(g1)
+         if (.is.grid(g1))
+            session_grid(g1)
+         else
+            session_grid(NULL)
          if (dropIndex)
             return(img$colortable)
          return(list(index=c(img$value)+1L,colortable=img$colortable))
@@ -901,8 +905,18 @@
                   ##~ col <- colorRampPalette(sample(col))(n)
             }
             else {
-               col <- cubehelix(n,r=sample(c(-360,360),1)*
-                                    runif(1,min=0.8,max=1.2)*(n/11)^0.75)
+               arglist <- list(...)
+               myname <- names(arglist)
+               ind <- .grep("^pal\\.",myname)
+               if (length(ind)) {
+                  arglist <- arglist[ind]
+                  names(arglist) <- .gsub("(^pal\\.)","",myname[ind])
+                  arglist <- c(list(n=n,value=unname(value)),arglist)
+                  col <- do.call("cubehelix",arglist)
+               }
+               else
+                  col <- cubehelix(n,r=sample(c(-360,360),1)*
+                                       runif(1,min=0.8,max=1.2)*(n/11)^0.75)
             }
          }
          else {

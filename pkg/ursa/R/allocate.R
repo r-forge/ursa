@@ -1,3 +1,5 @@
+# for interpoaltion: packages 'interp', 'MBA'. 'akima' is under ACM license
+# D:\ongoing\CloudMailRu\pdf\R\akima_ACM--alternatives_GPL.pdf 
 'allocate' <- function(vec,nodata=NA,attr=".+",fun=c("mean","sum","n")
                       ,cellsize=NA,verbose=FALSE)
 {
@@ -13,6 +15,15 @@
       lname <- colnames(z)
       proj4 <- sp::proj4string(vec)
       vec <- as.data.frame(sp::coordinates(vec),stringsAsFactors=FALSE)
+      colnames(vec) <- c("x","y")
+   }
+   else if ((inherits(vec,c("sf","sfc")))&&
+      (.grep("^sfc_.+$",class(vec[[attr(vec,"sf_column")]]),value=TRUE))=="sfc_POINT") {
+      proj4 <- sf::st_crs(vec)$proj4string
+      z <- vec
+      sf::st_geometry(z) <- NULL
+      lname <- colnames(z)
+      vec <- as.data.frame(sf::st_coordinates(vec))
       colnames(vec) <- c("x","y")
    }
    else {
@@ -104,6 +115,7 @@
                resy <- max(resy) # min(resy) mx
             }
             else {
+               isU <- FALSE
                n <- sqrt(2*nrow(z))
                if (FALSE) ## coarse
                   res <- min(c(v1=(maxx-minx)/n,v2=(maxy-miny)/n))
@@ -113,11 +125,21 @@
                   d <- .dist2(vec,vec,verbose=FALSE)$dist
                   if (verbose)
                      print(summary(d))
-                  res <- min(d)
+                  res <- unique(d)
+                  if (!(isU <- length(res)==1L)) {
+                    # res <- min(d)
+                     res <- median(d)
+                     if ((res==mean(d))||(res==min(d)))
+                        isU <- TRUE
+                  }
                }
-               p <- pretty(res)
-               resx <- resy <- p[which.min(abs(res-p))]
-               print(c(x=resx,y=resy))
+               if (!isU) {
+                  p <- pretty(res)
+                  res <- p[which.min(abs(res-p))]
+               }
+               resx <- resy <- res 
+               if (verbose)
+                  print(c(x=resx,y=resy))
             }
          }
       }

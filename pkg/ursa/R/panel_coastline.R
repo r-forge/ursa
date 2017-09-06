@@ -1,3 +1,5 @@
+## http://www.soest.hawaii.edu/pwessel/gshhg/ 2.3.7 2017-06-15
+## http://gis-lab.info/forum/viewtopic.php?t=22977
 ##~ '.panel_coastline' <- function(
                                ##~ coastline=TRUE,col="grey60",fill="transparent"
                               ##~ ,detail=NA,density=NA,angle=NA,land=FALSE

@@ -1,3 +1,12 @@
+# version 3.7-16
+
+* minor improvement to spatial allocation of vector objects
+  with crossing of 180 degree longitude
+
+* allocate(): slightly improvement for regular grid detection
+
+* background for future functionality
+
 # version 3.7-15
 
 * added possibility of image annotation;

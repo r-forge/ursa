@@ -1,77 +1,15 @@
-'.shp.layer' <- function(fname)
-{
-   f <- basename(fname)
-   if (!.lgrep("\\.shp$",f))
-      return(f)
-   .gsub("\\.shp$","",f)
-}
-'.shp.file' <- function(fname)
-{
-   if (.lgrep("\\.shp$",fname))
-      return(fname)
-   paste0(fname,".shp")
-}
-'.shp.read' <- function(fname,reproject=TRUE,encoding="1251",resetGrid=FALSE
-                       ,verbose=0L,...)
-{
-  ## b <- sf::st_read("gde-1-1-15.shp",quiet=TRUE)
-  ## b <- sf::st_transform(b,ursa_proj(a))
-  # print(fname)
-   requireNamespace("rgdal",quietly=.isPackageInUse())
-   if (resetGrid)
-      reproject <- FALSE
-  # require(methods)
-   if (.lgrep("\\.zip$",basename(fname)))
-      fname <- .gsub("\\.zip$","",fname)
-   fpath <- dirname(fname)
-   z <- file.path(fpath,paste0(.shp.layer(fname),".zip"))
-   if (!file.exists(z))
-      z <- file.path(fpath,paste0(.shp.layer(fname),".shp.zip"))
-   if (file.exists(z))
-   {
-      a <- utils::unzip(z,exdir=fpath,junkpaths=TRUE)
-      on.exit(file.remove(a))
-   }
-   if (verbose>1)
-      .elapsedTime("readOGR:start")
-   cpgname <- file.path(fpath,paste0(.shp.layer(fname),".cpg"))
-   e_opt <- if (file.exists(cpgname)) readLines(cpgname,warn=FALSE) else ""
-   i_opt <- if (grepl("UTF(-)*8",e_opt)) TRUE else FALSE
-  # print(data.frame(e_opt=e_opt,i_opt=i_opt))
-   opW <- options(warn=0)
-   res <- rgdal::readOGR(.shp.file(fname),.shp.layer(fname),pointDropZ=TRUE
-                        ,encoding=e_opt,use_iconv=i_opt
-                        ,verbose=as.logical(verbose),...)
-   options(opW)
-   if (verbose>1)
-      .elapsedTime("readOGR:finish")
-   proj4 <- session_grid()$proj4
-   if ((reproject)&&(nchar(proj4))&&(!is.na(sp::proj4string(res)))) {
-      if (verbose>1)
-         .elapsedTime("spTransform:start")
-      res <- sp::spTransform(res,proj4)
-      if (verbose>1)
-         .elapsedTime("spTransform:finish")
-   }
-   if (resetGrid)
-      session_grid(NULL)
-   res
-}
-'.write_ogr' <- function(obj,fname,driver=NA
-                        ,compress="",zip=NULL,verbose=TRUE) {
+'.write_ogr' <- function(obj,fname,driver=NA,compress="",zip=NULL
+                        ,ogr2ogr=nchar(Sys.which("ogr2ogr"))>0,transform=NA
+                        ,verbose=FALSE) {
   # obj <- head(obj,100)
-   wait <- 60
-   isSF <- inherits(obj,c("sf","sfc"))
-   isSP <- !isSF
-   driverList <- c(shp="ESRI Shapefile"
-                  ,sqlite="SQLite",json="GeoJSON",gpkg="GPKG"
-                  ,tab="Mapinfo File",kml="KML")
-   driver0 <- driverList["shp"]
-   if (verbose)
-      print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    bname <- basename(fname)
    dname <- dirname(fname)
    fext <- .gsub("^.+\\.(.+)$","\\1",bname)
+   wait <- 60
+   interimExt <- c("gpkg","geojson")[2]
+   driverList <- c(shp="ESRI Shapefile"
+                  ,sqlite="SQLite",json="GeoJSON",geojson="GeoJSON",gpkg="GPKG"
+                  ,tab="Mapinfo File",kml="KML")
    if (!nchar(compress)) {
       packPatt <- "^(zip|bz(ip)*2|gz(ip)*|xz)$"
       if (.lgrep(packPatt,fext)>0) {
@@ -82,17 +20,110 @@
       }
    }
    lname <- .gsub("^(.+)\\.(.+)$","\\1",bname)
+   ext <- switch(driver,'ESRI Shapefile'="(cpg|dbf|prj|qpj|shp|shx)"
+                       ,'MapInfo File'="(mif|mid)",fext)
+   isList <- is.list(obj)
+   if (isList) {
+      cl <- sapply(obj,inherits,c("sf","sfc","SpatialLinesDataFrame"
+                          ,"SpatialPointsDataFrame","SpatialPolygonsDataFrame"
+                          ,"SpatialLines","SpatialPoints","SpatialPolygons"))
+      if (any(!cl))
+         isList <- FALSE
+   }
    if (!is.character(driver)) {
-      driver <- switch(fext,shp="ESRI Shapefile",sqlite="SQLite"
-                      ,json="GeoJSON",geojson="GeoJSON",gpkg="GPKG"
-                      ,mif="MapInfo File",kml="KML",NA)
+      driver <- driverList[fext]
       if (is.na(driver)) {
-         driver <- driverList[1]
+         if (isList)
+            driver <- driverList["sqlite"]
+         else
+            driver <- driverList["sqlite"]
          fext <- names(driver)
          lname <- bname
          bname <- paste0(lname,".",fext)
          fname <- file.path(dname,bname)
       }
+   }
+   if (isList) {
+      if (!nchar(Sys.which("ogr2ogr")))
+         stop("'ogr2ogr' is requires to merge layers")
+     # fname1 <- paste0("res",seq_along(obj),".gpkg")
+      fname1 <- .maketmp(length(obj),ext=interimExt)
+      pb <- ursaProgressBar(min=0,max=2*length(obj))
+      p4s <- sapply(obj,function(x){
+         res <- if (inherits(x,c("sf","sfc"))) sf::st_crs(x)$proj4string
+                else sp::proj4string(x)
+         res
+      })
+      p4s <- unname(p4s)
+      keepCRS <- do.call("all.equal",as.list(p4s))
+      if (verbose)
+         .elapsedTime("0")
+      for (i in seq_along(obj)) {
+         .write_ogr(obj[[i]],fname1[i],verbose=verbose)
+         setUrsaProgressBar(pb)
+         if (verbose)
+            .elapsedTime(i)
+      }
+      lname <- names(obj)
+      if (is.null(lname))
+         lname <- rep("",length(obj))
+      if (any(ind <- !nchar(lname))) {
+         lname[ind] <- as.character(as.list(match.call())$obj)[-1][ind]
+        # lname[ind] <- aname[ind]
+      }
+      dopt <- character()
+      lopt <- character()
+      if (driver=="MapInfo File")
+         dopt <- c(dopt,"FORMAT=MIF")
+      if (driver=="SQLite") {
+        # dopt <- c(dopt,"SPATIALITE=yes")
+         lopt <- c(lopt,"LAUNDER=NO")#,"SPATIAL_INDEX=YES")
+      }
+      for (i in seq_along(fname1)) {
+         b <- paste(fname,fname1[i],"-nln",lname[i])
+         if (length(dopt))
+            b <- paste(paste("-dco",dopt),b)
+         if (length(lopt))
+            b <- paste(paste("-lco",lopt),b)
+         if ((i==1)&&(keepCRS))
+            b <- paste(b,"-t_srs",.dQuote(p4s[1]))
+         if (i==1)
+            cmd <- paste("ogr2ogr","-f",.dQuote(driver),b)
+         else
+            cmd <- paste("ogr2ogr","-update -append",b)
+         if (verbose)
+            message(cmd)
+         if (!system(cmd))
+            file.remove(fname1[i])
+         setUrsaProgressBar(pb)
+         if (verbose)
+            .elapsedTime(i)
+      }
+      close(pb)
+      return(invisible(0L))
+   }
+   if ((nchar(Sys.which("ogr2ogr"))>0)&&(driver %in% "SQLite")) {
+      interim <- TRUE
+      driver0 <- driver
+      fext0 <- fext
+      fname0 <- fname
+      fext <- interimExt
+      driver <- driverList[fext]
+     # fname <- .gsub(paste0("\\.",fext0,"$"),paste0(".",fext),fname)
+      fname <- .maketmp(ext=interimExt)
+      bname <- basename(fname)
+      p4s <- if (inherits(obj,c("sf","sfc"))) sf::st_crs(obj)$proj4string
+             else sp::proj4string(obj)
+   }
+   else
+      interim <- FALSE
+   dopt <- character()
+   lopt <- character()
+   if (driver=="MapInfo File")
+      dopt <- c(dopt,"FORMAT=MIF")
+   if (driver=="SQLite") {
+     # dopt <- c(dopt,"SPATIALITE=yes")
+      lopt <- c(lopt,"LAUNDER=NO")#,"SPATIAL_INDEX=YES")
    }
    if ((is.logical(compress))&&(compress)) {
       compress <- if (driver %in% c("GeoJSON","SQLite","GPKG","KML")) "gz" 
@@ -124,16 +155,10 @@
             cat(" ok!\n")
       }
    })
-   ext <- switch(driver,'ESRI Shapefile'="(cpg|dbf|prj|qpj|shp|shx)"
-                       ,'MapInfo File'="(mif|mid)",fext)
-   dopt <- character()
-   lopt <- character()
-   if (driver=="MapInfo File")
-      dopt <- c(dopt,"FORMAT=MIF")
-   if (driver=="SQLite") {
-     # dopt <- c(dopt,"SPATIALITE=yes")
-      lopt <- c(lopt,"LAUNDER=NO")#,"SPATIAL_INDEX=YES")
-   }
+   isSF <- inherits(obj,c("sf","sfc"))
+   isSP <- !isSF
+   if (verbose)
+      print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    if (isSP) {
       if (driver %in% c("GeoJSON","KML","GPX")) {
          obj <- sp::spTransform(obj,sp::CRS("+init=epsg:4326"))
@@ -167,6 +192,30 @@
    }
    if (driver=="ESRI Shapefile")
       writeLines("1251",file.path(dname,paste0(lname,".cpg")))
+   if (interim) {
+      dopt <- character()
+      lopt <- character()
+      if (driver0=="MapInfo File")
+         dopt <- c(dopt,"FORMAT=MIF")
+      if (driver0=="SQLite") {
+        # dopt <- c(dopt,"SPATIALITE=yes")
+         lopt <- c(lopt,"LAUNDER=NO")#,"SPATIAL_INDEX=YES")
+      }
+      b <- character()
+      if (length(dopt))
+         b <- c(b,paste("-dco",.dQuote(dopt)))
+      if (length(lopt))
+         b <- c(b,paste("-lco",.dQuote(lopt)))
+      cmd <- paste("ogr2ogr"#,ifelse(verbose,"-progress","")
+                  ,"-f",.dQuote(driver0),"-t_srs",.dQuote(p4s),b
+                  ,.dQuote(fname0),.dQuote(fname),"-nln",lname)
+      if (verbose)
+         message(cmd)
+      system(cmd)
+      if (file.exists(fname0))
+         file.remove(fname)
+
+   }
    if (!nchar(compress))
       return(NULL)
    if ((.lgrep("gz",compress))&&(nchar(Sys.which("gzip"))))
@@ -204,6 +253,65 @@
       utils::zip(z,f,flags="-qm9j") ## verbose output ## 'myzip(z,f,keys="-m -9 -j")'
    }
    NULL
+}
+'.shp.layer' <- function(fname)
+{
+   f <- basename(fname)
+   if (!.lgrep("\\.shp$",f))
+      return(f)
+   .gsub("\\.shp$","",f)
+}
+'.shp.file' <- function(fname)
+{
+   if (.lgrep("\\.shp$",fname))
+      return(fname)
+   paste0(fname,".shp")
+}
+'.shp.read' <- function(fname,reproject=TRUE,encoding="1251",resetGrid=FALSE
+                       ,verbose=0L,...)
+{
+  ## b <- sf::st_read("gde-1-1-15.shp",quiet=TRUE)
+  ## b <- sf::st_transform(b,ursa_proj(a))
+  # print(fname)
+   requireNamespace("rgdal",quietly=.isPackageInUse())
+   if (resetGrid)
+      reproject <- FALSE
+  # require(methods)
+   if (.lgrep("\\.zip$",basename(fname)))
+      fname <- .gsub("\\.zip$","",fname)
+   fpath <- dirname(fname)
+   z <- file.path(fpath,paste0(.shp.layer(fname),".zip")) # ,.
+   if (!file.exists(z))
+      z <- file.path(fpath,paste0(.shp.layer(fname),".shp.zip"))
+   if (file.exists(z))
+   {
+      a <- utils::unzip(z,exdir=fpath,junkpaths=TRUE)
+      on.exit(file.remove(a))
+   }
+   if (verbose>1)
+      .elapsedTime("readOGR:start")
+   cpgname <- file.path(fpath,paste0(.shp.layer(fname),".cpg"))
+   e_opt <- if (file.exists(cpgname)) readLines(cpgname,warn=FALSE) else ""
+   i_opt <- if (grepl("UTF(-)*8",e_opt)) TRUE else FALSE
+  # print(data.frame(e_opt=e_opt,i_opt=i_opt))
+   opW <- options(warn=0)
+   res <- rgdal::readOGR(.shp.file(fname),.shp.layer(fname),pointDropZ=TRUE
+                        ,encoding=e_opt,use_iconv=i_opt
+                        ,verbose=as.logical(verbose),...)
+   options(opW)
+   if (verbose>1)
+      .elapsedTime("readOGR:finish")
+   proj4 <- session_grid()$proj4
+   if ((reproject)&&(nchar(proj4))&&(!is.na(sp::proj4string(res)))) {
+      if (verbose>1)
+         .elapsedTime("spTransform:start")
+      res <- sp::spTransform(res,proj4)
+      if (verbose>1)
+         .elapsedTime("spTransform:finish")
+   }
+   if (resetGrid)
+      session_grid(NULL)
+   res
 }
 '.shp.write' <- function(obj,fname,compress=FALSE,zip=NULL)
 {

@@ -8,8 +8,6 @@ margin - outside of the image
 
 graticule - grid
 
-colortable rmap.colortable ctable rmap.ctable
+colortable ursa.colortable ctable ursa.ctable
 
-rmap.crs - rmap.grid
-session.crs - rmap.crs
-session.grid - rmap.grid
+session_grid - rmap_grid

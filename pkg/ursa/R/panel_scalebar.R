@@ -86,7 +86,7 @@
       return(invisible(NULL))
    }
    isLonLat <- .lgrep("(\\+proj=longlat|epsg:4326)",g1$proj4)>0
-   if (isLonLat)
+   if ((isLonLat)||((TRUE)&&(!nchar(g1$proj4))))
       return(invisible(NULL))
    isGeo <- nchar(g1$proj4)>0
    if ((indirect)&&(!isGeo))

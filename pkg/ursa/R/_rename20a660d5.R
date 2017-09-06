@@ -11,9 +11,9 @@
       }
    }
    if (!FALSE) {
-      src <- "ursa_new"
-      dst <- "ursa_new"
-      ind <- as.character(c(1))
+      src <- "akima"
+      dst <- "akima"
+      ind <- as.character(c(1,2,3,4,5,6))
       toWrite <- FALSE
       dpath1 <- c('1'="C:/platt/R/ursa-package/ursa/R"
                  ,'2'="C:/platt/R/ursa-package/ursa/man"

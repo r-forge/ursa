@@ -56,7 +56,7 @@
       cmd <- paste("ogr2ogr"
               ,ogropt 
               ,"-where",dQuote(where)
-              ,"-f",.dQuote(c("ESRI Shapefile","SQLite")[1])
+              ,"-f",.dQuote(c("ESRI Shapefile","SQLite","GeoJSON")[1])
              # ,ifelse(verbose,"-progress","")
               ,.dQuote(paste0(shpname,".shp")),.dQuote(dsn)
               )

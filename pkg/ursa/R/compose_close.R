@@ -93,9 +93,11 @@
          }
       return(invisible(NULL))
    }
-   if ((getOption("ursaPngBox"))&&
-               (getOption("ursaPngFigure")==getOption("ursaPngLayout")$image))
-      panel_box()
+   if (getOption("ursaPngFigure")==getOption("ursaPngLayout")$image) {
+      .panel_attribution()
+      if (getOption("ursaPngBox"))
+         panel_box()
+   }
    grDevices::dev.off()
   # kind <- match.arg(kind)
    do.call(paste0(".",kind),list(fileout,border,verbose))
@@ -116,10 +118,13 @@
          cmd <- paste("i_view32",FoutTmp,"/bpp=8",paste0("/convert=",FoutTmp))
       }
       else if ((nchar(im <- Sys.getenv("R_IMAGEMAGICK"))>0)&&(file.exists(im))) {
+        # print("R_IMAGEMAGICK is found")
          cmd <- paste(im,fileout,ifelse(n>=255,"-colors 255","")
                      ,paste0("png8:",fileout))
       } 
       else if ((nchar(imdisplay <- Sys.which("imdisplay"))>0)) {
+        # imagemagick ver>=7.0.7 "magick" instead of "convert"
+        # print("imagemagick is in PATH")
          cmd <- paste(file.path(dirname(imdisplay),"convert")
                      ,fileout,ifelse(n>=255,"-colors 255","")
                      ,paste0("png8:",fileout))
@@ -127,11 +132,14 @@
       else if ((nchar(im <- Sys.which("convert"))>0)&& ##
                      (toupper(normalizePath(dirname(dirname(im))))!=
                       toupper(normalizePath(Sys.getenv("WINDIR"))))) {
+        # print("convert is not in Windows directory")
          cmd <- paste(im,fileout,ifelse(n>=255,"-colors 255","")
                      ,paste0("png8:",fileout))
       }
-      else ## else if... (other ways to force to bpp=8
+      else {## else if... (other ways to force to bpp=8
+        # print("imagemagick is not found")
          cmd <- ""
+      }
       if (nchar(cmd)) {
          if (verbose)
             message(cmd)

@@ -1,5 +1,7 @@
 ## "http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames", license?
 # https://gist.github.com/Yago/05d479de169a21ba9fff
+# http://b.sm.mapstack.stamen.com/(toner-background,$fff[difference],$fff[@23],$fff[hsl-saturation@20],toner-lines[destination-in])/9/273/172.png
+# https://pogoda1.ru/map/precipitation/7/77/40.png
 
 '.deg2num' <- function(lat,lon,zoom,verbose=FALSE) {
    lat_rad <- lat*pi/180
@@ -57,6 +59,12 @@
                      ,"\uA9 Esri - contributors to Esri Street Topo Map")
    s$Esri.Terrain <- c("http://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}.jpg"
                       ,"\uA9 Esri: USGS, Esri, TANA, DeLorme, and NPS")
+   s$Esri.Light <- c("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}.jpg"
+                      ,"\uA9 Esri: Esri, HERE, Garmin, NGA, USGS")
+   s$Esri.Dark <- c("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}.jpg"
+                      ,"\uA9 Esri: Esri, HERE, Garmin, NGA, USGS")
+   s$Esri.Hillshade <- c("https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}.jpg"
+                      ,"\uA9 ESRI World Hillshade")
    s$HERE.Aerial <- c(paste0("https://{1234}.aerial.maps.cit.api.here.com/maptile"
                           ,"/2.1/maptile/newest/satellite.day/{z}/{x}/{y}/256/png8?"
                           ,"app_id=",optHERE$id,"&app_code=",optHERE$code,"&lg=eng")
@@ -82,7 +90,10 @@
      return(names(s))
    if (!(server[1] %in% names(s))) {
       for (i in seq_along(s)) {
-         ind <- .lgrep(server[1],s[[i]])
+         if (.lgrep("http",server))
+            ind <- 0L
+         else
+            ind <- .lgrep(server[1],s[[i]])
          if (ind>0)
             break
       }
@@ -114,6 +125,7 @@
    indUrl <- .grep("^http(s)*://",style)
    if (!length(indUrl))
       return(names(s))
+   indUrl <- indUrl[1]
    indExt <- .grep("(png|jpg|jpeg)",style)
    indCite <- seq(style)[-unique(c(indUrl,indExt))]
    if (!length(indCite)) {
@@ -141,13 +153,13 @@
       tile$copyright <- style[indCite]
    if (tile$name=="custom") {
       if (.is.wms(tile$url)) {
-         s <- .grep("^(request=|service=WMS)",s,value=TRUE,invert=TRUE)
-         tile$url <- paste0(paste(s,collapse="&")
+         wurl <- .grep("^(request=|service=WMS)",tile$url,value=TRUE,invert=TRUE)
+         tile$url <- paste0(paste(wurl,collapse="&")
                            ,"&width=256&height=256"
                            ,"&service=WMS&request=GetMap")
       }
    }
-  # str(tile);q()
+  # print(tile);q()
    tile
 }
 '.tileGet' <- function(z=4,x=10,y=3,minx=-2e7,miny=-2e7,maxx=2e7,maxy=2e7
@@ -175,8 +187,9 @@
    fname <- tempfile(fileext=".tile")
    a <- try(download.file(tile,fname,mode="wb",quiet=!verbose))
    if (inherits(a,"try-error")) {
-      message(a)
-      stop()
+      return(a)
+     # message(a)
+     # stop()
    }
   # message(tile)
   # download.file(tile,fname,method="curl",mode="wb",quiet=FALSE

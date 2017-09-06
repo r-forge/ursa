@@ -71,15 +71,20 @@
    geocodeStatus <- FALSE
    if (inherits(loc,"Spatial")) {
       proj4 <- sp::proj4string(loc)
-      loc <- sp::bbox(loc)
-      loc <- c(.project(matrix(c(loc),ncol=2,byrow=TRUE),proj4
-                       ,inv=TRUE))[c(1,3,2,4)]
+      if (!.lgrep("\\+proj=longlat",proj4)) {
+         loc <- sp::bbox(loc)
+         loc <- c(.project(matrix(c(loc),ncol=2,byrow=TRUE),proj4
+                          ,inv=TRUE))[c(1,3,2,4)]
+      }
    }
-   if (inherits(loc,"sf")) {
-      loc <- sf::st_bbox(loc)
+   else if (inherits(loc,c("sf","bbox"))) {
+      if (inherits(loc,"sf"))
+         loc <- sf::st_bbox(loc)
       proj4 <- attr(loc,"crs")$proj4string
-      loc <- c(.project(matrix(loc,ncol=2,byrow=TRUE),proj4
-                       ,inv=TRUE))[c(1,3,2,4)]
+     # if (proj4!="+proj=longlat +datum=WGS84 +no_defs")
+      if (!.lgrep("\\+proj=longlat",proj4))
+         loc <- c(.project(matrix(loc,ncol=2,byrow=TRUE),proj4
+                          ,inv=TRUE))[c(1,3,2,4)]
    }
    isWMS <- isUrl & .is.wms(style)
    notYetGrid <- TRUE
@@ -131,9 +136,10 @@
       bbox <- c(xmin=bbox[1,1],ymin=bbox[1,2],xmax=bbox[2,1],ymax=bbox[2,2])
       res <- max(c((bbox["xmax"]-bbox["xmin"])/size[1]
            ,(bbox["ymax"]-bbox["ymin"])/size[2]))
-      s <- 2*6378137*pi/(2^(1:21+8))
-      if (!notYetGrid)
+      if (!notYetGrid) {
          res0 <- with(g0,sqrt(resx*resy))
+      }
+      s <- 2*6378137*pi/(2^(1:21+8))
       zman <- zoom
       zoom <- which.min(abs(s-res))
       fixRes <- FALSE
@@ -143,13 +149,13 @@
          res <- s[i]
          g0 <- regrid(ursa_grid(),res=res,proj4=proj4,border=border
                      ,setbound=unname(bbox[c("xmin","ymin","xmax","ymax")]))
-         if ((!notYetGrid)&&(identical(res0,res))) {
-            fixRes <- TRUE
-            break
+         if (!notYetGrid) {
+            if (identical(res0,res)) {
+               fixRes <- TRUE
+               break
+            }
          }
-        # if (isTile)
-        #    break
-         if ((g0$columns<=size[1])&&(g0$rows<=size[2]))
+         else if ((g0$columns<=size[1])&&(g0$rows<=size[2]))
             break
       }
       if ((art=="sputnikmap")&&(!isTile))
@@ -213,6 +219,8 @@
          g0 <- regrid(g0,miny=-B)
      # if (border>0)
      #    g0 <- regrid(g0,border=border)
+     # print(fixRes)
+     # print(g0)
    }
    else {
       g0 <- session_grid()
@@ -279,8 +287,8 @@
          if (length(ind))
             tX[ind,1] <- tX[ind,1]-dz
          tX <- unique(tX)
-        # print(tX)
          hX <- unique(tX[,1])
+        # str(tX)
          lon <- (c(head(hX,1),tail(hX,1))+c(0,1))/dz*360-180
         # print(lon)
          t0 <- rbind(t0,tX)
@@ -288,8 +296,12 @@
          if (j==1)
             v <- unique(tX[,2])
       }
+      dim1 <- unname(dim(g1)/256L)
+      dim2 <- c(length(v),length(h))
+      changeH <- dim1[2]!=dim2[2]
+      changeV <- dim1[1]!=dim2[1]
+     # changeDim <- !all(dim1==dim2)
       tgr <- expand.grid(z=zoom,y=v,x=h)
-      igr <- expand.grid(y=seq_along(v)-1,x=seq_along(h)-1)
       n <- 2^zoom
       lon1 = (tgr[,"x"]+0)/n*360-180
       lon2 = (tgr[,"x"]+1)/n*360-180
@@ -297,25 +309,92 @@
       lat2 = atan(sinh(pi*(1-2*(tgr[,"y"]+0)/n)))*180/pi
       xy1 <- .project(cbind(lon1,lat1),epsg3857)
       xy2 <- .project(cbind(lon2,lat2),epsg3857)
-      tgr <- cbind(tgr,lon1=lon1,lat1=lat1,lon2=lon2,lat2=lat2
-                 ,minx=xy1[,1],miny=xy1[,2],maxx=xy2[,1],maxy=xy2[,2])
+      tgr <- cbind(tgr
+                  #,lon1=lon1,lat1=lat1,lon2=lon2,lat2=lat2
+                  ,minx=xy1[,1],miny=xy1[,2],maxx=xy2[,1],maxy=xy2[,2]
+                  )
+      if (changeV) {
+         y <- sort(unique(c(xy1[,2],xy2[,2])))
+         nV <- dim1[1]+1
+         y0 <- seq(g1$miny,g1$maxy,len=nV)
+         ind <- na.omit(.is.near(y,y0))
+         if (length(ind)==nV) {
+            indY <- setdiff(seq_along(y),ind)
+            if (indY==4)
+               y <- xy2[,2]
+            else if (indY==1)
+               y <- xy1[,2]
+            else
+               stop("extra vertical tile: no heandler (#1)")
+            ind <- which(!is.na(.is.near(y,y0)))
+            tgr <- tgr[ind,]
+            v <- sort(unique(tgr[,"y"]))
+         }
+         else
+            stop("extra vertical tile: no handler (#2)")
+      }
+      if (changeH) {
+        ## not appeared during tests 
+         x <- sort(unique(c(xy1[,1],xy2[,1])))
+         nH <- dim1[1]+1
+         x0 <- seq(g1$minx,g1$maxx,len=nH)
+         ind <- na.omit(.is.near(x,x0))
+         if (length(ind)==nH) {
+            indX <- setdiff(seq_along(x),ind)
+            if (indX==4)
+               x <- xy2[,1]
+            else if (indX==1)
+               x <- xy1[,1]
+            else
+               stop("extra horizontal tile: no heandler (#1)")
+            ind <- which(!is.na(.is.near(x,x0)))
+            tgr <- tgr[ind,]
+            h <- sort(unique(tgr[,"x"]))
+         }
+         else
+            stop("extra horizontal tile: no handler (#2)")
+      }
+      igr <- expand.grid(y=seq_along(v)-1,x=seq_along(h)-1)
       if (verbose) {
          print(tgr)
       }
       tile <- if (isUrl) .tileService(style) else .tileService(art)
+      LL <- (isWMS) & (.lgrep("EPSG:(4326|4269)(\\D|$)",tile$url))
+      if (LL) { ## very rought 4236 -> 3857
+         x1 <- tgr$minx
+         y1 <- tgr$miny
+         x2 <- tgr$maxx
+         y2 <- tgr$maxy
+         tgr$minx <- tgr$lon1
+         tgr$miny <- tgr$lat1
+         tgr$maxx <- tgr$lon2
+         tgr$maxy <- tgr$lat2
+         tgr$lon1 <- x1
+         tgr$lat1 <- y1 
+         tgr$lon2 <- x2
+         tgr$lat2 <- y2
+      }
+      init <- TRUE
       for (i in seq(nrow(tgr))) {
          img2 <- .tileGet(z=zoom,x=tgr[i,"x"],y=tgr[i,"y"]
                          ,minx=tgr[i,"minx"],miny=tgr[i,"miny"]
                          ,maxx=tgr[i,"maxx"],maxy=tgr[i,"maxy"]
                          ,url=tile$url
                          ,fileext=tile$fileext,verbose=verbose)
-         if (i==1) {
+         if (!is.array(img2))
+            next
+         if (init) {
             nb <- dim(img2)[3]
             img <- array(0L,dim=c(256*length(v),256*length(h),nb))
+            init=FALSE
          }
+         if (init)
+            next
          ##~ img[igr[i,"y"]*256L+seq(256),igr[i,"x"]*256+seq(256),] <- img2[,,1:3]
          img[igr[i,"y"]*256L+seq(256),igr[i,"x"]*256+seq(256),] <- img2[,,seq(nb)]
       }
+      if (init)
+         stop("all tiles are failed")
       basemap <- as.ursa(img,aperm=TRUE,flip=TRUE)
       ursa(basemap,"grid") <- g1
      # basemap <- as.integer(regrid(basemap,g0,resample=FALSE))

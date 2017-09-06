@@ -80,6 +80,9 @@
    a <- gregexpr("(/|\\\\)",x,ignore.case=TRUE,perl=TRUE)
    substr(x,max(a[[1]])+1,nchar(x))
 }
+'.expand.grid' <- function(...,KEEP.OUT.ATTRS=FALSE,stringsAsFactors=FALSE)
+    expand.grid(...,KEEP.OUT.ATTRS=KEEP.OUT.ATTRS,stringsAsFactors=stringsAsFactors)
+
 '.gc' <- function(verbose=FALSE)
 {
    a1 <- gc()
@@ -339,3 +342,9 @@
 '.dQuote' <- function(ch) paste0("\"",ch,"\"")
 '.sQuote' <- function(ch) paste0("'",ch,"'")
 '.require' <- function(pkg,quietly=TRUE) do.call("require",list(pkg,quietly=quietly))
+'.tryE' <- function(...) {
+   opE <- options(show.error.messages=TRUE)
+   ret <- try(...)
+   options(opE)
+   ret
+}

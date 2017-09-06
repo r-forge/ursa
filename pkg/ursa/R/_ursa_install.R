@@ -3,7 +3,7 @@
    system("R --vanilla CMD build ursa")
    pkg <- tail(plutil::filelist("^ursa_.*\\.tar\\.gz$"))
    if (length(pkg)) {
-      system(paste("R --vanilla CMD INSTALL --no-multiarch",pkg))
+      system(paste("R --vanilla CMD INSTALL --compile_both",pkg)) ## --no-multiarch
       file.remove(pkg)
    }
    setwd(wd)

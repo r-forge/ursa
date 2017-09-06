@@ -5,12 +5,13 @@
    requireNamespace("rgdal",quietly=.isPackageInUse())
   # if (verbose)
   #    .elapsedTime("rgdal has been loaded")
-   opW <- options(warn=0-!verbose) ## to prevent 'GeoTransform values not available'
+   opW <- options(warn=0-!verbose,show.error.messages=TRUE) ## to prevent 'GeoTransform values not available'
    on.exit(options(opW))
    a <- try(rgdal::GDALinfo(fname,returnStats=FALSE,returnRAT=FALSE
                 ,returnColorTable=TRUE,returnCategoryNames=TRUE),silent=TRUE)
    if (inherits(a,"try-error")) {
-      cat(geterrmessage())
+      if ((TRUE)||(!.isPackageInUse()))
+         cat(geterrmessage())
      # * using R version 3.4.0 Patched (2017-05-16 r72684)
      # * using platform: x86_64-pc-linux-gnu (64-bit)
      # > ### Name: open_gdal

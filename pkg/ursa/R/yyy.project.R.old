@@ -1,7 +1,6 @@
-'.project' <- function(xy,proj,inv=FALSE,verbose=FALSE) {
-   ## because of quicker load of 'proj4' package
-  # show.error.messages=verbose
-   opW <- options(warn=-11,show.error.messages=verbose);on.exit(options(opW))
+'.project' <- function(xy,proj,inv=FALSE) {
+   ## because of quick load ot 'proj4' package
+   opW <- options(warn=-11);on.exit(options(opW))
   # if (("package:rgdal" %in% search())||
   #     (!requireNamespace("proj4",quietly=.isPackageInUse())))
   #    res <- rgdal::project(xy=xy,proj=proj,inv=inv)
@@ -23,8 +22,6 @@
          res <- proj4::project(xy=t(xy),proj=proj,inverse=inv)
       },silent=TRUE)
       if ((!FALSE)&&(!a)&&(nrow(xy)==2)) {
-         if (verbose)
-            cat(geterrmessage())
          a <- .try({
            ## suppressMessages(require(proj4)) ## uncomment?
             res <- proj4::project(xy=xy,proj=proj,inverse=inv)

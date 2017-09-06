@@ -154,11 +154,13 @@
       figN <- figN+1L
    }
    panel <- getOption("ursaPngLayout")
-   if ((getOption("ursaPngBox"))&&(figN==panel$image))
-      panel_box()
+   if (figN==panel$image) {
+      .panel_attribution()
+      if (getOption("ursaPngBox"))
+         panel_box()
+   }
    figN <- figN+1L
    options(ursaPngFigure=figN)
-   
    mat <- panel$layout
    ind <- which(c(mat)==figN)
    indr <- c(row(mat))[ind]
@@ -174,4 +176,13 @@
    else
       stop("cannot identify side")
    side
+}
+'.panel_attribution' <- function(pos=ifelse(vertical,"bottomright","bottomright")
+                                ,vertical=TRUE) {
+   ann <- paste0("",paste(unique(getOption("ursaPngCopyright")),collapse=" | "))
+  # ann <- paste(c(getOption("ursaPngCopyright")),collapse="\n")
+   if (nchar(ann))
+      panel_annotation(ann,pos=pos,cex=0.7,font="Arial Narrow"
+                      ,fg=sprintf("#000000%s","4F"),vertical=vertical)
+   options(ursaPngCopyright=NULL)
 }
