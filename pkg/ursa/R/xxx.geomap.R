@@ -110,6 +110,10 @@
          }
          if (!inherits(loc,"try-error"))
             geocodeStatus <- TRUE
+         else {
+            cat(geterrmessage())
+            return(NULL)
+         }
       }
       if ((is.numeric(loc))&&(length(loc) %in% c(2)))
          geocodeStatus <- TRUE

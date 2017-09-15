@@ -228,7 +228,8 @@
             print(epsgG,quote=FALSE)
             if (length(indM))
                message(paste("* is specified for layer",dQuote(layer)))
-            toStop <- toStop+2L
+            if (length(epsgG))
+               toStop <- toStop+2L
          }
       }
    }

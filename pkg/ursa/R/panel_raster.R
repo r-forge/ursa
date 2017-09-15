@@ -197,10 +197,12 @@
       session_grid(g2)
    col1 <- col2rgb(obj$colortable,alpha=TRUE)/255
    isAlpha <- any(col1[4,]!=1)
-   ann <- attr(obj,"copyright")
-   if ((is.character(ann))&&(nchar(.gsub("\\s","",ann))>1))
-   panel_annotation(ann,pos="bottomright",cex=0.7,font="Arial Narrow"
-                   ,fg=sprintf("#000000%s",ifelse(isAlpha,alpha,"4F")))
+   ann <- c(getOption("ursaPngCopyright"),attr(obj,"copyright"))
+   if (sum(nchar(ann)))
+      options(ursaPngCopyright=ann)
+  # if ((is.character(ann))&&(nchar(.gsub("\\s","",ann))>1))
+  #    panel_annotation(ann,pos="bottomright",cex=0.7,font="Arial Narrow"
+  #                    ,fg=sprintf("#000000%s",ifelse(isAlpha,alpha,"4F")))
    if (!isAlpha)
       return(invisible(obj$colortable))
    if (is.na(alpha))

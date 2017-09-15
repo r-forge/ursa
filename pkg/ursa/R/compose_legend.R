@@ -3,7 +3,7 @@
    arglist <- list(...)
    colorbar <- .getPrm(arglist,name="^colorbar$",default=TRUE)
    if (!as.logical(colorbar))
-      return(NULL)
+      return(invisible(NULL))
    units <- NULL
    ind <- sapply(arglist,is.ursa,"colortable")
    if (length(which(ind))) {
@@ -31,7 +31,7 @@
    else {
       ind <- sapply(arglist[[1]],is.ursa,"colortable")
       if ((is.list(ind))&&(!length(ind)))
-         return(NULL)
+         return(invisible(NULL))
       if (length(which(ind))) {
          obj <- vector("list",length(ind))
          names(obj) <- names(ind)
@@ -53,7 +53,7 @@
             obj <- .getPrm(arglist,index=1L,class="ursaColorTable",verbose=TRUE)
             isList <- all(sapply(obj,function(x) class(x) %in% "ursaColorTable"))
             if (is.null(obj))
-               return(NULL)
+               return(invisible(NULL))
          }
          else {
             isList <- .is.ursa_stack(obj)
@@ -115,5 +115,5 @@
      # legend_colorbar(obj,units=units,...)
       do.call("legend_colorbar",arglist)
    }
-   NULL
+   invisible(NULL)
 }

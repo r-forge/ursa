@@ -50,7 +50,6 @@
                                ,font=par("family"),vertical=FALSE
                                ,alpha=1,interpolate=FALSE
                                ,verbose=FALSE,...) {
-
    if (verbose)
       str(list(label=label,position=position,cex=cex,adjust=adjust,fg=fg,bg=bg
               ,fill=fill,buffer=buffer,vertical=vertical,verbose=verbose))

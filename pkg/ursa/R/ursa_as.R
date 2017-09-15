@@ -81,8 +81,26 @@
          if (length(ct))
             res <- ursa_new(raster::values(obj),colortable=ct
                            ,flip=FALSE,permute=FALSE)
-         else
-            res <- ursa_new(raster::values(obj),flip=FALSE,permute=FALSE)
+         else {
+            at <- obj@data@attributes#[[1]]#[,2,drop=FALSE]
+            if (!length(at))
+               res <- ursa_new(raster::values(obj),flip=FALSE,permute=FALSE)
+            else {
+               at <- at[[1]]
+               v <- raster::values(obj)
+               u <- ursa_new(v-1L,flip=FALSE,permute=FALSE)
+               res <- vector("list",ncol(at))
+               aname <- colnames(at)
+               for (i in seq_along(res)) {
+                  tname <- names(table(at[,i]))
+                  ind <- match(at[,i],tname)
+                  obj <- ursa_new(ind[v]-1L,flip=FALSE,permute=FALSE
+                                 ,bandname=aname[i])
+                  res[[i]] <- reclass(obj,src=seq_along(tname)-1L,dst=tname)
+               }
+              # stop("R: as.ursa from raster with attributes")
+            }
+         }
       }
       return(res)
    }

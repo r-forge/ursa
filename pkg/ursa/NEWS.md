@@ -1,3 +1,7 @@
+# version 3.7-17
+
+* Correction for bounding around 180 degree longitude
+
 # version 3.7-16
 
 * minor improvement to spatial allocation of vector objects

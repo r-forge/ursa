@@ -205,6 +205,8 @@
                da <- da[c("minx","miny","maxx","maxy")]
             else
                da <- da[,c("minx","miny","maxx","maxy")]
+            if (da[1]>da[3])
+               da[3] <- da[3]+360
             da <- matrix(da[c(1,2,1,4,3,4,3,2,1,2)],ncol=2,byrow=TRUE)
             if (TRUE) {
                x <- da[,1]
@@ -218,6 +220,7 @@
             }
             if (isSF) {
                obj <- sf::st_sfc(sf::st_multilinestring(list(da)),crs=4326)
+              # sf::st_write(obj,"rect.geojson");q()
             }
             if (isSP) {
                obj <- sp::SpatialLines(list(sp::Lines(sp::Line(da),1L))

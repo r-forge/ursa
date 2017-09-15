@@ -87,12 +87,37 @@
      # if (verbose)
      #   message("REPROJECT")
       shpname <- .maketmp()
+      bb1 <- with(regrid(g0,expand=1.1),matrix(c(minx,miny,maxx,maxy),ncol=2))
+      bb1 <- matrix(bb1[c(1,2,1,4,3,4,3,2,1,2)],ncol=2,byrow=TRUE)
+      if (TRUE) {
+         x <- bb1[,1]
+         y <- bb1[,2]
+         n <- 256
+         x <- c(seq(x[1],x[2],len=n),seq(x[2],x[3],len=n)
+               ,seq(x[3],x[4],len=n),seq(x[4],x[5],len=n))
+         y <- c(seq(y[1],y[2],len=n),seq(y[2],y[3],len=n)
+               ,seq(y[3],y[4],len=n),seq(y[4],y[5],len=n))
+         bb1 <- cbind(x,y)
+      }
+      if (isSF) {
+         bb1 <- sf::st_sfc(sf::st_multilinestring(list(bb1)),crs=g0$proj4)
+         bb2 <- sf::st_transform(bb1,proj4)
+         bb2 <- sf::st_bbox(bb2)
+      }
+      else if (isSP) {
+         bb1 <- sp::SpatialLines(list(sp::Lines(sp::Line(bb1),1L))
+                                ,proj4string=sp::CRS(g0$proj4))
+         bb2 <- sp::spTransform(bb1,proj4)
+         bb2 <- c(sp::bbox(bb2))
+      }
       cmd <- paste("ogr2ogr","-t_srs",.dQuote(g0$proj4)
               ,"-sql",.dQuote(paste("select FID,* from",.dQuote(.dQuote(lname))))
               ,"-dialect",c("SQLITE","OGRSQL")[2]
               ,"-select FID"
               ,"-f",.dQuote(c("ESRI Shapefile","SQLite")[1])
               ,ifelse(verbose,"-progress","")
+             # ,"-clipdst",with(g1,paste(c(minx,miny,maxx,maxy),collapse=" "))
+              ,"-clipsrc",paste(bb2,collapse=" ")
               ,.dQuote(paste0(shpname,".shp")),.dQuote(dsn)
               )
       if (verbose)

@@ -21,6 +21,8 @@
    if (.skipPlot(FALSE))
       return(NULL)
    side <- .getSide()
+   if (!length(text))
+      text <- ""
    width <- max(strwidth(text,units="inches",cex=cex))
    height <- max(strheight(text,units="inches",cex=cex))
   # print(c(width=width,height=height,ratio=width/height))
