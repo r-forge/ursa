@@ -1,3 +1,7 @@
+# version 3.7-18
+
+* upcoming
+
 # version 3.7-17
 
 * Correction for bounding around 180 degree longitude

@@ -31,7 +31,7 @@
             arglist[[1]] <- s2[i]
             do.call("panel_new",arglist[-1])
             arglist$extend <- FALSE
-            arglist$verbose <- TRUE
+            arglist$verbose <- !.isPackageInUse()
            # .panel_wms(s2[i],tile=1e5,legend=TRUE,verbose=!TRUE)
             try(do.call(".panel_wms",arglist))
             arglist$verbose <- FALSE
@@ -41,7 +41,7 @@
             setUrsaProgressBar(pb,i)
          }
          close(pb)
-         compose_close()
+         compose_close(...)
          return(invisible(0L))
       }
    }

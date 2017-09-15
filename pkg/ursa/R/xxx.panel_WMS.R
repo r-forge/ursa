@@ -12,7 +12,10 @@
                           ,extend=TRUE
                           ,verbose=FALSE,...) {
    src <- unlist(src)
-   dst <- if (!TRUE) tempfile(fileext=".xml") else paste0(.argv0name(),".xml")
+   dst <- if (.isPackageInUse()) tempfile(fileext=".xml") 
+          else paste0(.argv0name(),".xml")
+  # dst <- tempfile(fileext=".xml") 
+  # dst <- paste0(.argv0name(),".xml")
    isMetadata <- FALSE
    versionList <- c("1.1.1","1.3.0","1.1.0","1.0.0")
   # if (nchar(version))
@@ -38,8 +41,8 @@
       src <- sapply(strsplit(src,split="&"),function(x)
          paste(.grep("^version=",x,invert=TRUE,value=TRUE),collapse="&"))
    }
-  # if ((ind2)||(ind1))
-  #    src <- paste0(src,"&version=",as.character(version))
+   else if (ind2)
+      src <- paste0(src,"&version=",as.character(version))
    src1 <- unlist(strsplit(src,split="&"))
    src1 <- .grep("^(bbox|request|service)=",src1,value=TRUE,invert=TRUE)
    src1 <- paste0(paste(src1,collapse="&"),"&service=WMS&request=GetCapabilities")
@@ -66,6 +69,11 @@
          if (!isMetadata)
             isMetadata <- TRUE
          md <- .parse_wms(dst,verbose=verbose)
+         if (.lgrep("<ServiceException(>|\\s)",md)) {
+            message("Exception is found")
+            message(paste(md,collapse="\n"))
+            return(src)
+         }
          ind1 <- .grep("<Layer(>|\\s)",md)
          ind2 <- .grep("<Name(>|\\s)",md)
          ind3 <- .grep("<Title(>|\\s)",md)
@@ -338,6 +346,7 @@
             md <- md2
       }
       ind1 <- .grep("<(EX_Geographic|LatLon)BoundingBox",md)
+      bboxLL <- FALSE
       if (length(ind1)) {
          minxI <- .grep("<westBoundLongitude>",md)
          maxxI <- .grep("<eastBoundLongitude>",md)
@@ -350,6 +359,7 @@
             miny <- md[minyI+1L]
             maxy <- md[maxyI+1L]
             a <- as.numeric(c(minx,miny,maxx,maxy))
+            bboxLL <- TRUE
             tryGrid <- tryGrid+1L
          }
          else {
@@ -359,6 +369,7 @@
                miny <- md[minyI[1L]+1L]
                maxy <- md[maxyI[1L]+1L]
                a <- as.numeric(c(minx,miny,maxx,maxy))
+               bboxLL <- TRUE
                if (length(na.omit(a))==4)
                   tryGrid <- tryGrid+1L
             }
@@ -504,6 +515,7 @@
       }
    }
    if (toStop) {
+      message(paste("Suggested to use",.sQuote(paste0("version=",version))))
       if ((file.exists(dst))&&(dirname(dst)==tempdir())) {
          file.remove(dst)
       }
