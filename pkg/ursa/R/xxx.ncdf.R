@@ -242,7 +242,9 @@
       rm(.ind)
    }
    indS <- c(indX,indY)
-   indT <- .grep("time",bname)
+   indT <- which(sapply(b,inherits,c("POSIXt","Date")))
+   if (!length(indT))
+      indT <- .grep("(time|^zzzday$)",bname)
    indL <- which(is.na(match(seq_along(b),c(indS,indT))))
    if ((!length(indT))&&(length(indL))) {
       lev <- b[[indL]]
@@ -299,7 +301,7 @@
    con$driver <- "NCDF"
    con$offset <- nc$var[[varName]]$size
    con$seek <- FALSE
-   if ((length(indT))&&(indT<=2)) {
+   if ((length(indT))&&(indT<=2)&&(length(indS)!=2)) {
       if (verbose)
          message("spatial coordinates cannot be detected")
       val4 <- ncdf4::ncvar_get(nc,varName)
@@ -319,6 +321,7 @@
    attr(con$handle,"permute") <- permute
    attr(con$handle,"spatial") <- indS
    attr(con$handle,"temporal") <- indT
+   attr(con$handle,"level (proposed)") <- indL
    #indL <- which(is.na(match(seq_along(b),c(indX,indY,indT,length(b)))))
   # if ((!any(is.na(level)))&&(length(indL <- .grep("(level|zlev)",bname)))) {
   # if ((!any(is.na(level)))&&(length(indL))) {

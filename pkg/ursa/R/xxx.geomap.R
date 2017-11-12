@@ -151,8 +151,15 @@
          if (i<1)
             break
          res <- s[i]
-         g0 <- regrid(ursa_grid(),res=res,proj4=proj4,border=border
-                     ,setbound=unname(bbox[c("xmin","ymin","xmax","ymax")]))
+         if (FALSE) { ## 20170918
+            g0 <- regrid(ursa_grid(),res=res,proj4=proj4,border=border
+                        ,setbound=unname(bbox[c("xmin","ymin","xmax","ymax")]))
+         }
+         else {
+            g0 <- regrid(ursa_grid(),res=res,proj4=proj4
+                        ,setbound=unname(bbox[c("xmin","ymin","xmax","ymax")]))
+            g0 <- regrid(g0,border=border)
+         }
          if (!notYetGrid) {
             if (identical(res0,res)) {
                fixRes <- TRUE

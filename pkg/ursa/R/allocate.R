@@ -98,6 +98,8 @@
       resy <- unique(dify)
       if ((length(resx)!=1)||(length(resy)!=1))
       {
+        # print(resx,digits=16)
+        # print(resy,digits=16)
          if (!is.na(cellsize))
             resx <- resy <- cellsize
          else {
@@ -110,7 +112,7 @@
                resx <- mx
                resy <- my
             }
-            else if ((sd(difx)/mean(difx)<0.01)&&(sd(dify)/mean(dify)<0.01)){
+            else if ((sd(difx)/mean(difx)<0.01)&&(sd(dify)/mean(dify)<0.01)) {
                resx <- max(resx) # min(resx) mx
                resy <- max(resy) # min(resy) mx
             }
@@ -123,14 +125,19 @@
                   res <- median(c(difx,dify))
                else {
                   d <- .dist2(vec,vec,verbose=FALSE)$dist
-                  if (verbose)
+                  if (verbose) {
+                     print(range(d),digits=16)
                      print(summary(d))
+                  }
                   res <- unique(d)
                   if (!(isU <- length(res)==1L)) {
                     # res <- min(d)
                      res <- median(d)
                      if ((res==mean(d))||(res==min(d)))
                         isU <- TRUE
+                     else if (max(res)/min(res)-1<.Machine$double.eps) {
+                        isU <- TRUE
+                     }
                   }
                }
                if (!isU) {

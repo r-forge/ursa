@@ -29,6 +29,7 @@
       units <- names(img)
       if (is.null(units))
          units <- if (FALSE) rep("",ng) else unname(ln)
+      canRGB <- FALSE
    }
    else
    {
@@ -36,12 +37,15 @@
       nb <- nband(img)
       ln <- bandname(img)
       units <- if (nb==1) ln[1] else ""
+      canRGB <- .is.rgb(img) ## can improve RGB detection?
    }
    isRGB <- nb/3==np || nb/4==np || nb/2==np
+   if ((!.is.integer(nb/np))&&(!isRGB)&&(canRGB))
+      isRGB <- TRUE
    if (isRGB)
-      nl <- nb/np
-  # print(c(isRGB=isRGB))
-  # print(c(nb=nb,np=np))
+      nl <- nb/np ## ??? not used after
+  # print(img)
+  # print(c(nb=nb,np=np,ng=ng,isRGB=as.integer(isRGB)))
    annotation <- nb>1 & !isRGB #& !isList
    if (is.na(verbose))
       verbose <- nb>2
@@ -95,7 +99,10 @@
         #    next
          panel_new(...)
          if (isRGB) {
-            panel_raster(img,...)
+            if (isList)
+               panel_raster(img[[j]],...)
+            else
+               panel_raster(img,...)
            # panel_raster(colorize(obj,...),...)
          }
          else {

@@ -8,7 +8,7 @@
   # geocode <- match.arg(geocode)
    geocodeStatus <- FALSE
    hasOpened <- FALSE
-   toUnloadMethods <- FALSE
+   toUnloadMethods <- !("methods" %in% .loaded())
    if (is.na(resetProj))
       resetProj <- TRUE
    cpg <- NULL
@@ -39,7 +39,7 @@
       spcl <- paste0("Spatial",c("Points","Lines","Polygons"))
       spcl <- c(spcl,paste0(spcl,"DataFrame"))
       if ((nextCheck)&&(inherits(dsn,spcl))) {
-         if ((!toUnloadMethods)&&(!("package:methods" %in% search()))) {
+         if ((!toUnloadMethods)&&(!("methods" %in% .loaded()))) {
             if (FALSE) {
               # .require("methods")
                opW <- options(warn=1)
@@ -75,7 +75,13 @@
       }
       if ((nextCheck)&&((isSF)||(isNative))) {
          if (isNative) {
-            isSF <- requireNamespace("sf",quietly=.isPackageInUse())
+            loaded <- .loaded()
+            if ("sf" %in% loaded)
+               isSF <- TRUE
+            else if (("sp" %in% loaded)||("rgdal" %in% loaded))
+               isSF <- FALSE
+            else
+               isSF <- requireNamespace("sf",quietly=.isPackageInUse())
             isSP <- !isSF
          }
         # nextCheck <- isSP
@@ -85,10 +91,11 @@
             message("process 'array' by 'sf' -- TODO (dilemma: raster is array)")
          }
          else if (is.numeric(dsn)) {
+            limLonLat <- all(dsn>=-360 & dsn<=+360)
             if (length(dsn)==2) { ## point
               # obj <- sf::st_sfc(sf::st_point(dsn))
                obj <- sf::st_as_sf(data.frame(lon=dsn[1],lat=dsn[2])
-                                  ,coords=c("lon","lat"),crs=4326)
+                                  ,coords=c("lon","lat"))#,crs=4326)
             }
             else if (length(dsn)==4) { ## boundary
                if (dsn[1]>dsn[3])
@@ -107,13 +114,17 @@
               # colnames(obj) <- c("lon","lat")
                ##~ obj <- sf::st_sf(sf::st_sfc(sf::st_polygon(list(obj)))
                                ##~ ,coords=c("lon","lat"),crs=4326)
-               obj <- sf::st_sfc(sf::st_multilinestring(list(obj)),crs=4326)
+               obj <- sf::st_sfc(sf::st_multilinestring(list(obj)))#,crs=4326)
               # obj <- sf::st_sf(obj)
             }
             else
                obj <- NULL
             if (!is.null(obj)) {
-               sf::st_crs(obj) <- 4326
+               if (limLonLat)
+                  sf::st_crs(obj) <- 4326
+               else {
+                  sf::st_crs(obj) <- session_proj4()
+               }
             }
             else
                rm(obj)
@@ -135,10 +146,11 @@
          if (is.array(dsn))
             message("process 'array' by 'sp' -- TODO (dilemma: raster is array)")
          else if (is.numeric(dsn)) {
+            limLonLat <- all(dsn>=-360 & dsn<=+360)
             if (length(dsn)==2) { ## point
                obj <- data.frame(lon=dsn[1],lat=dsn[2])
                sp::coordinates(obj) <- ~lon+lat
-               sp::proj4string(obj) <- sp::CRS("+init=epsg:4326")
+              # sp::proj4string(obj) <- sp::CRS("+init=epsg:4326")
             }
             else if (length(dsn)==4) { ## boundary
                if (dsn[1]>dsn[3])
@@ -154,11 +166,16 @@
                         ,seq(y[3],y[4],len=n),seq(y[4],y[5],len=n))
                   obj <- cbind(x,y)
                }
-               obj <- sp::SpatialLines(list(sp::Lines(sp::Line(obj),1L))
-                                      ,proj4string=sp::CRS("+init=epsg:4326"))
+              # obj <- sp::SpatialLines(list(sp::Lines(sp::Line(obj),1L))
+              #                        ,proj4string=sp::CRS("+init=epsg:4326"))
+               obj <- sp::SpatialLines(list(sp::Lines(sp::Line(obj),1L)))
             }
            # else
            #    obj <- NULL
+            if (limLonLat)
+               sp::proj4string(obj) <- sp::CRS("+init=epsg:4326")
+            else
+               sp::proj4string(obj) <- sp::CRS(session_proj4())
          }
          else
             obj <- try(methods::as(dsn,"Spatial"))
@@ -174,8 +191,14 @@
       }
    }
    else {
-      if (engine=="native") {
-         isSF <- requireNamespace("sf",quietly=.isPackageInUse())
+      if (isNative) {
+         loaded <- .loaded()
+         if ("sf" %in% loaded)
+            isSF <- TRUE
+         else if (("sp" %in% loaded)||("rgdal" %in% loaded))
+            isSF <- FALSE
+         else
+            isSF <- requireNamespace("sf",quietly=.isPackageInUse())
          isSP <- !isSF
       }
       if (!file.exists(dsn)) {
@@ -677,16 +700,18 @@
       else if (isEPSG) {
          a <- .try({
             t_srs <- .epsg2proj4(style)
-            if (isSF)
+            if (isSF) {
                obj <- sf::st_transform(obj,t_srs)
+            }
             if (isSP) {
                obj <- sp::spTransform(obj,t_srs)
             }
          })
          if (!a) {
             t_srs <- .epsg2proj4(style,force=TRUE)
-            if (isSF)
+            if (isSF) {
                obj <- sf::st_transform(obj,t_srs)
+            }
             if (isSP) {
                obj <- sp::spTransform(obj,t_srs)
             }
@@ -699,16 +724,18 @@
       if (isSF) {
         # opE <- options(show.error.messages=TRUE)
         # print(sf::st_bbox(obj))
-        # print(sf::st_crs(obj)$proj4string)
-         obj <- sf::st_transform(obj,t_srs)
+         src0 <- sf::st_crs(obj)$proj4string
+         if (!is.na(src0))
+            obj <- sf::st_transform(obj,t_srs)
         # print(sf::st_crs(obj)$proj4string)
         # print(sf::st_bbox(obj))
         # options(opE)
       }
       if (isSP) {
-        # print(sp::proj4string(obj))
+         src0 <- sp::proj4string(obj)
         # print(c(sp::bbox(obj)))
-         obj <- sp::spTransform(obj,t_srs) ## not tested
+         if (!is.na(src0))
+            obj <- sp::spTransform(obj,t_srs) ## not tested
         # print(sp::proj4string(obj))
         # print(c(sp::bbox(obj)))
       }

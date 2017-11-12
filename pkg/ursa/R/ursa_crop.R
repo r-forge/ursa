@@ -4,16 +4,17 @@
 'ursa_crop' <- function(obj,condition,border=0,resetGrid=TRUE
                                       ,verbose=FALSE)
 {
+  # 20171111 ++ 'discolor(cond)'
    border <- as.integer(round(rep(border,length=4)))
    if (is.null(obj$value))
       return(NULL)
    if (missing(condition))
-      a <- as.data.frame(obj)
+      a <- as.data.frame(discolor(obj))
    else {
       if (FALSE) ## longtime
          a <- as.data.frame(obj[condition])
       else {
-         a <- as.data.frame(condition)
+         a <- as.data.frame(discolor(condition))
       }
    }
    g1 <- g2 <- obj$grid

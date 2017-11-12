@@ -431,6 +431,7 @@
          indS <- attr(varName,"spatial")
          indV <- c(indS,indT)
          indL <- seq_along(con$offset)[-indV]
+        # print(c(indS=indS,indT=indT,indL=indL))
          w <- attr(varName,"weight")
          attributes(varName) <- NULL
          nc.start <- rep(1,length(con$offset))
@@ -471,7 +472,11 @@
                      stop("NCDF column 'time' index?")
                }
                else { 
-                  val[,,i2] <- ncdf4::ncvar_get(nc,varName,start=nc.start
+                  if (indT==3)
+                     val[,,i2] <- ncdf4::ncvar_get(nc,varName,start=nc.start
+                                           ,count=nc.count,collapse_degen=FALSE)
+                  else if (indT==1)
+                     val[i2,,] <- ncdf4::ncvar_get(nc,varName,start=nc.start
                                            ,count=nc.count,collapse_degen=FALSE)
                }
             }

@@ -64,11 +64,18 @@
         # print(mosaic)
         # print(fileout)
          layout.show(max(mosaic$layout))
+        # str(par())
+        # plot(ann,add=TRUE)
          grDevices::dev.off()
          if (execute) {
             if (!toOpen) {
                op <- par(mar=c(0,0,0,0))
                plot(grDevices::as.raster(png::readPNG(fileout)))
+               if (TRUE) {
+                  ann <- png::readPNG(system.file("sponsorship/annotation.png"
+                                  ,package="ursa"))
+                  plot(grDevices::as.raster(ann),add=TRUE)
+               }
                par(op)
             }
             else {
@@ -90,7 +97,7 @@
          graphics.off()
          if ((delafter)&&(file.exists(fileout)))
             file.remove(fileout)
-         }
+      }
       return(invisible(NULL))
    }
    if (getOption("ursaPngFigure")==getOption("ursaPngLayout")$image) {

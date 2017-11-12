@@ -2,6 +2,7 @@
 \alias{session_grid}
 \alias{session_proj4}
 \alias{session_cellsize}
+\alias{session_bbox}
 \alias{session_pngviewer}
 \alias{session_tempdir}
 \title{
@@ -21,6 +22,7 @@ Get and set sessional parameters for grid, CRS, external software for open PNG f
 session_grid(obj)
 session_proj4()
 session_cellsize()
+session_bbox()
 
 session_pngviewer(allow = NA)
 session_tempdir(dst = character())
@@ -76,6 +78,9 @@ NULL
 \code{session_cellsize} returns squared root from multiplication of cell dimension: \code{sqrt(resx*resy)}.
 
 \code{sessiong_pngviewer} returns value of \code{getOption("ursaAllowPngViewer")}.
+
+\code{sessiong_bbox} returns named numeric of lenght 4: minimal x-coodrinate (\code{xmin}), minimal y-coordinate (\code{ymin}), maximal x-coordinate  (\code{xmax}), maximal y-coordinate  (\code{ymax}).
+
 }
 %%~ \references{
 %%~ %% ~put references to the literature/web site here ~

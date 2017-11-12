@@ -1,4 +1,4 @@
-'.rasterize' <- function(obj,...) {
+'.rasterize' <- '.gdal_rasterize' <- function(obj,...) {
    if (!nchar(Sys.which("gdal_rasterize")))
       return(NULL)
    arglist <- list(...)
@@ -24,6 +24,7 @@
    feature <- .getPrm(arglist,name="feature",valid=c("attribute","geometry"))
    where <- .getPrm(arglist,name="subset",default="")
    ogropt <- .getPrm(arglist,name="ogropt",default="")
+   optF <- .getPrm(arglist,name="^opt$",default="")
    isZip <- .lgrep("\\.zip$",dsn)>0
    fname1 <- .gsub("\\.zip$","",dsn)
    fname2 <- paste0(fname1,".zip")
@@ -110,6 +111,11 @@
          bb2 <- sp::spTransform(bb1,proj4)
          bb2 <- c(sp::bbox(bb2))
       }
+     # print(proj4)
+      if (.lgrep("\\+proj=longlat",proj4)) {
+         bb2[1][bb2[1]<(-179)] <- -180
+         bb2[3][bb2[3]>(179)] <- 180
+      }
       cmd <- paste("ogr2ogr","-t_srs",.dQuote(g0$proj4)
               ,"-sql",.dQuote(paste("select FID,* from",.dQuote(.dQuote(lname))))
               ,"-dialect",c("SQLITE","OGRSQL")[2]
@@ -143,7 +149,7 @@
    if (feature=="attribute") {
      # opt <- paste()
       cmd <- with(g0,paste("gdal_rasterize"
-              ,"-a FID"
+              ,"-a FID",optF
               ,"-sql",.dQuote(paste("select FID,* from",.dQuote(.dQuote(lname))))
               ,"-dialect",c("SQLITE","OGRSQL")[2]
               ,"-init -1 -a_nodata -1"
@@ -167,7 +173,11 @@
          va <- va+1L
       va[va==0] <- NA
       res <- lapply(dname,function(x){
-         a <- reclass(va,src=seq(nrow(obj)),dst=obj[[x]])
+         isFID <- .lgrep("fid",x)
+         if (isFID)
+            a <- va
+         else
+            a <- reclass(va,src=seq(nrow(obj)),dst=obj[[x]])
          if (.is.category(a))
             ursa(a,"nodata") <- length(ursa(a,"colortable"))
          names(a) <- x
@@ -181,7 +191,7 @@
       nr <- nrow(obj)
       res <- lapply(seq(nr),function(i){
          cmd <- with(g0,paste("gdal_rasterize"
-              ,"-a FID"
+              ,"-a FID",optF
               ,"-sql",.dQuote(paste("select FID,* from",.dQuote(.dQuote(lname))
                              ,"where",paste0(.dQuote("FID"),"=",i)))
               ,"-dialect",c("SQLITE","OGRSQL")[2]
@@ -204,9 +214,14 @@
    res
 }
 '.gdalwarp' <- function(src,dst=NULL,grid=NULL,resample="near",nodata=NA
-                       ,resetGrid=FALSE,verbose=1L) {
+                       ,resetGrid=FALSE,opt=NULL,verbose=1L) {
    if (is.null(grid)) {
-      grid <- getOption("ursaSessionGrid")
+      if (is.ursa(dst,"grid")) {
+         grid <- dst
+         dst <- NULL
+      }
+      else
+         grid <- getOption("ursaSessionGrid")
    }
    else
       grid <- ursa_grid(grid)
@@ -247,15 +262,27 @@
       dst <- .maketmp(ext=".")
    if (verbose)
       print(c(inMemory=inMemory,removeSrc=removeSrc,isNullGrid=is.null(grid)))
+   if (is.null(opt)) {
+      optF <- ""
+   }
+   else if (!is.null(names(opt))) {
+      optS <- unlist(opt)
+      optF <- paste(paste0("-",names(optS)," ",.dQuote(unname(optS))),collapse=" ")
+   }
+   else
+      optF <- ""
+   if (!("r" %in% names(opt))) {
+      optF <- paste(optF,"-r",resample)
+   }
    if (is.null(grid))
       cmd <- paste("gdalwarp -overwrite -of ENVI"
                   ,ifelse(is.na(nodata),"",paste("-srcnodata",nodata,"-dstnodata",nodata))
-                  ,"-r",resample,src,dst)
+                  ,optF,src,dst)
    else
       cmd <- with(grid,paste("gdalwarp -overwrite -of ENVI"
                         ,"-t_srs",.dQuote(proj4),"-tr",resx,resy,"-te",minx,miny,maxx,maxy
                         ,ifelse(is.na(nodata),"",paste("-srcnodata",nodata,"-dstnodata",nodata))
-                        ,"-r",resample,src,dst))
+                        ,optF,src,dst))
    if (verbose)
       message(cmd)
    if (verbose>1)

@@ -1,6 +1,15 @@
 '.project' <- function(xy,proj,inv=FALSE,verbose=FALSE) {
    ## because of quicker load of 'proj4' package
   # show.error.messages=verbose
+   if (isSF <- inherits(xy,c("sf","sfc"))) {
+      return(sf::st_transform(xy,proj))
+   }
+   else if (inherits(xy,"Spatial")) {
+      return(sp::spTransform(xy,proj))
+   }
+  # print("---")
+  # print(class(xy))
+  # print("===")
    opW <- options(warn=-11,show.error.messages=verbose);on.exit(options(opW))
   # if (("package:rgdal" %in% search())||
   #     (!requireNamespace("proj4",quietly=.isPackageInUse())))

@@ -27,7 +27,13 @@
                cname <- val
                val <- seq_along(val)-1L
               # str(list(value=val,name=cname,pal=unclass(unname(ct))))
-               res <- colorize(obj,value=val,name=cname,pal=unclass(unname(ct)))
+               pal <- unclass(unname(ct))
+               if (anyNA(pal)) {
+                  res <- colorize(obj,value=val,name=cname)
+                  ursa_colortable(res) <- ct
+               }
+               else
+                  res <- colorize(obj,value=val,name=cname,pal=unclass(unname(ct)))
             }
             else { ## interval ## not-tested
                res <- obj

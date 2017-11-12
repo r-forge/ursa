@@ -11,8 +11,8 @@
       }
    }
    if (!FALSE) {
-      src <- "akima"
-      dst <- "akima"
+      src <- "compose_panel"
+      dst <- "=======_====="
       ind <- as.character(c(1,2,3,4,5,6))
       toWrite <- FALSE
       dpath1 <- c('1'="C:/platt/R/ursa-package/ursa/R"

@@ -596,7 +596,8 @@
       }
    }
    if (is.null(outframe)) {
-      res <- list(gridline=gridline,panel=panel,margin=NULL,col=col,lwd=lwd,lty=lty)
+      res <- list(gridline=gridline,grid=list(lon=lonSet,lat=latSet)
+                ,panel=panel,margin=NULL,col=col,lwd=lwd,lty=lty)
       class(res) <- "ursaGridLine"
       return(res)
    }
@@ -743,7 +744,8 @@
       outframe <- rbind(outframe,da0[which(da0$side!=0),])
    }
    outframe <- outframe[with(outframe,order(side,at)),]
-   res <- list(gridline=gridline,panel=panel,margin=outframe
+   res <- list(gridline=gridline,grid=list(lon=lonSet,lat=latSet)
+              ,panel=panel,margin=outframe
               ,col=col,lwd=lwd,lty=lty)
    class(res) <- "ursaGridLine"
    res

@@ -126,8 +126,9 @@
    }
    if (verbose>2)
       .elapsedTime(paste0("finish:nodata-restore:",fun))
-   if (isCT)
+   if (isCT) {
       y <- reclass(discolor(y),ct)
+   }
    if (verbose>1)
       print(summary(y$value))
    if (FALSE) {
@@ -425,6 +426,8 @@
    }
    if (is.character(proj4))
       g$proj4 <- proj4
+   else if (is.numeric(proj4))
+      g$proj4 <- .epsg2proj4(proj4,force=!TRUE)
    if (is.na(g$proj4))
       g$proj4 <- ""
    if (any(border!=0))
@@ -450,6 +453,7 @@
          tolx <- toly <- tolerance
       }
       if ((!.is.integer(g$columns,tolx))||(!.is.integer(g$rows,toly))) {
+         verbose <- TRUE
          if (verbose) {
             print(g,digits=15)
          }

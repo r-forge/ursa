@@ -174,6 +174,7 @@
    if (missing(dsn)) {
       dsn <- if (style!="auto") .geomap(style=style) else .geomap()
    }
+   toUnloadMethods <- !("methods" %in% .loaded())
    S4 <- isS4(dsn)
    if (S4) {
       .require("methods",quietly=.isPackageInUse())
@@ -197,7 +198,7 @@
       g0 <- regrid(g0,bbox=bbox)
       print(g0)
    }
-   toUnloadMethods <- if (S4) TRUE else attr(obj,"toUnloadMethods")
+   toUnloadMethods <- if (S4) toUnloadMethods else attr(obj,"toUnloadMethods")
    dname <- attr(obj,"colnames")
    style <- attr(obj,"style")
    geocodeStatus <- attr(obj,"geocodeStatus")
@@ -262,7 +263,6 @@
          basemap <- try(.geomap(lim,style=style,size=size,zoom=zoom
                        ,border=border,verbose=verbose))
          options(opE)
-        # q()
          if (!inherits(basemap,"try-error"))
             break
         # message(geterrmessage())

@@ -172,7 +172,7 @@
    }
    else
       w0 <- w*1000
-   if (paperScale[1]!=0) {
+   if ((!manualW)&&(paperScale[1]!=0)) { ## 20171019 ++ (!manualW)
       pw <- par()$fin[1]*2.54
       w1 <- paperScale[2]/(pw*sc) ## 1cm or 'paperScale[2] cm'
       if (w1<1)

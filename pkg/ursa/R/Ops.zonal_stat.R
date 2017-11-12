@@ -1,6 +1,6 @@
 # 'choropleth' <- function(...) .syn('zonal_stat',1,...) ## GISTools::choropleth()
 'zonal_stat' <- function(x,by,FUN,table=FALSE) {
-   aggregate(x=x,by=by,FUN=FUN,table=table,na.rm=TRUE)
+   aggregate(x=x,by=by,FUN=FUN,table=table)#,na.rm=TRUE)
 }
 'aggregate.ursaRaster' <- function(x,by,FUN,table=FALSE,...)
 {

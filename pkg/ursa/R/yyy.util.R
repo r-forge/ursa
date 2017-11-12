@@ -242,7 +242,8 @@
       d <- b1$dist
       if (!.try(m <- .modal3(d)))
          m <- NA
-      print(c(avg=mean(d),median=median(d),mode2=.modal2(d),mode3=m))
+      if (verbose)
+         print(c(avg=mean(d),median=median(d),mode2=.modal2(d),mode3=m))
    }
    b1
 }
@@ -348,3 +349,4 @@
    options(opE)
    ret
 }
+'.loaded' <- function() gsub("^package:","",grep("^package:",search(),value=TRUE))

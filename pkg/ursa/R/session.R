@@ -50,6 +50,8 @@
 #}
 'session_proj4' <- function() session_grid()$proj4
 'session_cellsize' <- function() with(session_grid(),sqrt(resx*resy))
+'session_bbox' <- function() with(session_grid()
+                                 ,c(minx=minx,miny=miny,maxx=maxx,maxy=maxy))
 'session_pngviewer' <- function(allow=NA) {
    opV <- getOption("ursaAllowPngViewer")
    if ((is.na(allow))||(!is.logical(allow))) {

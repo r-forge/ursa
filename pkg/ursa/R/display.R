@@ -67,6 +67,11 @@
          compose_open(legend=NULL,...)
          panel_new(...)
          panel_decor(...)
+         if (TRUE) { #(.isPackageInUse())
+            ann <- png::readPNG(system.file("sponsorship/annotation.png"
+                            ,package="ursa"))
+            panel_annotation(ann,alpha=0.5,pos="bottomright",cex=0.5)
+         }
          compose_close(...)
          return(NULL)
       }

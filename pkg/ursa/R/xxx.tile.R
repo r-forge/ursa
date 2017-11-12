@@ -65,10 +65,11 @@
                       ,"\uA9 Esri: Esri, HERE, Garmin, NGA, USGS")
    s$Esri.Hillshade <- c("https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}.jpg"
                       ,"\uA9 ESRI World Hillshade")
-   s$HERE.Aerial <- c(paste0("https://{1234}.aerial.maps.cit.api.here.com/maptile"
-                          ,"/2.1/maptile/newest/satellite.day/{z}/{x}/{y}/256/png8?"
-                          ,"app_id=",optHERE$id,"&app_code=",optHERE$code,"&lg=eng")
-                     ,"Map \uA9 1987-2014 HERE")
+   s$HERE.Aerial <- c(url=paste0("https://{1234}.aerial.maps.cit.api.here.com/maptile"
+                                ,"/2.1/maptile/newest/satellite.day/{z}/{x}/{y}/256/png8?"
+                                ,"app_id=",optHERE$id,"&app_code=",optHERE$code,"&lg=eng")
+                     ,cite="Map \uA9 1987-2014 HERE"
+                     ,ext="png")
    s$'2gis' <- c("https://tile{0123}.maps.2gis.com/tiles?x={x}&y={y}&z={z}&v=1.2"
                 ,paste0(osmCr,", API 2GIS")
                 ,"png")
@@ -195,9 +196,13 @@
   # download.file(tile,fname,method="curl",mode="wb",quiet=FALSE
   #              ,extra="-H Accept-Language:de")
    if (fileext %in% c("png"))
-      a <- 255*png::readPNG(fname)
+      a <- try(255*png::readPNG(fname))
    else if (fileext %in% c("jpg","jpeg"))
-      a <- 255*jpeg::readJPEG(fname)
+      a <- try(255*jpeg::readJPEG(fname))
+   if (inherits(a,"try-error")) {
+      cat(geterrmessage())
+      return(a)
+   }
    file.remove(fname)
    if (TRUE) {
       dima <- dim(a)

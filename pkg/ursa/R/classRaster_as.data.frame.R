@@ -19,6 +19,7 @@
    y <- rev(with(g1,seq(miny,maxy,by=resy)[-1]-resy/2))
   # xy <- expand.grid(x=x,y=y,KEEP.OUT.ATTRS=FALSE,stringsAsFactors=FALSE)
    xy <- data.frame(x=rep(x,times=length(y)),y=rep(y,each=length(x)))
+   isCT <- .is.colortable(obj)
    bname <- bandname(obj)
    if (!is.na(obj$con$posZ[1]))
       indZ <- obj$con$posZ
@@ -48,6 +49,13 @@
          for (i in seq_along(indZ))
          {
             res$z <- c(obj$value[indR,i]) ## 20170202 'i' or 'indZ[i]'?
+            if (isCT) {
+               ct <- ursa_colortable(obj)
+               str(ct)
+               aname <- names(ct)
+              # acol <- unname(ct) ## TODO new column $amount_col for $amount
+               res$z <- factor(names(ct)[res$z+1L])
+            }
             if (length(indZ)>0) ## 20160812 changed '>1' -> '>0'
                colnames(res)[i+2] <- bname[i]
          }
@@ -86,7 +94,7 @@
    if (is.character(col.names))
       colnames(res) <- rep(col.names,length=ncol(res))
    attr(res,"proj4") <- g1$proj[which.max(nchar(g1$proj))]
-   attr(res,"colortable") <- ursa_colortable(obj)
+  # attr(res,"colortable") <- ursa_colortable(obj)
    res
 }
 # 'as_data_frame' <- function(obj) UseMethod("as_data_frame",obj)

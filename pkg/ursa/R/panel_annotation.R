@@ -122,7 +122,8 @@
       sc <- getOption("ursaPngScale")
       g2 <- if (is.numeric(sc)) regrid(g1,mul=sc) else g1
       dima <- dim(label)
-      nb <- length(dima)
+     # nb <- length(dima) ## -- 20170919
+      nb <- dima[3] ## ++ 20170919
       if (is.character(alpha)) {
          alpha <- as.numeric(as.hexmode(alpha))/255
       }
@@ -134,7 +135,7 @@
             dim(label) <- c(dima[1:2],nb+1)
          }
          else if (nb==4) {
-            label[,,4] < label[,,4]*alpha
+            label[,,4] <- label[,,4]*alpha
          }
       }
       width <- dima[2]*g2$resx*cex
