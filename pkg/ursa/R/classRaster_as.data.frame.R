@@ -51,7 +51,6 @@
             res$z <- c(obj$value[indR,i]) ## 20170202 'i' or 'indZ[i]'?
             if (isCT) {
                ct <- ursa_colortable(obj)
-               str(ct)
                aname <- names(ct)
               # acol <- unname(ct) ## TODO new column $amount_col for $amount
                res$z <- factor(names(ct)[res$z+1L])
