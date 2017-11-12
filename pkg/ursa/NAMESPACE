@@ -6,7 +6,7 @@ importFrom("graphics", "abline", "axTicks", "axis", "contour",
            "filled.contour", "hist", "image", "mtext", "plot",
            "polygon", "rect", "strheight", "strwidth", "text", 
            "box", "layout", "layout.show", "lcm", "lines",
-           "par", "points", "segments")
+           "par", "points", "segments", "legend")
 importFrom("stats", "aggregate", "density", "loess", "median", "pf",
            "predict", "runif", "sd", "var", "na.omit")
 importFrom("utils", "str", "download.file", "head", "tail", "methods",

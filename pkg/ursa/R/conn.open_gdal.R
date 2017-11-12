@@ -35,7 +35,7 @@
      #   no applicable method for 'close' applied to an object of class "NULL"
      # Calls: close
      ## 20170529 patch for failure with 'rgdal' at r-forge
-      if (.Platform$OS.type=="zzzunix"){
+      if (.Platform$OS.type=="unix"){
          message(paste("Unable to open GDAL file. Failure for"
                       ,"R-forge buildig machine (Unix OS) since May 2017"))
          if ((!.lgrep("\\.(rds)$",fname))&&(file.exists(fname))) {## 20170529

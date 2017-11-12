@@ -1,0 +1,134 @@
+2017-11-12
+
+<style>
+   code,
+   kbd,
+   pre {
+     font-family: Cousine, Consolas, Menlo, "Liberation Mono", Courier, monospace;
+     font-weight: regular;
+     line-height: 115%;
+     font-size: 90%;
+     background-color: #E6F1FF;
+   }
+</style>
+### version 3.7-18
+
+-   Improved consistence beetween 'dim' interity in non-public `.regrid()`
+
+-   Supporting categories in exporting to `data.frame`
+
+-   Back to patch of failure with 'rgdal' of Unix build machine at r-forge
+
+### version 3.7-17
+
+-   Correction for bounding around 180 degree longitude
+
+### version 3.7-16
+
+-   minor improvement to spatial allocation of vector objects with crossing of 180 degree longitude
+
+-   allocate(): slightly improvement for regular grid detection
+
+-   background for future functionality
+
+### version 3.7-15
+
+-   added possibility of image annotation; argument 'label' in 'panel\_annotation' can be object of class 'array'
+
+-   fixed divergent coloring for (only) two values in 'cubehelix()'
+
+-   'ggmap', 'foreign' are removed from the list of suggested packages; 'ncdf4' is added to the list of suggested packages.
+
+### version 3.7-14
+
+-   fixed export to Raster(Layer|Brick|Stack) with NA nodata
+
+### version 3.7-13
+
+-   gentle requirements to "chessboard" grid in 'panel\_new()'
+
+-   fix layout in 'compose\_design()' for images like strips
+
+-   in suggestion, sf (&gt;= 0.5-0)
+
+### version 3.7-12
+
+-   Minor changes for geocoded glance()
+
+### version 3.7-11
+
+-   'nominatim' geocoding for 180-longitute-objects is more correct, but traffic is higher
+
+-   alternate geocoding service in the case of base one failure
+
+### version 3.7-10
+
+-   Adapation glance() for if argument "dsn" is "point" 'c(lon,lat)' and "boundary" 'c(minx,miny,maxx,maxy)'
+
+### version 3.7-9
+
+-   Vectors without data table - fixed
+
+### version 3.7-8
+
+-   Bypass for 'rgdal' usage diring examples on r-forge UNIX building machine. E.g.: Error in dyn.load(file, DLLpath = DLLpath, ...) : unable to load shared object '/home/rforge/lib/R/3.4/rgdal/libs/rgdal.so': libgdal.so.1: cannot open shared object file: No such file or directory
+
+### version 3.7-7
+
+-   Better matching for floating-point coordinates
+
+### version 3.7-6
+
+-   Minor fixes for categories after resample
+
+-   'glance()' is recoded
+
+### version 3.7-5
+
+-   Adaptation for R-exts' "5.4 Registering native routines" for R-3.4.0.
+
+### version 3.7-4
+
+-   Non-ascii for geocoding in 'glance'
+
+-   New function 'get\_earthdata' for retreiving MODIS mosaics.
+
+-   Added package 'jpeg' in the category 'Imported'.
+
+### version 3.7-3
+
+-   Non-ascii for geocoding in 'glance'
+
+### version 3.7-2
+
+-   Introduce geocode to 'glance'. There is no relation between data and geocoded place.
+
+-   Introduce tiles to 'glance'. Now static maps and tiles for basemap in "+proj=merc"
+
+-   Dismiss from dQuote() and sQuote(), which put non-symmetrical quotes in Rgui; GDAL does't understad it.
+
+-   'inst/glance' contains mock-up to create vector/raster file associantion with glance()
+
+-   'glance' can work without package 'sf'; however "package:methods" should be in "search()"
+
+-   Rename 'panel\_gridline' to 'panel\_graticule'.
+
+### version 3.7-1
+
+-   Public wrapper 'glance()' for non-public '.glance()': quick-look of GIS raster and vector data
+
+### version 3.6-3
+
+-   Documentation for 'ursaProgressBar'
+
+### version 3.6-2
+
+-   Added argument "..." to function 'read\_gdal'. Now, if 'as.ursa(uri)' or 'display(uri)', then additional arguments can be passed to 'download.file'. For example, if you need 'mode="wb"' or ignore certificate for HTTPS
+
+### version 3.6-1
+
+-   Added 'session\_pngviewer()' and 'session\_tempdir()' to follow CRAN policy. If "Rscript", then external software is used to open PNG; current directory is used to write files If 'interactive()' or "R CMD BATCH", no external software for PNG; 'tempdir()' is used to write files
+
+### version 3.5-2
+
+-   Initial submission to R-Forge
