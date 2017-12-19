@@ -1,4 +1,4 @@
-'as.table.ursaRaster' <- function(x,...) {
+'as.table.ursaRaster' <- 'ursa_table' <- function(x,...) {
   # print("as.table.ursaRaster")
    ct <- ursa_colortable(x)
    isCT <- .is.colortable(x)

@@ -525,8 +525,10 @@
       bname1 <- .grep(patt,metadata,value=TRUE)
       if (length(bname1)) {
          bname2 <- .gsub2(patt,"\\2",bname1)
-         if (!all(bname2==bname1))
-            obj$name <- bname2
+         if (!all(bname2==bname1)) {
+            bseq2 <- as.integer(.gsub2(patt,"\\1",bname1))
+            obj$name[bseq2] <- bname2
+         }
       }
    }
    if (is.na(obj$name[1])) {

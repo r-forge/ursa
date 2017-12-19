@@ -6,11 +6,32 @@
    img <- .getPrm(arglist,name="",default=NULL
                  ,class=list(c("list","ursaRaster"),"ursaRaster"))
    isList <- .is.ursa_stack(img)
-   if ((is.null(img))||((!isList)&&(ursa_blank(img)))) { ## was 'missing'
+   if ((is.null(img))||((!isList)&&(all(is.na(ursa_value(img)))))) { ## was 'missing'
   # if (is.null(img)) { 
-      panel_new(...)
-      panel_decor(...)
-      return(NULL)
+      if (!length(arglist)) {
+         panel_new(...)
+         panel_decor(...)
+      }
+      else {
+         aname <- names(arglist)
+         indB <- .grep("^blank",aname)
+         do.call("panel_new",arglist[indB])
+         indSP <- which(sapply(arglist,inherits,"Spatial"))
+         indSF <- which(sapply(arglist,inherits,c("sfc","sf")))
+         other <- seq_along(arglist)[-c(indSP,indSF)]
+         if (length(indSP)) {
+           # panel_plot(...)
+            do.call("panel_plot",c(arglist[indSP],arglist[other]))
+         }
+         if (length(indSF)) {
+            do.call("panel_plot",c(arglist[indSF],arglist[other]))
+         }
+         indD <- .grep("^(coast|grid|graticul|scale|ruler)",aname)
+         do.call("panel_decor",arglist[indD])
+         indA <- .grep("^(caption|ann)",aname)
+         do.call("panel_annotation",arglist[indA])
+      }
+      return(invisible(NULL))
    }
   # annotation <- .getPrm(arglist,name="annotation",default=NA)#_character_)
   # decor <- .getPrm(arglist,name="decor",default=TRUE)
@@ -142,5 +163,5 @@
      # do.call("compose_legend",c(img,arglist)) ## FAIL
       return(NULL)
    }
-   ct
+   invisible(ct)
 }

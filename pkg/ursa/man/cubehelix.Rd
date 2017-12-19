@@ -7,7 +7,7 @@ Generate "cubehelix" palette.
 \code{cubehelix} returs set of RGB colours, which are  screen display of intensity images
 }
 \usage{
-cubehelix(n, value = numeric(), weak = NA, rich = NA, r = NA, hue = NA, gamma = 1,
+cubehelix(n, value = numeric(), weak = NA, rich = NA, rotate = NA, hue = NA, gamma = 1,
           dark = NA, light = NA, inv = NA, verbose = NA)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -19,13 +19,13 @@ Positive integer. Length of returned color vector. If \code{n} is \link[base:mis
 Numerice vector of values, which are associated with a palette. If both positive and negative values are in this vector, then divergence color palette is returned. Default in numeric of length zero (unspecified).
 }
   \item{weak}{
-Numeric. The angle (in degrees) of the helix for color with \code{light} intensity. If both \code{rich} and \code{weak} are specified, the \code{r} is defined as difference between \code{rich} and \code{weak}. If all \code{weak}, \code{rich} and \code{r} are unspecified, then random values are used. Default is \code{NA} (unspecified).
+Numeric. The angle (in degrees) of the helix for color with \code{light} intensity. If both \code{rich} and \code{weak} are specified, the \code{rotate} is defined as difference between \code{rich} and \code{weak}. If all \code{weak}, \code{rich} and \code{rotate} are unspecified, then random values are used. Default is \code{NA} (unspecified).
 }
   \item{rich}{
-Numeric. The angle (in degrees) of the helix for color with \code{dark} intensity. If both \code{rich} and \code{weak} are specified, the \code{r} is defined as difference between \code{rich} and \code{weak}. If all \code{weak}, \code{rich} and \code{r} are unspecified, then random values are used. Default is \code{NA} (unspecified).
+Numeric. The angle (in degrees) of the helix for color with \code{dark} intensity. If both \code{rich} and \code{weak} are specified, the \code{rotate} is defined as difference between \code{rich} and \code{weak}. If all \code{weak}, \code{rich} and \code{rotate} are unspecified, then random values are used. Default is \code{NA} (unspecified).
 }
-  \item{r}{
-Numeric. The anlge of rotation (in degrees) of the helix over the scale; can be negative. If \code{r} and \code{weak} are specified, then \code{rich} is defined as sum of \code{weak} and \code{r}. If \code{r} and \code{rich} are specified, then \code{weak} is defined as difference between \code{r} and \code{weak}. If all \code{weak}, \code{rich} and \code{r} are unspecified, then random values are used. Default is \code{NA} (unspecified).
+  \item{rotate}{
+Numeric. The anlge of rotation (in degrees) of the helix over the scale; can be negative. If \code{rotate} and \code{weak} are specified, then \code{rich} is defined as sum of \code{weak} and \code{rotate}. If \code{rotate} and \code{rich} are specified, then \code{weak} is defined as difference between \code{rotate} and \code{weak}. If all \code{weak}, \code{rich} and \code{rotate} are unspecified, then random values are used. Default is \code{NA} (unspecified).
 }
   \item{hue}{
 Non-negative numeric. Saturation of color. \code{hue=0} gives pure greyscale. If unspecified, then random value in interval [0.9, 1.5] is used. Default is \code{NA} (unspecified).
@@ -93,8 +93,8 @@ session_grid(regrid(mul=1/16))
 a <- ursa_dummy(9,min=0,max=255)
 b4 <- b3 <- b2 <- b1 <- vector("list",length(a))
 for (i in seq_along(b1)) {
-   b1[[i]] <- colorize(a[i],pal=cubehelix(11,weak=45*i,r=+270),ncolor=11)
-   b2[[i]] <- colorize(a[i],pal=cubehelix(11,weak=45*i,r=-270),ncolor=11)
+   b1[[i]] <- colorize(a[i],pal=cubehelix(11,weak=45*i,rotate=+270),ncolor=11)
+   b2[[i]] <- colorize(a[i],pal=cubehelix(11,weak=45*i,rotate=-270),ncolor=11)
    b3[[i]] <- colorize(a[i]-127,pal=cubehelix)
    hue <- sample(seq(2)-1,1)
    s <- ifelse(hue==0,NA,runif(1,min=91,max=223))

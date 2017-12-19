@@ -1,12 +1,13 @@
-'.write_ogr' <- function(obj,fname,driver=NA,compress="",zip=NULL
-                        ,ogr2ogr=nchar(Sys.which("ogr2ogr"))>0,transform=NA
-                        ,verbose=FALSE) {
+'.write_spatial' <- 
+'.write_ogr' <- function(obj,fname,driver=NA,compress=""
+                        ,zip=NULL,ogr2ogr=nchar(Sys.which("ogr2ogr"))>0
+                        ,transform=NA,verbose=FALSE) {
   # obj <- head(obj,100)
    bname <- basename(fname)
    dname <- dirname(fname)
    fext <- .gsub("^.+\\.(.+)$","\\1",bname)
    wait <- 60
-   interimExt <- c("gpkg","geojson")[2]
+   interimExt <- c("gpkg","geojson","shp")[3]
    driverList <- c(shp="ESRI Shapefile"
                   ,sqlite="SQLite",json="GeoJSON",geojson="GeoJSON",gpkg="GPKG"
                   ,tab="Mapinfo File",kml="KML")
@@ -55,14 +56,28 @@
          res
       })
       p4s <- unname(p4s)
-      keepCRS <- do.call("all.equal",as.list(p4s))
+      keepCRS <- ifelse(length(p4s)==1,TRUE,do.call("all.equal",as.list(p4s)))
       if (verbose)
-         .elapsedTime("0")
+         .elapsedTime("list:0")
+      iname <- vector("list",length(fname1))
       for (i in seq_along(obj)) {
-         .write_ogr(obj[[i]],fname1[i],verbose=verbose)
+         o <- obj[[i]]
+         isSF <- inherits(o,c("sf","sfc"))
+         isSP <- !isSF
+         if (isSF) {
+            ind <- match(attr(o,"sf_column"),colnames(o))
+            jname <- colnames(o)[-ind]
+            colnames(o)[-ind] <- sprintf("fld%03d",seq_along(jname))
+         }
+         else if (isSP) {
+            jname <- colnames(o@data)
+            colnames(o@data) <- sprintf("fld%03d",seq_along(jname))
+         }
+         iname[[i]] <- jname
+         .write_ogr(o,fname1[i],verbose=verbose) ## RECURSIVE
          setUrsaProgressBar(pb)
          if (verbose)
-            .elapsedTime(i)
+            .elapsedTime(paste0("list:",i))
       }
       lname <- names(obj)
       if (is.null(lname))
@@ -79,6 +94,30 @@
         # dopt <- c(dopt,"SPATIALITE=yes")
          lopt <- c(lopt,"LAUNDER=NO")#,"SPATIAL_INDEX=YES")
       }
+      suppressWarnings({
+         first <- TRUE
+         op <- options(warn=2)
+         for (i in seq(wait)) {
+            if (!file.exists(fname))
+               break
+            if (file.remove(fname))
+               break
+            if (first) {
+               cat(paste("Waiting",wait,"seconds for permitted writting"
+                        ,.sQuote(bname)))
+               first <- FALSE
+            }
+            cat(".")
+            Sys.sleep(1)
+         }
+         options(op)
+         if (!first) {
+            if (i==wait)
+               cat(" FAILURE!\n")
+            else
+               cat(" ok!\n")
+         }
+      })
       for (i in seq_along(fname1)) {
          b <- paste(fname,fname1[i],"-nln",lname[i])
          if (length(dopt))
@@ -87,17 +126,35 @@
             b <- paste(paste("-lco",lopt),b)
          if ((i==1)&&(keepCRS))
             b <- paste(b,"-t_srs",.dQuote(p4s[1]))
-         if (i==1)
-            cmd <- paste("ogr2ogr","-f",.dQuote(driver),b)
+         if ((interimExt=="shp")&&(!is.null(iname[[i]]))) {
+            aname <- sprintf("fld%03d",seq_along(iname[[i]]))
+            s <- paste("select",paste(aname,"as",paste0("\\\"",iname[[i]],"\\\"")
+                                     ,collapse=",")
+                      ,"from",paste0("\\\""
+                                    ,.gsub("\\.shp$","",basename(fname1[i]))
+                                    ,"\\\""))
+            s <- paste("-sql",.dQuote(s))
+            ##~ cat(s)
+            ##~ cat("\n")
+            ##~ s <- ""
+         }
          else
-            cmd <- paste("ogr2ogr","-update -append",b)
+            s <- ""
+         if (i==1)
+            cmd <- paste("ogr2ogr",s,"-f",.dQuote(driver),b)
+         else
+            cmd <- paste("ogr2ogr",s,"-update -append",b)
          if (verbose)
             message(cmd)
-         if (!system(cmd))
-            file.remove(fname1[i])
+         if (!system(cmd)) {
+            if (.grep("\\.shp$",basename(fname1[i])))
+               .shp.remove(fname1[i])
+            else if (file.exists(fname1[i]))
+               file.remove(fname1[i])
+         }
          setUrsaProgressBar(pb)
          if (verbose)
-            .elapsedTime(i)
+            .elapsedTime(paste0("append:",i))
       }
       close(pb)
       return(invisible(0L))
@@ -141,7 +198,8 @@
          if (file.remove(fname))
             break
          if (first) {
-            cat(paste("Waiting for permitted writting",.sQuote(bname)))
+            cat(paste("Waiting",wait,"seconds for permitted writting"
+                     ,.sQuote(bname)))
             first <- FALSE
          }
          cat(".")
@@ -159,12 +217,30 @@
    isSP <- !isSF
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
+   if (isSF)
+      aname <- try(names(sf::st_agr(obj)),silent=TRUE)
+   else if (isSP)
+      aname <- try(colnames(obj@data),silent=TRUE)
+   if (inherits(aname,"try-error"))
+      aname <- character()
+   if (driver %in% c("ESRI Shapefile")) {
+      for (a in aname) {
+         if (!inherits(obj[[a]],"POSIXt"))
+            next
+         v <- as.character(as.POSIXct(as.numeric(obj[[a]])
+                          ,origin="1970-01-01",tz="UTC"))
+         obj[[a]] <- paste0(.gsub("(^.+\\d)(\\s)(\\d.+$)","\\1\\T\\3",v),"Z")
+      }
+   }
    if (isSP) {
       if (driver %in% c("GeoJSON","KML","GPX")) {
          obj <- sp::spTransform(obj,sp::CRS("+init=epsg:4326"))
       }
       opW <- options(warn=1)
      # dsn <- if (driver %in% c("zzzESRI Shapefile")) dname else fname
+      if (interim) {
+         colnames(obj@data) <- iname <- sprintf("fld%03d",seq_along(colnames(obj@data)))
+      }
       rgdal::writeOGR(obj,dsn=fname,layer=lname,driver=driver
                      ,dataset_options=dopt,layer_options=lopt
                    # ,encoding=encoding
@@ -183,6 +259,10 @@
          obj <- sf::st_transform(obj,4326)
       }
       opW <- options(warn=1)
+      if (interim) {
+         ind <- head(seq_along(obj),-1)
+         names(obj)[ind] <- iname <- sprintf("fld%03d",ind)
+      }
       sf::st_write(obj,dsn=fname,layer=lname,driver=driver
                   ,dataset_options=dopt,layer_options=lopt
                   ,delete_layer=file.exists(fname)
@@ -190,8 +270,6 @@
                   ,quiet=!verbose)
       options(opW)
    }
-   if (driver=="ESRI Shapefile")
-      writeLines("1251",file.path(dname,paste0(lname,".cpg")))
    if (interim) {
       dopt <- character()
       lopt <- character()
@@ -206,18 +284,35 @@
          b <- c(b,paste("-dco",.dQuote(dopt)))
       if (length(lopt))
          b <- c(b,paste("-lco",.dQuote(lopt)))
-      cmd <- paste("ogr2ogr"#,ifelse(verbose,"-progress","")
-                  ,"-f",.dQuote(driver0),"-t_srs",.dQuote(p4s),b
+      lnameF <- ifelse(interimExt=="shp",.gsub("\\.shp$","",basename(fname)),lname)
+      if (length(aname)) {
+         s <- paste("select"
+                   ,paste(iname,"as",paste0("\\\"",aname,"\\\""),collapse=",")
+                   ,"from",paste0("\\\"",lnameF,"\\\""))
+         s <- paste("-sql",.dQuote(s))
+      }
+      else
+         s <- ""
+      cmd <- paste("ogr2ogr"
+                  ,ifelse(verbose,"-progress",""),s
+                  ,"-f",.dQuote(driver0)
+                  ,ifelse(interimExt=="shp","",paste("-t_srs",.dQuote(p4s)))
+                  ,b
                   ,.dQuote(fname0),.dQuote(fname),"-nln",lname)
       if (verbose)
          message(cmd)
       system(cmd)
-      if (file.exists(fname0))
-         file.remove(fname)
-
+      if (file.exists(fname0)) {
+         if (interimExt=="shp")
+            .shp.remove(fname)
+         else
+            file.remove(fname)
+      }
    }
+   else if (driver=="ESRI Shapefile")
+      writeLines("1251",file.path(dname,paste0(lname,".cpg")))
    if (!nchar(compress))
-      return(NULL)
+      return(invisible(NULL))
    if ((.lgrep("gz",compress))&&(nchar(Sys.which("gzip"))))
       system2("gzip",list(fname))
    else if (.lgrep("bz(ip)*2",compress)&&(nchar(Sys.which("bzip2"))))
@@ -252,7 +347,7 @@
       options(opW)
       utils::zip(z,f,flags="-qm9j") ## verbose output ## 'myzip(z,f,keys="-m -9 -j")'
    }
-   NULL
+   invisible(NULL)
 }
 '.shp.layer' <- function(fname)
 {
@@ -393,6 +488,8 @@
    res
 }
 '.shp.remove' <- function(fname) {
+   if (.lgrep("\\.shp$",fname))
+      fname <- .gsub("\\.shp$","",fname)
    file.remove(.dir(paste0("^",fname,"\\.(cpg|dbf|prj|shp|shx)$")))
 }
 '.sf.read' <- function(fname,reproject=TRUE,encoding="1251",verbose=0L,...)

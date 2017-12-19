@@ -8,6 +8,7 @@
   # print("ursa -- .onLoad")
    p <- proc.time()
    options(ursaTimeStart=p,ursaTimeDelta=p)
+   rm(p)
    session_pngviewer()
    session_tempdir()
   # if ((FALSE)&&(interactive()))
@@ -19,8 +20,22 @@
    if (file.exists(fpath)) {
      # ok <- try(Sys.setenv(R_RMAP_TEMPLATE=fpath))
       ok <- try(options(ursaTemplate=fpath))
-      if (!inherits(ok,"try-error"))
+      if (!inherits(ok,"try-error")) {
+         if (("plutil" %in% loadedNamespaces())&&(.isPackageInUse())) {
+            .ursaEnviron <- new.env()
+            list1 <- unclass(utils::lsf.str(envir=asNamespace("ursa"),all=TRUE))
+            list1 <- .grep("^\\..+",list1,value=TRUE)
+            list1 <- .grep("(zzz|hide)",list1,value=TRUE,invert=TRUE)
+            '.assign' <- function(v) assign(v,get(v),envir=.ursaEnviron)
+            for (a in list1)
+               .assign(a)
+         }
+        # .spatialize <<- ursa:::.spatialize
+        # assign(".spatialize",ursa:::.spatialize,envir=.GlobalEnv) ## OK
+        # assign(".spatialize",get(".spatialize"),envir=.GlobalEnv) ## OK
+        # assign(".spatialize",get("ursa:::.spatialize"),envir=.GlobalEnv) ## FAIL
          return(invisible(0L))
+      }
    }
    fpath <- system.file("template",package="ursa")
   # try(Sys.setenv(R_RMAP_TEMPLATE=fpath))

@@ -138,10 +138,10 @@
    }
    invisible(0L)
 }
-'.glance' <- function(dsn,layer=".*",grid=NULL,attr=".+",size=NA,expand=1
+'.glance' <- function(dsn,layer=".*",grid=NULL,field=".+",size=NA,expand=1
                         ,border=27,lat0=NA,lon0=NA,resetProj=FALSE
                         ,style="auto"
-                        ,feature=c("auto","attribute","geometry"),alpha=NA
+                        ,feature=c("auto","field","geometry"),alpha=NA
                         ,basemap.order=c("after","before"),basemap.alpha=NA
                         ,engine=c("native","sp","sf")
                         ,geocode="",place=""
@@ -180,7 +180,7 @@
       .require("methods",quietly=.isPackageInUse())
      # requireNamespace("methods",quietly=.isPackageInUse())
    }
-   obj <- .spatialize(dsn=dsn,engine=engine,layer=layer,attr=attr,geocode=geocode
+   obj <- .spatialize(dsn=dsn,engine=engine,layer=layer,field=field,geocode=geocode
                    ,place=place,grid=grid,size=size
                   # ,expand=expand,border=border
                    ,expand=expand,border=0
@@ -322,7 +322,7 @@
    else
       isOverlap <- FALSE
    if (feature=="auto")
-      feature <- ifelse(isOverlap,"geometry","attribute")
+      feature <- ifelse(isOverlap,"geometry","field")
    if ((!toUnloadMethods)&&(isSP)&&(!"package:methods" %in% search())) {
      # I've read "R-exts 1.1.3.1",
      # but sp::plot() is failed for 'requireNamespace("methods")
@@ -362,7 +362,7 @@
       basemap.alpha <- ifelse(before,0.5,0.35)
    if (is.na(alpha))
       alpha <- ifelse(isWeb,ifelse(before,0.75,1),1)
-   if (feature=="attribute") {
+   if (feature=="field") {
       ct <- vector("list",length(dname))
       cpg <- "1251"
       for (i in seq_along(dname)) {

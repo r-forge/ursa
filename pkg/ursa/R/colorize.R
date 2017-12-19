@@ -79,6 +79,7 @@
    if (!is.ursa(obj)) {
       isTime <- inherits(obj,c("Date","POSIXct","POSIXlt")[2:3])
       isDate <- inherits(obj,c("Date","POSIXct","POSIXlt")[1])
+     # print(c(isCharacter=is.character(obj),isTime=isTime,isDate=isDate))
       if (inherits(obj,c("Date","POSIXct","POSIXlt")))
          obj <- if (nchar(format)) format(obj,format) else as.character(obj)
       if ((is.numeric(obj))||(is.character(obj))||(is.factor(obj))) {
@@ -86,6 +87,8 @@
          g1 <- getOption("ursaSessionGrid")
          if (.is.grid(g1))
             session_grid(NULL)
+         if ((isDate)||(isTime))
+            obj <- sort(obj)
          if (isChar) {
             oname <- as.character(obj)
             obj <- seq_along(obj)
@@ -107,7 +110,7 @@
             s <- "default"
          if (!length(ind <- .grep("stretch",names(rel))))
             rel[["stretch"]] <- s
-         img <- do.call(fun,rel[-1])
+         img <- do.call(fun,rel[-1]) ## RECURSIVE!
          if (.is.grid(g1))
             session_grid(g1)
          else
@@ -232,7 +235,7 @@
          stretch <- "category"
          if ((is.null(palname))&&(is.null(pal))) {
            # palname <- "Paired" ## "random"
-            pal <- cubehelix(value=uniqval)#,r=2.5)
+            pal <- cubehelix(value=uniqval)#,rotate=2.5)
             inv <- FALSE
          }
       }
@@ -359,7 +362,7 @@
                   pal <- cubehelix(11)
                }
                else {
-                  pal <- cubehelix(11,r=sample(c(-1,1),1)*2.5*360)
+                  pal <- cubehelix(11,rotate=sample(c(-1,1),1)*2.5*360)
                   pal <- sample(pal)
                }
             }
@@ -456,7 +459,8 @@
          }
       }
       else if (length(v2)<(+2)) {
-         if ((!is.na(v2))&&(abs(v2-as.integer(v2))>.Machine$double.eps)) {
+         iv2 <- try(as.integer(v2))
+         if ((is.integer(v2))&&(!is.na(v2))&&(abs(v2-iv2)>.Machine$double.eps)) {
             .v2 <- pretty(v2*(1+c(-1,0,1)*1e-3),n=2)
             v2 <- .v2[which.min(abs(.v2-v2))[1]]
          }
@@ -915,7 +919,7 @@
                   col <- do.call("cubehelix",arglist)
                }
                else
-                  col <- cubehelix(n,r=sample(c(-360,360),1)*
+                  col <- cubehelix(n,rotate=sample(c(-360,360),1)*
                                        runif(1,min=0.8,max=1.2)*(n/11)^0.75)
             }
          }
@@ -931,8 +935,9 @@
                arglist <- list()
             arglist <- c(list(n=n,value=unname(value)),arglist)
             if (palname=="cubehelix") {
-               if (TRUE)
+               if (TRUE) {
                   col <- do.call("cubehelix",arglist)
+               }
                else {
                   arglist <- list(...)
                   myname <- names(arglist)
@@ -958,7 +963,7 @@
                      arglist$hue <- 0
                   }
                   if (palname=="Blues") {
-                     arglist$r <- 45
+                     arglist$rotate <- 45
                      arglist$hue <- 1.5
                   }
                   col <- do.call("cubehelix",arglist)

@@ -2,8 +2,11 @@
    wd <- setwd("C:/platt/R/ursa-package")
    system("R --vanilla CMD build ursa")
    pkg <- tail(plutil::filelist("^ursa_.*\\.tar\\.gz$"))
-   if (length(pkg)) {
-      system(paste("R --vanilla CMD INSTALL",pkg)) ## --no-multiarch
+   if (length(pkg)==1) {
+      opt1 <- "--fake" ## --no-multiarch
+      opt2 <- "--no-html"
+      opt3 <- "--no-html --build"
+      system(paste("R --vanilla CMD INSTALL",opt2,pkg)) 
       file.remove(pkg)
    }
    setwd(wd)

@@ -5,6 +5,11 @@
    if (!as.logical(colorbar))
       return(invisible(NULL))
    units <- NULL
+   arglist <- lapply(arglist,function(x1) {
+      if (identical(c("index","colortable"),names(x1)))
+         return(x1$colortable)
+      x1
+   })
    ind <- sapply(arglist,is.ursa,"colortable")
    if (length(which(ind))) {
       obj <- vector("list",length(ind))

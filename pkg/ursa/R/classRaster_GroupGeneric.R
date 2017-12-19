@@ -151,36 +151,46 @@
    }
    seq1 <- rep(seq(n1),len=n3)
    seq2 <- rep(seq(n2),len=n3)
+  # st1 <- st2 <- st3 <- 0
    for (i in seq(n3))
    {
-      left <- if (isImage1) e1$value[,seq1[i]]
-              else if (isArray1) e1[,seq1[i]]
-              else e1[seq1[i]]
-      right <- if (isImage2) e2$value[,seq2[i]]
-               else if (isArray2) e2[,seq2[i]]
-               else e2[seq2[i]]
-      if (varName=="e1")
-         e1$value[,i] <- eval(f)
-      else if (varName=="e2")
-         e2$value[,i] <- eval(f)
-      else if (varName=="e3")
-         e3$value[,i] <- eval(f)
-      if ((TRUE)&&(.Generic %in% c(">","<",">=","<=","==","!=")))
-      {
-         if (varName=="e1") {
-            e1$value[,i][!e1$value[,i]] <- NA
-            ignorevalue(e1) <- 127L
+     # st1 <- system.time({
+         left <- if (isImage1) e1$value[,seq1[i]]
+                 else if (isArray1) e1[,seq1[i]]
+                 else e1[seq1[i]]
+         right <- if (isImage2) e2$value[,seq2[i]]
+                  else if (isArray2) e2[,seq2[i]]
+                  else e2[seq2[i]]
+     # })["elapsed"]+st1
+     # st2 <- system.time({
+         if (varName=="e1")
+            e1$value[,i] <- eval(f)
+         else if (varName=="e2")
+            e2$value[,i] <- eval(f)
+         else if (varName=="e3")
+            e3$value[,i] <- eval(f)
+     # })["elapsed"]+st2
+     # st3 <- system.time({
+         if ((TRUE)&&(.Generic %in% c(">","<",">=","<=","==","!=")))
+         {
+            if (varName=="e1") {
+               e1$value[,i][!e1$value[,i]] <- NA
+               ignorevalue(e1) <- 127L
+            }
+            else if (varName=="e2") {
+               e2$value[,i][!e2$value[,i]] <- NA
+               ignorevalue(e2) <- 127L
+            }
+            else if (varName=="e3") {
+               e3$value[,i][!e3$value[,i]] <- NA
+               ignorevalue(e3) <- 127L
+            }
          }
-         else if (varName=="e2") {
-            e2$value[,i][!e2$value[,i]] <- NA
-            ignorevalue(e2) <- 127L
-         }
-         else if (varName=="e3") {
-            e3$value[,i][!e3$value[,i]] <- NA
-            ignorevalue(e3) <- 127L
-         }
-      }
+     # })["elapsed"]+st3
+     # print(summary(e1$value[,i]))
+     # message("-------------")
    }
+  # print(c(st1=st1,st2=st2,st3=st3))
    return(get(varName))
 }
 '.groupSummary' <- function(obj,generic=c("blank","all","any","sum"
@@ -232,7 +242,8 @@
    else
    {
       res$con$posR <- obj$con$posR
-      res$value[] <- a
+      res$value <- a
+      class(res$value) <- "ursaNumeric"
       dim(res$value) <- c(dimx[1],1)
    }
    session_grid(g0)

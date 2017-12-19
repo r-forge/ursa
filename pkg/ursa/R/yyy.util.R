@@ -92,7 +92,7 @@
       print(a1)
       print(a2)
    }
-   NULL
+   invisible(NULL)
 }
 # '.paste' <- function(...,sep="",collapse=NULL) paste(...,sep=sep,collapse=collapse)
 '.maketmp' <- function(n=1,ext="",prefix="") 
@@ -257,15 +257,20 @@
 '.is.le' <- function(x,value) x<value | .is.eq(x,value)
 '.is.gt' <- function(x,value) x>value
 '.is.lt' <- function(x,value) x<value
-'.is.near' <- function(x1,x2) {
+'.is.near' <- function(x1,x2,verbose=FALSE) {
    m1 <- match(x1,x2)
-   if (all(!is.na(m1))) ## 20161222 add 'all', removed 'any'
+   if (all(!is.na(m1))) { ## 20161222 add 'all', removed 'any'
+      if (verbose)
+         message(".is.near: exact matching")
       return(m1)
+   }
    n1 <- length(x1)
    n2 <- length(x2)
    b1 <- .Cursa("isNear",x1=as.numeric(x1),x2=as.numeric(x2),n1=n1,n2=n2
            ,res=integer(n1),NAOK=TRUE)$res
    b1[b1==0] <- NA
+   if (verbose)
+      message(".is.near: fuzzy matching")
    b1
 }
 '.getMajorSemiAxis' <- function(proj4) {
@@ -350,3 +355,8 @@
    ret
 }
 '.loaded' <- function() gsub("^package:","",grep("^package:",search(),value=TRUE))
+'.in.memory' <- function(obj) {
+   if (!is.ursa(obj))
+      return(NA)
+   !is.null(dim(obj$value))
+}

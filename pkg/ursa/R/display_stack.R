@@ -4,7 +4,7 @@
                                             ,crop="crop",...) {
   NULL
 }
-'display_stack' <- function(obj,...)
+'display_stack' <- 'display_hetero' <- function(obj,...)
 {
    if (is.character(obj))
       obj <- if (envi_exists(obj)) read_envi(obj) else read_gdal(obj)

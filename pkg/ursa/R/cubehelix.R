@@ -1,8 +1,8 @@
 ## modified from rje::cubeHelix 
-# b <- colorize(n,weak=-270*pi/180,r=270/360) ~ colorBrewer "Spectral"
-# b <- colorize(n,rich=0,r=60,hue=1.5 ~ for bathymetry
+# b <- colorize(n,weak=-270*pi/180,rotate=270/360) ~ colorBrewer "Spectral"
+# b <- colorize(n,rich=0,rotate=60,hue=1.5 ~ for bathymetry
 
-'cubehelix' <- function(n,value=numeric(),weak=NA,rich=NA,r=NA,hue=NA,gamma=1
+'cubehelix' <- function(n,value=numeric(),weak=NA,rich=NA,rotate=NA,hue=NA,gamma=1
                        ,dark=NA,light=NA,inv=NA,verbose=NA)
 {
   # str(match.call())
@@ -38,7 +38,7 @@
    if (missing(n))
       n <- if (length(value)) length(value) else 256L
    if (is.na(verbose))
-      verbose <- FALSE #is.na(rich) || is.na(r) || is.na(hue)
+      verbose <- FALSE #is.na(rich) || is.na(rotate) || is.na(hue)
    k <- round(1/(exp(n^0.5)),6)
    divergent <- length(value)>0 ## 20170705 -- length(value)>0
    if (divergent) {
@@ -114,45 +114,45 @@
      # print(round(lambda*255,1))
    }
    if ((!is.na(rich))&&(!is.na(weak))) {
-      r <- rich-weak
+      rotate <- rich-weak
    }
-   if (any(is.na(r))) {
+   if (any(is.na(rotate))) {
       if (length(unique(lambda))==1) {
-         r <- round(runif(1,min=0.5,max=0.9),2)
-        # r <- 1
+         rotate <- round(runif(1,min=0.5,max=0.9),2)
+        # rotate <- 1
       }
       else {
          if (divergent)
-            r <- round(runif(1,min=0.6,max=0.8),2)
+            rotate <- round(runif(1,min=0.6,max=0.8),2)
          else if ((light-dark)/n<0.005)
-            r <- round(runif(1,min=0.5,max=0.9),2)
+            rotate <- round(runif(1,min=0.5,max=0.9),2)
          else
-            r <- round(runif(1,min=0.4,max=1.2),2)
+            rotate <- round(runif(1,min=0.4,max=1.2),2)
       }
-      r <- sample(c(-1,1),1)*r*360
+      rotate <- sample(c(-1,1),1)*rotate*360
    }
    if ((is.na(weak))&&(!is.na(rich))) {
-      weak <- rich-r
+      weak <- rich-rotate
    }
    else if ((!is.na(weak))&&(is.na(rich))) {
-      rich <- weak+r
+      rich <- weak+rotate
    }
    else if ((is.na(weak))&&(is.na(rich))) {
       rich <- round(runif(1,min=0,max=2*pi),2)*180/pi
-      weak <- rich-r
+      weak <- rich-rotate
    }
-   if (length(r)>1)
-      r <- sample(r,1)
+   if (length(rotate)>1)
+      rotate <- sample(rotate,1)
    if (is.na(hue))
       hue <- round(runif(1,min=0.9,max=1.5),2)
    if ((!FALSE)&&(verbose))
-      message(sprintf("cubehelix: br=%d:%d weak=%4.0f rich=%4.0f r=%4.0f hue=%4.2f k=%.2f n=%d"
-                     ,round(dark*255),round(light*255),weak,rich,r,hue,k,n))
+      message(sprintf("cubehelix: br=%d:%d weak=%4.0f rich=%4.0f rotate=%4.0f hue=%4.2f k=%.2f n=%d"
+                     ,round(dark*255),round(light*255),weak,rich,rotate,hue,k,n))
    rich <- rich*pi/180
    weak <- weak*pi/180
-   r <- r/360
+   rotate <- rotate/360
    l <-  rep(lambda^gamma,each=3)
-   phi = weak+2*pi*r*seq(0,1,length.out=n) # head(seq(0,1,length.out=n+1),-1))
+   phi = weak+2*pi*rotate*seq(0,1,length.out=n) # head(seq(0,1,length.out=n+1),-1))
   # print(round(phi*180/pi))
    tau <- rbind(cos(phi),sin(phi))
    M <- matrix(c(-0.14861,-0.29227,1.97294,1.78277,-0.90649,0),ncol=2)

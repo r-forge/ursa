@@ -27,7 +27,7 @@ Use \code{name = value} sequence. Properties of new ENVI file are extracted from
 }
 }
 \details{
-   \code{create_envi} and \code{create_gdal} use parameters of grid (boundary box, cell size, projection) from reference object of class \code{ursaRaster} in argument \code{x} or calls \code{\link[ursa]{session_grid}}. You may specify values of GDAL or ENVI binary file later using \code{\link[ursa:classRaster.Replace]{[<-}}. If \code{x} is object of class \code{ursaRaster} then metadata parameters (interleave, data type, ignore value, etc) are inherited. 
+   \code{create_envi} and \code{create_gdal} use parameters of grid (boundary box, cell size, projection) from reference object of class \code{ursaRaster} in argument \code{x} or calls \code{\link[ursa:session]{session_grid}}. You may specify values of GDAL or ENVI binary file later using \code{\link[ursa:classRaster.Replace]{[<-}}. If \code{x} is object of class \code{ursaRaster} then metadata parameters (interleave, data type, ignore value, etc) are inherited. 
 
 Keywords:
 \itemize{
@@ -102,7 +102,7 @@ If file name is unknown, then random file name is used with informing via \code{
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 \code{\link[ursa:ursa_new]{ursa_new}} creates object of class \code{ursaRaster} in memory and allows to assign values at once.
 
-Use \code{\link[ursa]{session_grid}} to check or specify parameters of grid before calling \code{create_envi}.
+Use \code{\link[ursa:session]{session_grid}} to check or specify parameters of grid before calling \code{create_envi}.
 
 Use \code{\link[ursa:classRaster.Replace]{[<-}} to assign values to ENVI binary file after calling \code{create_envi}.
 

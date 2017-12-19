@@ -173,6 +173,8 @@
                              ,raster=FALSE,tolerance=NA #1e-10
                              ,verbose=FALSE,...)
 {
+   if (is.character(border)) ## cuttof 'border' in 'plot' functions
+      border <- 0
   # print("regrid")
   # verbose <- TRUE
    mtol <- 1e5 # [1e2->1e5 20170720]

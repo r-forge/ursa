@@ -471,7 +471,7 @@
   # con$offset <- as.integer(5*4+8*8+sum(nchar(obj$name))+length(obj$name)+
   #                          nchar(obj$grid$proj4)+1+
   #                          4*obj$dim[2]+con$sizeof)
-   if (is.na(con$offset))
+   if ((length(con$offset)>1)||(is.na(con$offset)))
       con$offset <- 0L
    if (is.na(con$bands))
    {

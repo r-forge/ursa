@@ -2,7 +2,9 @@
    arglist <- list(...)
    if (!.lgrep("na\\.rm",names(arglist)))
       arglist$na.rm <- TRUE
-   res <- do.call("mean",c(list(c(x$value)),arglist))
+   res <- try(do.call("mean",c(list(c(x$value)),arglist)))
+   if (inherits(res,"try-error"))
+      res <- NA
    if (ursa)
       return(ursa_new(res,bandname="mean"))
    res
@@ -11,7 +13,9 @@
    arglist <- list(...)
    if (!.lgrep("na\\.rm",names(arglist)))
       arglist$na.rm <- TRUE
-   res <- do.call("min",c(list(c(x$value)),arglist))
+   res <- try(do.call("min",c(list(c(x$value)),arglist)))
+   if (inherits(res,"try-error"))
+      res <- NA
    if (ursa)
       return(ursa_new(res,bandname="min"))
    res
@@ -20,7 +24,9 @@
    arglist <- list(...)
    if (!.lgrep("na\\.rm",names(arglist)))
       arglist$na.rm <- TRUE
-   res <- do.call("max",c(list(c(x$value)),arglist))
+   res <- try(do.call("max",c(list(c(x$value)),arglist)))
+   if (inherits(res,"try-error"))
+      res <- NA
    if (ursa)
       return(ursa_new(res,bandname="max"))
    res
@@ -29,7 +35,9 @@
    arglist <- list(...)
    if (!.lgrep("na\\.rm",names(arglist)))
       arglist$na.rm <- TRUE
-   res <- do.call("sd",c(list(c(x$value)),arglist))
+   res <- try(do.call("sd",c(list(c(x$value)),arglist)))
+   if (inherits(res,"try-error"))
+      res <- NA
    if (ursa)
       return(ursa_new(res,bandname="sd"))
    res
@@ -38,7 +46,9 @@
    arglist <- list(...)
    if (!.lgrep("na\\.rm",names(arglist)))
       arglist$na.rm <- TRUE
-   res <- do.call("sum",c(list(c(x$value)),arglist))
+   res <- try(do.call("sum",c(list(c(x$value)),arglist)))
+   if (inherits(res,"try-error"))
+      res <- NA
    if (ursa)
       return(ursa_new(res,bandname="sum"))
    res
@@ -47,7 +57,9 @@
    arglist <- list(...)
    if (!.lgrep("na\\.rm",names(arglist)))
       arglist$na.rm <- TRUE
-   res <- do.call("median",c(list(c(x$value)),arglist))
+   res <- try(do.call("median",c(list(c(x$value)),arglist)))
+   if (inherits(res,"try-error"))
+      res <- NA
    if (ursa)
       return(ursa_new(res,bandname="median"))
    res
@@ -55,6 +67,13 @@
 'global_n' <- function(x,ursa=FALSE,...) {
    arglist <- list(...)
    res <- length(na.omit(c(x$value)))
+   if (ursa)
+      return(ursa_new(res,bandname="n"))
+   res
+}
+'global_nNA' <- function(x,ursa=FALSE,...) {
+   arglist <- list(...)
+   res <- length(which(is.na(c(x$value))))
    if (ursa)
       return(ursa_new(res,bandname="n"))
    res

@@ -113,8 +113,8 @@ Nikita Platonov \email{platonov@sevin.ru}
 session_grid(NULL)
 
 b <- ursa_dummy(nband=7,min=0,max=50,mul=1/16)
-p <- list(colorize(b[1:4],pal.rich=240,pal.r=0)
-         ,colorize(sqrt(b[5:7]),pal.rich=-15,pal.r=0,stretch="equal"))
+p <- list(colorize(b[1:4],pal.rich=240,pal.rotate=0)
+         ,colorize(sqrt(b[5:7]),pal.rich=-15,pal.rotate=0,stretch="equal"))
 
 ## exam #01
 ursa:::.ursaOptions()

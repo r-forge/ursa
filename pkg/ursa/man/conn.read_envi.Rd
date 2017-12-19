@@ -53,9 +53,9 @@ Nikita Platonov \email{platonov@sevin.ru}
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-\code{\link[ursa]{open_envi}}, \emph{\link[ursa:classRaster.Extract]{Extract}} method \code{\link[ursa:classRaster.Extract]{[}} for \code{ursaRaster} object, \code{\link[ursa:classRaster_close]{close_envi}}.
+\code{\link[ursa:conn.open_envi]{open_envi}}, \emph{\link[ursa:classRaster.Extract]{Extract}} method \code{\link[ursa:classRaster.Extract]{[}} for \code{ursaRaster} object, \code{\link[ursa:classRaster_close]{close_envi}}.
 
-\code{\link[ursa]{read_gdal}} uses GDAL (\pkg{rgdal}) to read ENVI .hdr Labelled Raster file.
+\code{\link[ursa:conn.read_gdal]{read_gdal}} uses GDAL (\pkg{rgdal}) to read ENVI .hdr Labelled Raster file.
 }
 \examples{
 session_grid(NULL)

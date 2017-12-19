@@ -436,8 +436,8 @@
       if (verbose)
          str(list(col=col,fill=fill,shadow=shadow#,detail=detail
                  ,density=density,angle=angle,land=land,lwd=lwd,lty=lty))
-      if ((TRUE)&&(shadow!=255)||
-          ((!is.na(angle[1]))&&(!is.na(density[1]))))
+      if ((TRUE)&&(shadow==0)|| ## 20171214 changed 'shadow!=255'
+          ((!is.na(angle[1]))&&(!is.na(density[1])))) ## more quick
       {
         # op <- par(usr=par()$usr-c(0,125000,0,125000))
         # print(par()$usr)

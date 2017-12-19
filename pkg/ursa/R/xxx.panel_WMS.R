@@ -246,6 +246,7 @@
                      .gsub(".+=EPSG:(.+)","\\1",.grep("^[cs]rs=",x,value=TRUE)))
    }
    layer <- unlist(strsplit(paste(layers,collapse=","),split=","))#[1]
+   arglist <- list(...)
    if ((length(layer)==1)&&(extend | toStop)) { 
       if (!file.exists(dst))
          download.file(src1,dst,mode="wt",quiet=!verbose)
@@ -279,8 +280,8 @@
          dname2 <- tail(unlist(strsplit(md[ind2],split="\\s+")),-1)
       if (length(ind1)) {
          for (i in seq_along(ind1)) {
-            if (i==2)
-               next
+           # if (i==2)
+           #    next
             dname <- tail(unlist(strsplit(md[ind1[i]],split="\\s+")),-1)
             isInline <- .lgrep("/>",tail(dname,1))
             if (!isInline)
@@ -308,16 +309,20 @@
             else
                val <- character()
            # val <- c(head(val,3),tail(val,3))
-            message(paste0("Optional attribute is found "
-                          ,"(argument '",res[,"name"],"')"
-                          ,ifelse(isInline,"",":")))
-            print(res)
-            if (length(val)>12) {
-               message(paste("From:",paste(head(val,3),collapse=" ")))
-               message(paste("To:  ",paste(tail(val,3),collapse=" ")))
+            varname <- res[,"name"]
+            ind3a <- .lgrep(paste0("&",varname,"="),src)>0
+            ind3b <- .lgrep(varname,names(arglist))>0
+            if (ind3a+ind3b==0) {
+               message(paste0("Optional attribute is found "
+                             ,"(argument '",res[,"name"],"')"
+                             ,ifelse(isInline,"",":")))
+               if (length(val)>12) {
+                  message(paste("From:",paste(head(val,3),collapse=" ")))
+                  message(paste("To:  ",paste(tail(val,3),collapse=" ")))
+               }
+               else if (length(val))
+                  message(paste("Values:",paste(val,collapse=" ")))
             }
-            else if (length(val))
-               message(paste("Values:",paste(val,collapse=" ")))
             toStop <- toStop+0L
          }
       }
@@ -542,7 +547,6 @@
                         else "{minx},{miny},{maxx},{maxy}"
       src <- paste0(src,"&bbox=",bbox)
    }
-   arglist <- list(...)
    if (length(arglist))
       src <- paste0(src,paste(paste0("&",names(arglist)),as.character(arglist)
                              ,sep="=",collapse=""))

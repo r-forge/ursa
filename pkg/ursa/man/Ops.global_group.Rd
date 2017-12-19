@@ -6,6 +6,7 @@
 \alias{global_min}
 \alias{global_max}
 \alias{global_n}
+\alias{global_nNA}
 \alias{global_range}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
@@ -22,6 +23,7 @@ global_sum(x, ursa = FALSE, ...)
 global_min(x, ursa = FALSE, ...)
 global_max(x, ursa = FALSE, ...)
 global_n(x, ursa = FALSE, ...)
+global_nNA(x, ursa = FALSE, ...)
 global_range(x, ursa = FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.

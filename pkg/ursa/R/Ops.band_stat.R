@@ -2,7 +2,8 @@
 {
    if (!is.ursa(x))
       return(NULL)
-   if ((is.null(dim(x$value)))||(grid))
+  # inMemory <- !is.null(dim(x$value))
+   if ((!.in.memory(x))||(grid))
       return(ursa_info(x))
    n <- x$dim[2] # length(x$name)
    if (.is.con(x$con)) {

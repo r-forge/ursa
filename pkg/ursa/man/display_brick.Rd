@@ -1,5 +1,6 @@
 \name{display_brick}
 \alias{display_brick}
+\alias{display_homo}
 \title{
 Plot multi-band homogenous raster image in the PNG format.
 }
@@ -8,6 +9,7 @@ Raster image is forced to be interpeted as homogenuous (having the same units). 
 }
 \usage{
 display_brick(obj, ...)
+display_homo(obj, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -40,6 +42,8 @@ Passed to hierarchy of plotting functions:
 }
 \details{
 If argument \code{obj} is \code{\link[base]{list}} of \code{ursaRaster} objects (or object of class \code{ursaStack}) then \code{obj} is coerced to class \code{ursaRaster} ('stack' is coerced to 'brick').
+
+\code{display_homo} is a synonyn to \code{display_brick}. It is introduced to emphasize the plotting of homogenous object.
 }
 \value{
 Function returns \code{NULL} value.

@@ -1,5 +1,6 @@
 \name{display_stack}
 \alias{display_stack}
+\alias{display_hetero}
 \title{
 Plot multi-band heterogenous raster images in the PNG format.
 }
@@ -8,6 +9,7 @@ Raster images are forced to be interpeted as heterogenuous (having the different
 }
 \usage{
 display_stack(obj, ...)
+display_hetero(obj, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -48,6 +50,8 @@ Passed to hierarchy of plotting functions:
 If argument \code{obj} is object of class \code{ursaRaster} then \code{obj} is coerced to \code{\link[base]{list}} of \code{ursaRaster} objects ('brick' is coerced to 'stack').
 
 The plot layout is either two-columns or two-rows. Extent of coordinate grid has a form of rectangle. The layout selection depends on ratio of rectangle's sides. For single-column design use parameter \code{layout=c(NA,1L)}. e.g., \code{display_brick(a,layout=c(NA,1))}, for single-row design use parameter \code{layout=c(1,NA)}. The same is for forcing of two-columns (\code{layout=c(NA,2L)}) and two-rows layouts (\code{layout=c(2L,NA)}). Other layouts are not applicable for multiple colorbars.
+
+\code{display_hetero} is a synonyn to \code{display_stack}. It is introduced to emphasize the plotting of complex object with heterogeneous elements, for example, having different units.
 
 }
 \value{

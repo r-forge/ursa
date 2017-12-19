@@ -3,15 +3,26 @@
    if (.skipPlot(TRUE))
       return(NULL)
    geoType <- ""
-   if ((is.character(obj))&&(.lgrep("\\.shp(\\.zip)*$",obj)))
+   isSP <- FALSE
+   isSF <- FALSE
+   arglist <- as.list(match.call())
+   isLang <- is.language(arglist[["obj"]])
+  # str(lapply(arglist,class))
+   if ((is.character(obj))&&
+        (.lgrep("\\.(shp(\\.zip)*|(geojson|sqlite|gpkg)(\\.(gz|bz2))*)$",obj)))
    {
-      op <- options(warn=0)
-      requireNamespace("rgdal",quietly=.isPackageInUse())
-      a <- .shp.read(obj)
-     # a <- spTransform(a,session_grid()$proj4)
-     # ret <- .panel_plot(a,add=TRUE,...)
-      ret <- sp::plot(a,add=TRUE,...)
-      options(op)
+      if (FALSE) { ## 20171216 deprecated
+         op <- options(warn=0)
+         requireNamespace("rgdal",quietly=.isPackageInUse())
+         a <- .shp.read(obj)
+        # a <- spTransform(a,session_grid()$proj4)
+        # ret <- .panel_plot(a,add=TRUE,...)
+         ret <- sp::plot(a,add=TRUE,...)
+         options(op)
+      }
+      else {
+         ret <- panel_plot(.spatialize(obj),...) ## RECURSIVE
+      }
    }
    else if (inherits(obj,c("raster"))) {
          ret <- with(session_grid()
@@ -29,13 +40,32 @@
          if (!identical(oprj2,sprj2))
             obj <- sp::spTransform(obj,sprj)
       }
-     # arglist <- list(...) ## remove dupe of 'add=TRUE'
-     # str(arglist)
-      ret <- sp::plot(obj,add=TRUE,...)
+      arglist <- list(...) ## remove dupe of 'add=TRUE'
+      if (FALSE) { ## TRUE is undesired
+         arglist <- lapply(arglist,function(x1) {
+            if (identical(c("index","colortable"),names(x1)))
+               return(unclass(unname(x1$colortable))[x1$index])
+            x1
+         })
+      }
+      if (FALSE) { # undesired
+         opW <- options(warn=1)
+         ret <- sp::plot(obj,add=TRUE,...) ## OK for source(), if warn==1
+         options(opW)
+      }
+      else {
+         ret <- .tryE(do.call(".panel_plot",c(obj,add=TRUE,arglist))) 
+      }
+     # ret <- do.call("plot",c(obj,add=TRUE,arglist)) ## FAIL
+     # ret <- .tryE(do.call("plot",c(obj,add=TRUE,arglist))) 
+     # ret <- .tryE(.panel_plot(sp::geometry(obj),add=TRUE,...)) # FAIL
+     # ret <- .tryE(.panel_plot(obj,add=TRUE,...)) # 
+     # ret <- .panel_plot(obj,add=TRUE,...) ## FAIL
       geoType <- switch(class(sp::geometry(obj))
                        ,SpatialPolygons="POLYGON"
                        ,SpatialPoints="POINT"
                        ,SpatialLines="LINE")
+      isSP <- TRUE
    }
    else if (inherits(obj,c("sf","sfc"))) {
       oprj <- sf::st_crs(obj)$proj4string
@@ -63,6 +93,7 @@
       geoType <- .gsub("^sfc_","",geoType)
       if (geoType=="GEOMETRY")
          geoType <- unique(as.character(sf::st_geometry_type(obj)))
+      isSF <- TRUE
    }
    else {
       ret <- try(.panel_plot(obj,add=TRUE,...))
@@ -75,14 +106,16 @@
          ret <- NULL
       }
    }
-   arglist <- as.list(match.call())
+   if (isLang)
+      oname <- as.character(arglist[["obj"]])
+   else
+      oname <- "*undetermed*"
    aname <- names(arglist)
-  # str(arglist)
-   ret <- list(name=as.character(arglist[["obj"]])
+   ret <- list(name=oname
               ,col="transparent",border="transparent",lty=1,lwd=1,pch=0,cex=1
               ,fill="transparent",density=NULL,angle=45)
    rname <- names(ret)
-   if (geoType %in% c("POLYGON","MULTIPOLYGON")) {
+   if (.lgrep("polygon",geoType)) { # 20171215 -- 'if (geoType %in% c("POLYGON","MULTIPOLYGON"))'
       ret$pch <- 22
       ret$cex <- 3
    }
@@ -133,22 +166,34 @@
       return(NULL)
    segments(...)
 }
-'.panel_plot' <- function(obj,...){
+'.panel_plot.--20171115' <- function(obj,...){
    if (.skipPlot(TRUE))
       return(NULL)
    if (is.null(obj))
       return(obj)
-   ##~ arglist <- list(...)
-   ##~ str(obj)
-   ##~ str(arglist)
-  ## WARNING: here not only plot
-  # pkg <- attr(class(obj),"package")
-  # print(class(obj))
-  # fun <- if (nchar(pkg)) paste0(pkg,"::","plot") else "plot"
-  # if (nchar(pkg))
-  #    requireNamespace(pkg,quietly=.isPackageInUse())
-  # require(methods)
    plot(obj,...)
-  # do.call("plot",list(obj,arglist)) ## ,add=TRUE 
-  # plot(obj,...) ## ,add=TRUE 
+}
+'.panel_plot' <- function(obj,...) {
+   if (.skipPlot(TRUE))
+      return(NULL)
+   if (is.null(obj))
+      return(obj)
+   arglist <- list(...)
+  # str(arglist)
+   arglist <- lapply(arglist,function(x1) {
+      if (identical(c("index","colortable"),names(x1)))
+         return(unclass(unname(x1$colortable))[x1$index])
+      x1
+   })
+   pkg <- attr(class(obj),"package")
+   opW <- NULL
+   if (is.character(pkg)) {
+      if (pkg=="sp")
+         plot <- sp::plot ## unerror "cannot coerce type 'S4' to vector of type 'double'"
+         opW <- options(warn=-1) ## release 'warn=-1': no wornings
+   }
+   ret <- do.call("plot",c(list(obj),arglist))
+   if (!is.null(opW))
+      options(opW)
+   ret
 }

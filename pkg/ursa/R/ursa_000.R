@@ -100,5 +100,9 @@
       ignorevalue(obj) <- value
       return(obj)
    }
+   if (.lgrep("(bbox|extent)",attr)) {
+      ursa_grid(obj) <- regrid(ursa_grid(obj),setbound=value)
+      return(obj)
+   }
    return(obj)
 }

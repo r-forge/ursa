@@ -6,7 +6,7 @@
       class(res) <- "ursaStack"
    res
 }
-'ursa_stack' <- function(...) {
+'ursa_stack' <- function(...) { ## 'ursa_hetero' (make syn?)
    obj <- list(...)
    if ((length(obj)==1)&&(is.ursa(obj[[1]]))) {
       obj <- obj[[1]]
@@ -21,13 +21,14 @@
    class(obj) <- "ursaStack"
    obj
 }
-'ursa_brick' <- function(obj) {
+'ursa_brick' <- function(obj) { ## 'ursa_homo' (make syn?)
    if (is.ursa(obj))
       return(obj)
    isList <-  .is.ursa_stack(obj)
    if (!isList)
       return(NULL)
    n <- sapply(obj,nband)
+   nodata <- unique(sapply(obj,ignorevalue))
    res <- ursa_new(nband=sum(n),bandname=unlist(lapply(obj,bandname)))
    oname <- names(obj)
    k <- 0L
@@ -46,6 +47,8 @@
          bandname(res)[k2] <- oname[i]
       k <- k+nl
    }
+   if (length(nodata)==1)
+      ignorevalue(res) <- nodata
   # bandname(res) <- sapply(obj,bandname)
   # class(res) <- c(class(res),"ursaBrick") ## not necessary
    res

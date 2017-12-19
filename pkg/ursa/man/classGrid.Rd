@@ -3,6 +3,7 @@
 \alias{str.ursaGrid}
 \alias{print.ursaGrid}
 \alias{dim.ursaGrid}
+\alias{as.data.frame.ursaGrid}
 \title{
 Spatial paramaters of raster images.
 }
@@ -10,23 +11,33 @@ Spatial paramaters of raster images.
 Class \code{ursaGrid} is a part of class \code{ursaRaster}. It defines spatial locations of image.
 }
 \usage{
+
 \method{print}{ursaGrid}(x, ...)
 
 \method{str}{ursaGrid}(object, ...)
 
 \method{dim}{ursaGrid}(x)
+
+\method{as.data.frame}{ursaGrid}(x, row.names = NULL, optional = FALSE, ...)
+
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{x}{
-\code{ursaGrid} object in function \code{print}.
+\code{ursaGrid} object in functions \code{print}, \code{dim} and \code{as.data.frmame}.
 %%~ Any in function \code{is.grid}
 }
   \item{object}{
 \code{ursaGrid} object in function \code{str}.
 }
+  \item{row.names}{
+Ignored. Argument, which is passed to generic function \code{\link[base]{as.data.frame}}.
+}
+  \item{optional}{
+Ignored. Argument, which is passed to generic function \code{\link[base]{as.data.frame}}.
+}
   \item{\dots}{
-Further arguments passed to generic functions \code{\link[base]{print}} and \code{\link[utils]{str}}.
+Further arguments passed to generic functions \code{\link[base]{as.data.frame}}, \code{\link[base]{print}}, and \code{\link[utils]{str}}.
 }
 }
 \details{
@@ -75,7 +86,7 @@ Nikita Platonov \email{platonov@sevin.ru}
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-\code{\link[ursa]{regrid}}, \code{\link[ursa]{session_grid}}
+\code{\link[ursa]{regrid}}, \code{\link[ursa:session]{session_grid}}
 }
 \examples{
 session_grid(NULL)

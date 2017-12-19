@@ -69,7 +69,7 @@ Currently, only \code{detail="l"} is implemented. Other values of \code{detail} 
 
 If \code{detail=NA} then te spatial resolution is selected using CRS boundary and resolution using intuitive approach. If package's database cannot supply required detalization, then lower resolution is used.
 
-Source coastline data in EPSG:4326 are transformed to CRS projection, extracted using \code{\link[ursa]{session_grid}} function. Coastlines with optional filling of either land or ocean area is interpreted as polygins. If filling is solid (there is no transparency or shading lines (numerical values of arguments \code{density} and \code{angle}), then coastline plotting is imlemented via \code{\link[graphics]{polypath}} function, otherwise  \code{\link[graphics]{polygon}} function.
+Source coastline data in EPSG:4326 are transformed to CRS projection, extracted using \code{\link[ursa:session]{session_grid}} function. Coastlines with optional filling of either land or ocean area is interpreted as polygins. If filling is solid (there is no transparency or shading lines (numerical values of arguments \code{density} and \code{angle}), then coastline plotting is imlemented via \code{\link[graphics]{polypath}} function, otherwise  \code{\link[graphics]{polygon}} function.
 }
 \value{
 \code{panel_coastline} returns \code{NULL}

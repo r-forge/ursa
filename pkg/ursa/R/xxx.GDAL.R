@@ -1,9 +1,31 @@
-'.rasterize' <- '.gdal_rasterize' <- function(obj,...) {
+'.gdal_rasterize' <- '.rasterize' <- function(obj,...) {
    if (!nchar(Sys.which("gdal_rasterize")))
       return(NULL)
+   on.exit(NULL)
    arglist <- list(...)
    verbose <- .getPrm(arglist,name="verb(ose)*",default=FALSE)
   # obj <- .getPrm(arglist,name=".*",class=list("character","ursaVectorExternal"))
+   inMemory <- inherits(obj,c("sf","Spatial"))
+   if (inMemory) {
+      if (inherits(obj,"sf")) {
+         mname <- try(names(sf::st_agr(obj)),silent=TRUE)
+         if (inherits(mname,"try-error"))
+            mname <- character()
+      }
+      else if (inherits(obj,"Spatial")) {
+         mname <- try(colnames(obj@data),silent=TRUE)
+         if (inherits(mname,"try-error"))
+            mname <- character()
+      }
+      Ftemp <- .maketmp(ext=".shp")
+      .write_ogr(obj,Ftemp)
+      obj <- Ftemp
+      isShp <- .lgrep("\\.shp$",basename(Ftemp))>0
+      if (isShp)
+         on.exit(.shp.remove(Ftemp),add=TRUE)
+      else
+         on.exit(file.remove(Ftemp),add=TRUE)
+   }
    external <- is.character(obj)
    if (external) {
       dsnE <- obj
@@ -20,11 +42,15 @@
   # print(c(dsn=dsn,dsnE=dsnE))
    g0 <- attr(obj,"grid")
    dname <- attr(obj,"colnames")
-  # attr <- .getPrm(arglist,name="attr",default=".+")
+   dmask <- .getPrm(arglist,name="(attr|field)",default=".+")
    feature <- .getPrm(arglist,name="feature",valid=c("attribute","geometry"))
    where <- .getPrm(arglist,name="subset",default="")
    ogropt <- .getPrm(arglist,name="ogropt",default="")
    optF <- .getPrm(arglist,name="^opt$",default="")
+   clipsrc <- .getPrm(arglist,name="clipsrc",default=FALSE)
+   clipdst <- .getPrm(arglist,name="clipdst",default=FALSE)
+   wrapdateline <- .getPrm(arglist,name="wrapdateline",default=FALSE)
+   layer <- .getPrm(arglist,name="layer",default=".*")
    isZip <- .lgrep("\\.zip$",dsn)>0
    fname1 <- .gsub("\\.zip$","",dsn)
    fname2 <- paste0(fname1,".zip")
@@ -35,7 +61,6 @@
   # print(dsn)
   # print(c(fname1=fname1,fname2=fname2,fname3=fname3))
   # print(c(isZip=isZip,cond1=cond1,cond2=cond2,cond3=cond3))
-   on.exit(NULL)
    if (cond1)
       dsn <- fname1
    else if (cond2 | cond3) {
@@ -71,12 +96,23 @@
       lname <- basename(shpname)
       dsn <- .grep("\\.shp$",list3,value=TRUE)
    }
+   if (isZip <- .lgrep("\\.zip$",dsn)>0) {
+      ziplist <- unzip(dsn,exdir=tempdir());on.exit(file.remove(ziplist))
+      dsn <- .grep("\\.(shp|sqlite|gpkg|geojson)$",ziplist,value=TRUE)
+   }
+   else if ((nchar(Sys.which("gzip")))&&(isZip <- .lgrep("\\.gz$",dsn)>0)) {
+      dsn0 <- dsn
+      dsn <- tempfile();on.exit(file.remove(dsn))
+      system2("gzip",c("-f -d -c",dsn0),stdout=dsn)
+   }
    cmd <- paste("gdalsrsinfo -o proj4",.dQuote(dsn))
    if (verbose)
       message(cmd)
    proj4 <- system(cmd,intern=TRUE)
    proj4 <- .gsub("'","",proj4)
    proj4 <- .gsub("(^\\s|\\s$)","",proj4)
+   if (noProj <- !length(proj4))
+      proj4 <- "+init=epsg:4326"
    ftemp <- .maketmp() # .maketmp() #tempfile(pattern="") # ".\\tmp1"
    cmd <- paste("ogrinfo","-q",.dQuote(dsn))
    if (verbose)
@@ -84,6 +120,16 @@
    lname <- system(cmd,intern=TRUE)
    lname <- .gsub("(\\s\\(.+\\))*$","",lname)
    lname <- .gsub("^\\d+:\\s(.+)$","\\1",lname)
+   .lname <- .grep(layer,lname,value=TRUE)
+   if (length(.lname)>1)
+      .lname <- lname[match(layer,lname)]
+   if (length(.lname)!=1) {
+      print(paste("Select only one layer:",paste(paste0(seq(.lname),")")
+                                 ,.sQuote(.lname),collapse=", ")),quote=FALSE)
+      return(NULL)
+   }
+   lname <- .lname
+   rm(.lname)
    if (proj4!=g0$proj4) {
      # if (verbose)
      #   message("REPROJECT")
@@ -116,14 +162,21 @@
          bb2[1][bb2[1]<(-179)] <- -180
          bb2[3][bb2[3]>(179)] <- 180
       }
+     ## http://www.gdal.org/ogr2ogr.html http://gis-lab.info/qa/ogr2ogr-examples.html
+      g1 <- regrid(g0,border=5)
       cmd <- paste("ogr2ogr","-t_srs",.dQuote(g0$proj4)
+              ,ifelse(noProj,paste("-s_srs",.dQuote(proj4)),"")
               ,"-sql",.dQuote(paste("select FID,* from",.dQuote(.dQuote(lname))))
               ,"-dialect",c("SQLITE","OGRSQL")[2]
               ,"-select FID"
               ,"-f",.dQuote(c("ESRI Shapefile","SQLite")[1])
               ,ifelse(verbose,"-progress","")
-             # ,"-clipdst",with(g1,paste(c(minx,miny,maxx,maxy),collapse=" "))
-              ,"-clipsrc",paste(bb2,collapse=" ")
+             # ,"-skipfailures"
+              ,ifelse(wrapdateline,"-wrapdateline","")
+             # ,"-datelineoffset 180"
+              ,ifelse(clipsrc,paste("-clipsrc",paste(bb2,collapse=" ")),"")
+              ,ifelse(clipdst,paste("-clipdst"
+                       ,with(g1,paste(c(minx,miny,maxx,maxy),collapse=" "))),"")
               ,.dQuote(paste0(shpname,".shp")),.dQuote(dsn)
               )
       if (verbose)
@@ -144,10 +197,13 @@
       md <- system(paste("ogrinfo -al -so",dsn),intern=TRUE)
       patt <- "^(.+): \\S+ \\(.+\\)$"
       md <- .grep(patt,md,value=TRUE)
-      dname <- .grep(attr,.gsub(patt,"\\1",md),value=TRUE)
+      dname <- .grep(dmask,.gsub(patt,"\\1",md),value=TRUE)
    }
    if (feature=="attribute") {
+      if (inMemory)
+         dname <- mname ## restore dbf coersion
      # opt <- paste()
+     # dname <- .grep(dmask,dname,value=TRUE)
       cmd <- with(g0,paste("gdal_rasterize"
               ,"-a FID",optF
               ,"-sql",.dQuote(paste("select FID,* from",.dQuote(.dQuote(lname))))
@@ -159,7 +215,6 @@
               ,"-te",minx,miny,maxx,maxy
               ,"-of ENVI -ot Int32",ifelse(verbose,"","-q")
               ,.dQuote(shpname),ftemp))
-      
       if (verbose) {
          .elapsedTime(paste("rasterize",.sQuote(feature),"-- start"))
          message(cmd)
@@ -169,21 +224,36 @@
          .elapsedTime(paste("rasterize",.sQuote(feature),"-- finish"))
       va <- read_envi(ftemp,resetGrid=TRUE)
       envi_remove(ftemp)
-      if (global_min(va)==0)
-         va <- va+1L
+      ta <- ursa(va,"table")
+      tavalue <- as.integer(names(ta))
+      if (TRUE) { ## ++ 20171127
+        # print(ursa_table(va))
+         fext <- .gsub(".+\\.(.+)$","\\1",basename(dsn))
+         fromZero <- .lgrep("^(sqlite|gpkg)$",fext)==0 & .lgrep("^fid$",dname)==0
+         if (verbose)
+            print(c(FID_starts_from_zero=fromZero))
+         if (fromZero)
+            va <- va+1L
+      }
+      else {
+         minva <- global_min(va)
+         if ((!is.na(minva))&&(minva==0))
+            va <- va+1L
+      }
       va[va==0] <- NA
-      res <- lapply(dname,function(x){
+      res <- lapply(dname,function(x) {
          isFID <- .lgrep("fid",x)
-         if (isFID)
+         if ((isFID)||(identical(tavalue,obj[[x]])))
             a <- va
-         else
+         else {
             a <- reclass(va,src=seq(nrow(obj)),dst=obj[[x]])
+         }
          if (.is.category(a))
             ursa(a,"nodata") <- length(ursa(a,"colortable"))
          names(a) <- x
          a
       })
-     # names(res) <- dname
+      names(res) <- dname ## or, comment it
    }
    else if (feature=="geometry") {
       if (verbose)
@@ -214,7 +284,7 @@
    res
 }
 '.gdalwarp' <- function(src,dst=NULL,grid=NULL,resample="near",nodata=NA
-                       ,resetGrid=FALSE,opt=NULL,verbose=1L) {
+                       ,resetGrid=FALSE,opt=NULL,verbose=0L) {
    if (is.null(grid)) {
       if (is.ursa(dst,"grid")) {
          grid <- dst
@@ -225,7 +295,7 @@
    }
    else
       grid <- ursa_grid(grid)
-  if (!nchar(Sys.which("gdalwarp"))) {
+   if (!nchar(Sys.which("gdalwarp"))) {
       withRaster <- requireNamespace("raster",quietly=.isPackageInUse())
       if (withRaster) {
          r1 <- as.Raster(src)
@@ -242,7 +312,7 @@
          message(paste("'gdalwarp' is not found; package 'raster' is not found."
                       ,"Reprojection is failed."))
       return(src)
-  }
+   }
   # a <- open_envi(src)
   # ct <- ursa_colortable(a)
   # close(a)
@@ -277,11 +347,13 @@
    if (is.null(grid))
       cmd <- paste("gdalwarp -overwrite -of ENVI"
                   ,ifelse(is.na(nodata),"",paste("-srcnodata",nodata,"-dstnodata",nodata))
+                  ,ifelse(verbose==0L,"-q","")
                   ,optF,src,dst)
    else
       cmd <- with(grid,paste("gdalwarp -overwrite -of ENVI"
                         ,"-t_srs",.dQuote(proj4),"-tr",resx,resy,"-te",minx,miny,maxx,maxy
                         ,ifelse(is.na(nodata),"",paste("-srcnodata",nodata,"-dstnodata",nodata))
+                        ,ifelse(verbose==0L,"-q","")
                         ,optF,src,dst))
    if (verbose)
       message(cmd)

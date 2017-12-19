@@ -20,6 +20,11 @@
 }
 'series' <- function(x,n=3L,s=170,...)
 {
+   if (!is.ursa(x)) {
+      if (is.null(dim(x)))
+         return(c(head(x,n),tail(x,n)))
+      return(rbind(head(x,n),tail(x,n)))
+   }
    s2 <- with(ursa_grid(x),columns*rows*4)
    m2 <- floor(s*1024*1024/2/s2)
    if (m2<n)

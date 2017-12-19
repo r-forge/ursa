@@ -133,7 +133,7 @@
    }
    if (length(varName)!=1) {
       if (!grid)
-         stop(paste("","-----","Please specify variable:"
+         stop(paste("","-----","Please specify variable (argument 'var='):"
                    ,paste(paste(seq(along=varList),". ",varList,sep=""),collapse="\n")
                    ,"-----",sep="\n"))
       else

@@ -18,7 +18,7 @@ open_envi(fname, resetGrid = FALSE, headerOnly = FALSE, decompress = !headerOnly
 Filename; full-name or short-name
 }
   \item{resetGrid}{
-Logical. If \code{TRUE} then existing base grid (from \code{\link[ursa]{session_grid}}) will be overwritten. Otherwise the spatial subsetting will be attempted.
+Logical. If \code{TRUE} then existing base grid (from \code{\link[ursa:session]{session_grid}}) will be overwritten. Otherwise the spatial subsetting will be attempted.
 %%     ~~Describe \code{resetGrid} here~~
 }
   \item{headerOnly}{

@@ -5,7 +5,9 @@
    arglist <- list(...)
    kwd <- "raster"
    obj <- .getPrm(arglist,name="",default=NULL
-                 ,class=list(c("list","ursaRaster"),"ursaRaster","ggmap"))
+                 ,class=list(c("list","ursaRaster"),"ursaRaster","ggmap","character"))
+   if (is.character(obj))
+      obj <- .geomap(style=obj)
    if (inherits(obj,"ggmap"))
       obj <- as.ursa(obj)
    if (is.null(obj))

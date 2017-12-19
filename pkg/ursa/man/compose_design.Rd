@@ -138,8 +138,8 @@ Nikita Platonov \email{platonov@sevin.ru}
 session_grid(NULL)
 session_grid(regrid(mul=1/4))
 a <- ursa_dummy(nband=5,min=1,max=200)
-b <- list(colorize(a[1:3],pal.rich=240,pal.r=0)
-         ,colorize(sqrt(a[4:5]),pal.rich=-15,pal.r=0))
+b <- list(colorize(a[1:3],pal.rich=240,pal.rotate=0)
+         ,colorize(sqrt(a[4:5]),pal.rich=-15,pal.rotate=0))
 cl1 <- compose_design(layout=c(2,3),byrow=TRUE,legend=NULL)
 print(cl1$layout)
 \dontrun{

@@ -47,3 +47,6 @@
    (g1$maxy==g2$maxy)&&
    1L
 }
+'as.data.frame.ursaGrid' <- function(x,row.names=NULL,optional=FALSE,...) {
+   expand.grid(x=seq(x,"x"),y=seq(x,"y"),KEEP.OUT.ATTRS=FALSE)
+}

@@ -1,6 +1,7 @@
 \name{as.table}
 \alias{as.table}
 \alias{as.table.ursaRaster}
+\alias{ursa_table}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Frequency of unique values
@@ -10,6 +11,8 @@ Frequency of unique values
 }
 \usage{
 \method{as.table}{ursaRaster}(x, ...)
+
+ursa_table(x, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -22,6 +25,8 @@ Other arguments which passed to function \code{\link[base]{table}} of package \p
 }
 \details{
 If \code{ursaRaster} has a \code{\link[ursa:classColorTable]{colortable}}, then values are replaced by names of categories.
+
+\code{ursa_table} is synonym to method \code{as.table} for class \code{`ursaRaster`}.
 }
 \value{
 Object of class \code{\link[base]{table}}.

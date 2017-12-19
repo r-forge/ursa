@@ -12,9 +12,9 @@ Command line utility for spatial view of raster or vector GIS file.
 glance(...)
 
 # non-public
-.glance(dsn, layer = ".*", grid = NULL, attr = ".+", size = NA, expand = 1,
+.glance(dsn, layer = ".*", grid = NULL, field = ".+", size = NA, expand = 1,
         border = 27, lat0 = NA, lon0 = NA, resetProj = FALSE, style = "auto",
-        feature = c("auto", "attribute", "geometry"), alpha = NA,
+        feature = c("auto", "field", "geometry"), alpha = NA,
         basemap.order = c("after", "before"), basemap.alpha = NA,
         engine = c("native", "sp", "sf"), geocode = "",
         place="", zoom = NA, gdal_rasterize = FALSE,verbose = FALSE, ...)
@@ -32,8 +32,8 @@ Character or integer. If integer, then layer index. If character, then pattern (
   \item{grid}{
 Object of class \code{ursaGrid} or NULL. Reference CRS and boundary box for visualization. If \code{NULL}, then CRS and boundary box are zoomed to layer. Default is \code{NULL}.
 }
-  \item{attr}{
-Character. Pattern for attribute selection by name using \link[base:regex]{regular expressions}. Multiple selection is allowed. Default is \code{".+"}; all attributes.
+  \item{field}{
+Character. Pattern for field (attribute, column,...) selection by name using \link[base:regex]{regular expressions}. Multiple selection is allowed. Default is \code{".+"}; all fields.
 }
   \item{size}{
 Integer of length 1 or 2 or character of length 1. Size of plotting panel in pixels. If character, then parsed to integer of length 1 or 2. Length 2 is used only for web cartography. If length 1, then \code{size} defines width of panel, and height is defined automatically. If integer, then width of panel for plotting in pixels. Default is \code{NA}; for web cartogrpaphy value of maximal size of static maps, and code{640} for other cases.
@@ -66,7 +66,7 @@ Valid values are \code{"stere"}, \code{"laea"}, \code{"merc"}, \code{"longlat"}.
          Supported tile services can be returned by calling of non-public function \code{ursa:::.tileService()} without arguments. Valid values are \code{"mapnik"}, \code{"cycle"}, \code{"transport"}, \code{"mapsurfer"}, \code{"sputnik"}, \code{"thunderforest"}, \code{"carto"}, \code{"kosmosnimki"}, etc. 
 %%~          Adding word \code{"tile"} forces tile services using, e.g. \code{style="tile mapnik"}.
       }
-      By default, if data has no attributes (e. g., geometry only), then basemap is drawn in color, else in grayscale. Adding word \code{"color"} (or \code{"colour"}) to the sentence forces to use colored basemap. Adding word \code{"gray"} (or \code{"grey"}, \code{"greyscale"}, \code{"grayscale"}) to the sentence forces to use colored basemap.
+      By default, if data has no data fields (e. g., geometry only), then basemap is drawn in color, else in grayscale. Adding word \code{"color"} (or \code{"colour"}) to the sentence forces to use colored basemap. Adding word \code{"gray"} (or \code{"grey"}, \code{"greyscale"}, \code{"grayscale"}) to the sentence forces to use colored basemap.
       
       The order of words in the sentence is any.
    }
@@ -74,7 +74,7 @@ Valid values are \code{"stere"}, \code{"laea"}, \code{"merc"}, \code{"longlat"}.
 }
 %%~ }
   \item{feature}{
-Character. Appearance of visualization. If \code{"attribute"} then each panel attribute is plotted on separate panel (number of panels is equal to number of columns in attribute table). If \code{"geometry"} then each feature is plotted on separate panel (number of panels is equal to number of rows in attribute table). Default is \code{"auto"}; if intersects of features are found, then \code{"geometry"} is used, else "attribute".
+Character. Appearance of visualization. If \code{"field"} then data of each field is plotted on separate panel (number of panels is equal to number of columns in attribute table). If \code{"geometry"} then each feature is plotted on separate panel (number of panels is equal to number of rows in attribute table). Default is \code{"auto"}; if intersects of features are found, then \code{"geometry"} is used, else \code{"field"}.
 }
    \item{basemap.order}{
 Character. The order of basemap layer rendering in the case of web-cartography basemap.If \code{"before"}, then basemap is plotted before object plot. If \code{"after"}, then basemap is plotted over object. 
@@ -149,9 +149,9 @@ Package \pkg{sf} is 'Suggested' for package \pkg{ursa}. But it is requiered for 
 \examples{
 session_grid(NULL)
 f <- system.file("vectors","scot_BNG.shp",package="rgdal")
-glance(f,style="merc",attr="(NAME|COUNT)")
+glance(f,style="merc",field="(NAME|COUNT)")
 cmd <- paste("Rscript --vanilla -e ursa::glance()",paste0("\"",f,"\"")
-            ,"proj=\"merc\"","attr=\"(lon|lat)\"")
+            ,"proj=\"merc\"","field=\"(lon|lat)\"")
 cat(" --------- Try in command line: -----------\n")
 message(cmd)
 cat(" ----------- end of quoting ---------------\n")

@@ -1,8 +1,10 @@
-'.spatialize' <- function(dsn,engine=c("native","sp","sf"),layer=".*",attr=".+"
-                       ,geocode="",place=""
-                       ,grid=NULL,size=NA,cell=NA,expand=1,border=NA
-                       ,lat0=NA,lon0=NA,resetProj=FALSE,style="auto"#,zoom=NA
-                       ,subset="",verbose=FALSE,...) {
+'.read_spatial' <- 
+'.spatialize' <- function(dsn,engine=c("native","sp","sf")
+                         ,layer=".*",field=".+"
+                         ,geocode="",place=""
+                         ,grid=NULL,size=NA,cell=NA,expand=1,border=NA
+                         ,lat0=NA,lon0=NA,resetProj=FALSE,style="auto"#,zoom=NA
+                         ,subset="",verbose=FALSE,...) {
    engine <- match.arg(engine)
   # print(c(expand=expand,border=border))
   # geocode <- match.arg(geocode)
@@ -25,6 +27,7 @@
       isSP <- NA
    }
    isEPSG <- FALSE
+   isPROJ4 <- nchar(style)>36 ## need more accurate detecton of proj4
    if (length(style)) {
       if (is.numeric(style))
          isEPSG <- TRUE
@@ -355,10 +358,10 @@
          dname <- character()
    }
    hasTable <- length(dname)>0
-   dname <- .grep(attr,dname,value=TRUE)
+   dname <- .grep(field,dname,value=TRUE)
   # str(dname);q()
    if ((hasTable)&&(!length(dname))) {
-      message("unable to get attributes by name")
+      message("unable to get fields by name")
      # str(asf)
      # return(invisible(20L))
    }
@@ -382,7 +385,21 @@
             da <- obj@data[,dname[i]]
          }
          if (is.character(da)) {
-            Encoding(da) <- "UTF-8"
+            isDateTime <- FALSE
+            if (dev <- TRUE) {
+               a <- as.POSIXct(da,format="%Y-%m-%dT%H:%M:%SZ",tz="UTC")
+               if (all(is.na(a)))
+                  a <- as.POSIXct(da,"",format="%Y-%m-%d %H:%M")
+               if (!all(is.na(a))) {
+                  da <- a
+                  rm(a)
+                  if (!is.null(tz <- Sys.getenv("TZ")))
+                     da <- as.POSIXct(as.POSIXlt(da,tz=tz))
+                  isDateTime <- TRUE
+               }
+            }
+            if (!isDateTime)
+               Encoding(da) <- "UTF-8"
            ## if inherits(da,"POSIXlt") then 'da' is a list with 9 items
             if (isSF)
                obj[,dname[i]] <- da
@@ -524,6 +541,8 @@
          else
             B <- as.numeric(major)*pi
       }
+      if (isPROJ4)
+         resetProj <- FALSE
       if (is.numeric(lon0) | is.numeric(lat0) | resetProj) {
          if (isSF) {
             asf2 <- sf::st_transform(obj,4326)
@@ -697,9 +716,9 @@
         # xy <- .project(xy,t_srs)
         # print(summary(xy))
       }
-      else if (isEPSG) {
+      else if (isEPSG | isPROJ4) {
          a <- .try({
-            t_srs <- .epsg2proj4(style)
+            t_srs <- ifelse(isPROJ4,style,.epsg2proj4(style))
             if (isSF) {
                obj <- sf::st_transform(obj,t_srs)
             }
@@ -708,7 +727,7 @@
             }
          })
          if (!a) {
-            t_srs <- .epsg2proj4(style,force=TRUE)
+            t_srs <- ifelse(isPROJ4,style,.epsg2proj4(style,force=TRUE))
             if (isSF) {
                obj <- sf::st_transform(obj,t_srs)
             }
