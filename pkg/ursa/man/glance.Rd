@@ -129,7 +129,7 @@ For OS Windows, bat-file can be created for raster and vector file association:
 Command line usage implies external software for PNG view \code{\link[ursa:session]{session_pngviewer}(TRUE)}.
 }
 \value{
-\code{glance} returns integer: \code{0L} - successful, \code{10L} - call without arguments, \code{1} - suggested package \pkg{sf} is not installed
+\code{glance} returns integer: \code{0L} - successful, \code{10L} - call without arguments.
 }
 %%~ \references{
 %%~ %% ~put references to the literature/web site here ~
@@ -138,7 +138,7 @@ Command line usage implies external software for PNG view \code{\link[ursa:sessi
 Nikita Platonov \email{platonov@sevin.ru}
 }
 \note{
-Package \pkg{sf} is 'Suggested' for package \pkg{ursa}. But it is requiered for function \code{.glance}.
+Package \pkg{sf} is 'Suggested' for package \pkg{ursa}.
 }
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~

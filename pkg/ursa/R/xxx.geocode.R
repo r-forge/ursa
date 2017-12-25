@@ -34,12 +34,11 @@
       src <- paste0("http://nominatim.openstreetmap.org/search.php?q=",loc
                   # ,"&polygon_text=1"
                    ,"&format=xml","&bounded=0","&accept-language=en-US,ru")
-      dst <- tempfile() # "nominatim.xml" # tempfile()
-      download.file(URLencode(URLencode(iconv(src,to="UTF-8")))
-                   ,dst,quiet=!verbose)
+     # dst <- tempfile() # "nominatim.xml" # tempfile()
+      dst <- .webCacheDownload(src,quiet=!verbose)
       xmlstring <- scan(dst,character(),quiet=!verbose)
-      if (dirname(dst)==tempdir())
-         file.remove(dst)
+     # if (dirname(dst)==tempdir())
+     #    file.remove(dst)
       ind <- grep("geotext",xmlstring)
       if (length(ind)) {
          geotext <- xmlstring[ind]
@@ -110,9 +109,7 @@
             src <- paste0("http://nominatim.openstreetmap.org/search.php?q=",loc
                          ,"&polygon_text=1"
                          ,"&format=xml","&bounded=0","&accept-language=en-US,ru")
-            dst <- tempfile() # "nominatim.xml" # tempfile()
-            download.file(URLencode(URLencode(iconv(src,to="UTF-8")))
-                         ,dst,quiet=!verbose)
+            dst <- .webCacheDownload(src,quiet=!verbose)
             if (verbose)
                .elapsedTime("correct bounds (180 degree) -- parsing")
             b <- readLines(dst,encoding="UTF-8",warn=FALSE)
@@ -126,8 +123,6 @@
             b <- matrix(as.numeric(b),ncol=2,byrow=TRUE)[,1]
             bounding[,"minx"] <- min(b[b>0])
             bounding[,"maxx"] <- max(b[b<0])
-            if (dirname(dst)==tempdir())
-               file.remove(dst)
             if (verbose)
                .elapsedTime("correct bounds (180 degree) -- finish")
          }
@@ -164,12 +159,8 @@
    else if (service=="google") {
       src <- paste0("https://maps.googleapis.com/maps/api/geocode/xml?"
                    ,"address=",loc)
-      dst <- tempfile() # "google.xml" #tempfile()
-      download.file(URLencode(URLencode(iconv(src,to="UTF-8")))
-                   ,dst,quiet=!verbose)
+      dst <- .webCacheDownload(src,quiet=!verbose)
       xmlstring <- scan(dst,character(),quiet=!verbose)
-      if (dirname(dst)==tempdir())
-         file.remove(dst)
       ilat <- .grep("<lat>",xmlstring)
       ilon <- .grep("<lng>",xmlstring)
       glat <- as.numeric(.gsub("<lat>(.+)</lat>","\\1",xmlstring[ilat]))

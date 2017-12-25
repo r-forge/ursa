@@ -185,7 +185,7 @@
       return(patt1a)
    if (!exact)
       return(character())
-   list1 <- dir(path=getOption("ursaTemplate") #Sys.getenv("R_RMAP_TEMPLATE")
+   list1 <- dir(path=getOption("ursaRequisite")
                ,pattern="\\.hdr$",all.files=all.files
                ,full.names=TRUE,recursive=FALSE
                ,ignore.case=ignore.case)

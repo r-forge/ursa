@@ -1,4 +1,4 @@
-2017-12-19
+2017-12-25
 
 <style>
    code,
@@ -11,6 +11,22 @@
      background-color: #E6F1FF;
    }
 </style>
+
+### version 3.8-1
+
+  - Internal land polygons (coastline) data are replaced from GSHHG to
+    OSM. Function `update_coastline` is added to update coastline data
+    personally.
+
+  - Caching is introduced for downloaded files.
+
+  - Changed structure of `inst` directory by adding sudirectories
+    `requisite` with neccessary files and `optional` with secondary
+    files and directories.
+
+  - Added family of functions `spatial_xxxxxxx` to retrieve properties
+    from non-raster spatial objects: simple features (package **sf**)
+    and Spatial abstract class (package **sp**).
 
 ### version 3.7-19
 

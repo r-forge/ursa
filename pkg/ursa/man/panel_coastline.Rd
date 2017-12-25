@@ -1,6 +1,7 @@
 \name{panel_coastline}
 \alias{panel_coastline}
 \alias{compose_coastline}
+\alias{update_coastline}
 \alias{.panel_coastline}
 \alias{.compose_coastline}
 %- Also NEED an '\alias' for EACH other topic documented here.
@@ -14,6 +15,8 @@ Add coastline to the image panel.
 compose_coastline(...)
 
 panel_coastline(...)
+
+update_coastline(merge = TRUE)
 
 # not public
 .compose_coastline(obj = NULL, panel = 0, col = NA, fill = "transparent",
@@ -56,16 +59,17 @@ panel_coastline(...)
    \item{lty}{Positive integer. Type (pattern) of coasltline. Default is \code{1L} (solid). See \code{lty} in \code{\link[graphics]{par}}.}
    \item{fail180}{Logical. Patch for correct plotof poligons crossing 180 degree longitude. \code{NA} means than decision is taken intuitively. \code{TRUE} forces to implement crossing og 180 degree longitude. \code{FALSE} forces to not implement crossing og 180 degree longitude. Default is \code{NA}.}
    \item{verbose}{Logical. Value \code{TRUE} may provide some additional information on console. Default is \code{FALSE}.}
+   \item{merge}{Logical. Ingored.}
 }
 \details{
 
 \code{compose_coastline} forms an obect of class \code{ursaCoastLine}. \code{panel_coastline} displays object of class \code{ursaCoastLine}. It is expected higher performance for multi-panel plotting.
 
-If \code{obj} is \code{NULL} then data are from Self-consistent Hierarchical High-resolution Geography Database (\href{https://www.soest.hawaii.edu/pwessel/gshhg}{GSHHG}), Version 2.3.3 (01 November 2014), distributed under the Lesser GNU Public License, Version 3 (29 June 2007). 
+If \code{obj} is \code{NULL}, then internal data is used. This data is based on simplified polygons of \href{http://openstreetmapdata.com/data/land-polygons}{OpenStreetMap-derived data}. Source data is \href{http://openstreetmapdata.com/info/license}{licensed} under the Open Data Commons Open Database License (ODbL). The crossing longitude 180 degrees polygons are merged. Removing of small polygons and simplifying of polygons geometry is applyed for three levels of detalizations (\code{"l"} - low, \code{"i"} - interim, \code{"h"} - high). For the full (\code{"f"}) level of detalization data simplification is not applied.
 
-Currently, only \code{detail="l"} is implemented. Other values of \code{detail} are reserved for supplemental data package (not realised).
+Coastline data are taken from directory, which is specidied by \code{getOption("ursaRequisite")} with default value \code{system.file("requisite",package="ursa")}. Package contains data of \code{"l"} (low) detalization level in the file \code{system.file("requisite/coast-l.rds",package="ursa")}. Data of higher levels can be added using \code{update_coastline()} function. It is required to specify user's requisite path using \code{options(ursaRequisite=path/to/user/files)} before loading \pkg{ursa}, e.g. in the user's \code{~/.Rprofile} file. Otherwise, there is a chance that data can not be updated due to 'permission deny' of the system directories. Package \pkg{sf} and some it's suggestions are required for data update.
 
-"GSHHS_l_L1.shp" and "GSHHS_l_L5.shp" are combined. The crossing longitude 180 degrees polygons are merged.\cr The data are in the file \code{system.file("template/coast-l.rds",package="ursa")}.
+
 
 If \code{detail=NA} then te spatial resolution is selected using CRS boundary and resolution using intuitive approach. If package's database cannot supply required detalization, then lower resolution is used.
 
@@ -86,17 +90,20 @@ Source coastline data in EPSG:4326 are transformed to CRS projection, extracted 
 \item{lwd}{See description of argument \code{lwd}.}
 \item{lty}{See description of argument \code{lty}.}
 }
-\references{
-Wessel, P., and W. H. F. Smith, A Global Self-consistent, Hierarchical, High-resolution Shoreline Database, \emph{J. Geophys. Res.}, \emph{101}, 8741-8743, 1996.
-}
+%%~ \references{
+%%~ Wessel, P., and W. H. F. Smith, A Global Self-consistent, Hierarchical, High-resolution Shoreline Database, \emph{J. Geophys. Res.}, \emph{101}, 8741-8743, 1996.
+%%~ }
 \author{
 Nikita Platonov \email{platonov@sevin.ru}
 }
-%%~ \note{
-%%~ %%  ~~further notes~~
-%%~ }
+\note{
+In the versions <=3.7-19 package \pkg{ursa} contained land polygons based on union of "GSHHS_l_L1.shp" and "GSHHS_l_L5.shp" data from Self-consistent Hierarchical High-resolution Geography Database (\href{https://www.soest.hawaii.edu/pwessel/gshhg}{GSHHG}), Version 2.3.3 (01 November 2014), distributed under the Lesser GNU Public License, Version 3 (29 June 2007). 
 
-%% ~Make other sections like Warning with \section{Warning }{....} ~
+}
+
+\section{License}{
+   Coastal data (land polygons) is distributed under ODbL.
+} 
 
 %%~ \seealso{
 %%~ %% ~~objects to See Also as \code{\link{help}}, ~~~

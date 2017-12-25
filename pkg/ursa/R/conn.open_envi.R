@@ -12,7 +12,7 @@
    wname <- fname
    fname <- envi_list(wname,exact=TRUE)
    if ((length(fname)!=1)&&(dirname(wname)=="."))
-      fname <- envi_list(path=getOption("ursaTemplate") # Sys.getenv("R_RMAP_TEMPLATE")
+      fname <- envi_list(path=getOption("ursaRequisite")
                         ,pattern=basename(wname),exact=TRUE,full.names=TRUE)
    if (length(fname)!=1)
    {
@@ -401,7 +401,7 @@
             file.rename(fname,con$fname)
          }
          else  ## without "-k" key
-            system2("gzip",c("-f -d -c",fname.gz),stdout=con$fname)
+            system2("gzip",c("-f -d -c",.dQuote(fname.gz)),stdout=con$fname)
          con$compress <- -1L
       }
       fname.aux <- paste0(fname,".aux.xml")
@@ -423,7 +423,7 @@
             file.rename(fname.envi,con$fname)
          }
          else ## without "-k" key
-            system2("gzip",c("-f -d -c",fname.envigz),stdout=con$fname)
+            system2("gzip",c("-f -d -c",.dQuote(fname.envigz)),stdout=con$fname)
          con$compress <- -1L
       }
       fname.aux <- paste0(fname.envi,".aux.xml")
@@ -445,7 +445,7 @@
             file.rename(fname.bin,con$fname)
          }
          else ## without "-k" key
-            system2("gzip",c("-f -d -c",fname.bingz),stdout=con$fname)
+            system2("gzip",c("-f -d -c",.dQuote(fname.bingz)),stdout=con$fname)
          con$compress <- -1L
       }
       fname.aux <- paste0(fname.bin,".aux.xml")

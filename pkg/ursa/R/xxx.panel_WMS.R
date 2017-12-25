@@ -12,8 +12,8 @@
                           ,extend=TRUE
                           ,verbose=FALSE,...) {
    src <- unlist(src)
-   dst <- if (.isPackageInUse()) tempfile(fileext=".xml") 
-          else paste0(.argv0name(),".xml")
+  # dst <- if (.isPackageInUse()) tempfile(fileext=".xml") 
+  #        else paste0(.argv0name(),".xml")
   # dst <- tempfile(fileext=".xml") 
   # dst <- paste0(.argv0name(),".xml")
    isMetadata <- FALSE
@@ -62,10 +62,11 @@
       }
       else {
         # src1 <- paste0(src,"&service=WMS&request=GetCapabilities")
-         if (!file.exists(dst))
-            download.file(src1,dst,mode="wt",quiet=!verbose)
-         else if ((verbose)&&(!isMetadata))
-            message(src1)
+        # if (!file.exists(dst))
+        #    download.file(src1,dst,mode="wt",quiet=!verbose)
+        # else if ((verbose)&&(!isMetadata))
+        #    message(src1)
+         dst <- .webCacheDownload(src1,mode="wt",quiet=!verbose)
          if (!isMetadata)
             isMetadata <- TRUE
          md <- .parse_wms(dst,verbose=verbose)
@@ -124,10 +125,11 @@
       }
       else {
         # src1 <- paste0(sample(src,1),"&service=WMS&request=GetCapabilities")
-         if (!file.exists(dst))
-            download.file(src1,dst,mode="wt",quiet=!verbose)
-         else if ((verbose)&&(!isMetadata))
-            message(src1)
+        # if (!file.exists(dst))
+        #    download.file(src1,dst,mode="wt",quiet=!verbose)
+        # else if ((verbose)&&(!isMetadata))
+        #    message(src1)
+         dst <- .webCacheDownload(src1,mode="wt",quiet=!verbose)
          if (!isMetadata)
             isMetadata <- TRUE
          md <- .parse_wms(dst,verbose=verbose)
@@ -183,10 +185,11 @@
       }
       else {
         # src1 <- paste0(sample(src,1),"&service=WMS&request=GetCapabilities")
-         if (!file.exists(dst))
-            download.file(src1,dst,mode="wt",quiet=!verbose)
-         else if ((verbose)&&(!isMetadata))
-            message(src1)
+        # if (!file.exists(dst))
+        #    download.file(src1,dst,mode="wt",quiet=!verbose)
+        # else if ((verbose)&&(!isMetadata))
+        #    message(src1)
+         dst <- .webCacheDownload(src1,mode="wt",quiet=!verbose)
          if (!isMetadata)
             isMetadata <- TRUE
          md <- .parse_wms(dst,verbose=verbose)
@@ -248,10 +251,11 @@
    layer <- unlist(strsplit(paste(layers,collapse=","),split=","))#[1]
    arglist <- list(...)
    if ((length(layer)==1)&&(extend | toStop)) { 
-      if (!file.exists(dst))
-         download.file(src1,dst,mode="wt",quiet=!verbose)
-      else if ((verbose)&&(!isMetadata))
-         message(src1)
+     # if (!file.exists(dst))
+     #    download.file(src1,dst,mode="wt",quiet=!verbose)
+     # else if ((verbose)&&(!isMetadata))
+     #    message(src1)
+      dst <- .webCacheDownload(src1,mode="wt",quiet=!verbose)
       if (!isMetadata)
          isMetadata <- TRUE
       md <- .parse_wms(dst,verbose=verbose)
@@ -330,10 +334,11 @@
    defineGrid <- is.null(getOption("ursaSessionGrid"))
    if (toStop | defineGrid) {
      # src1 <- paste0(sample(src,1),"&service=WMS&request=GetCapabilities")
-      if (!file.exists(dst))
-         download.file(src1,dst,mode="wt",quiet=!verbose)
-         else if ((verbose)&&(!isMetadata))
-         message(src1)
+     # if (!file.exists(dst))
+     #    download.file(src1,dst,mode="wt",quiet=!verbose)
+     # else if ((verbose)&&(!isMetadata))
+     #    message(src1)
+      dst <- .webCacheDownload(src1,mode="wt",quiet=!verbose)
       if (!isMetadata)
          isMetadata <- TRUE
       md <- .parse_wms(dst,verbose=verbose)
@@ -521,9 +526,9 @@
    }
    if (toStop) {
       message(paste("Suggested to use",.sQuote(paste0("version=",version))))
-      if ((file.exists(dst))&&(dirname(dst)==tempdir())) {
-         file.remove(dst)
-      }
+     # if ((file.exists(dst))&&(dirname(dst)==tempdir())) {
+     #    file.remove(dst)
+     # }
       if (TRUE)
          stop("Incomplete request")
       opW <- options(warn=1)
@@ -748,8 +753,9 @@
          }
          src2 <- paste0(src2,"&width=",tg$width[i],"&height=",tg$height[i])
          src2 <- paste0(src2,"&service=WMS&request=GetMap")
-         dst <- tempfile()
-         download.file(src2,dst,mode="wb",quiet=!verbose)
+        # dst <- tempfile()
+        # download.file(src2,dst,mode="wb",quiet=!verbose)
+         dst <- .webCacheDownload(src2,mode="wb",quiet=!verbose)
          if (isPNG)
             a <- try(png::readPNG(dst))
          else if (isJPEG)
@@ -760,7 +766,7 @@
          }
          if (inherits(a,"try-error"))
             error <- paste(readLines(dst),collapse="\n")
-         file.remove(dst)
+        # file.remove(dst)
          if (inherits(a,"try-error")) {
             message(error)
             if (i0==1)
@@ -805,8 +811,10 @@
          a <- .grep("^(request|servce|bbox)=",a,value=TRUE,invert=TRUE)
          a <- .gsub("^(layer)(s)*(=.+)","\\1\\3",a)
          reqL <- paste(c(a,"service=WMS","request=GetLegendGraphic"),collapse="&")
-         dst <- tempfile()
-         if (.try(download.file(reqL,dst,mode="wb",quiet=!verbose))) {
+        # dst <- tempfile()
+        # if (.try(download.file(reqL,dst,mode="wb",quiet=!verbose))) {
+         dst <- try(.webCacheDownload(reqL,mode="wb",quiet=!verbose))
+         if (!inherits(dst,"try-error")) {
             if (isPNG)
                logo2 <- try(png::readPNG(dst))
             else if (isJPEG)
@@ -817,7 +825,7 @@
             }
             if (inherits(logo2,"try-error"))
                error <- paste(readLines(dst),collapse="\n")
-            file.remove(dst)
+           # file.remove(dst)
             if (inherits(logo2,"try-error")) {
                message(error)
                opW <- options(warn=1)
@@ -842,10 +850,12 @@
          a <- paste(c(a[-ind],suff),collapse="&")
          reqL <- paste(a,paste0("layer=",layer),sep="&")
          logo <- vector("list",length(reqL))
-         dst <- tempfile()
+        # dst <- tempfile()
          isOK <- TRUE
          for (i in seq_along(logo)) {
-            if (.try(download.file(reqL[i],dst,mode="wb",quiet=!verbose))) {
+           # if (.try(download.file(reqL[i],dst,mode="wb",quiet=!verbose))) {
+            dst <- try(.webCacheDownload(reqL,mode="wb",quiet=!verbose))
+            if (!inherits(dst,"try-error")) {
                if (isPNG)
                   logo[[i]] <- try(png::readPNG(dst))
                else if (isJPEG)
@@ -856,7 +866,7 @@
                }
                if (inherits(logo[[i]],"try-error"))
                   error <- paste(readLines(dst),collapse="\n")
-               file.remove(dst)
+              # file.remove(dst)
                if (inherits(logo[[i]],"try-error")) {
                   if (verbose) {
                      message(error)

@@ -13,8 +13,9 @@
    osm <- paste0("http://",letters[sample(seq(3),1)],".tile.openstreetmap.org")
    tile <- paste0(paste(osm,zoom,xtile,ytile,sep="/"),".png")
    message(tile)
-   fname <- "tile.png"
-   download.file(tile,fname,mode="wb",quiet=!verbose)
+  # fname <- "tile.png"
+  # download.file(tile,fname,mode="wb",quiet=!verbose)
+   fname <- .webCacheDownload(tile,mode="wb",quiet=!verbose)
    return(tile)
 }
 # https://leaflet-extras.github.io/leaflet-providers/preview/
@@ -181,12 +182,14 @@
                  ,2,function(x) strtoi(paste(x,collapse=""),base=2L))
       tile <- .gsub("{q}",paste(b5,collapse=""),tile)
    }
-   if (.lgrep("\\{..+}",tile)) {
-      dom <- unlist(strsplit(.gsub2("\\{(.+)\\}","\\1",gsub("\\{.\\}","",tile)),""))
-      tile <- .gsub("{.+}",sample(dom,1),tile)
-   }
-   fname <- tempfile(fileext=".tile")
-   a <- try(download.file(tile,fname,mode="wb",quiet=!verbose))
+   ##~ if (.lgrep("\\{..+}",tile)) {
+      ##~ dom <- unlist(strsplit(.gsub2("\\{(.+)\\}","\\1",gsub("\\{.\\}","",tile)),""))
+      ##~ print(tile)
+      ##~ print(dom)
+      ##~ tile <- .gsub("{.+}",sample(dom,1),tile)
+   ##~ }
+  # fname <- tempfile(fileext=".tile")
+   a <- try(fname <- .webCacheDownload(tile,mode="wb",quiet=!verbose))
    if (inherits(a,"try-error")) {
       return(a)
      # message(a)
@@ -203,7 +206,7 @@
       cat(geterrmessage())
       return(a)
    }
-   file.remove(fname)
+  # file.remove(fname)
    if (TRUE) {
       dima <- dim(a)
       a <- as.integer(c(a))

@@ -264,7 +264,7 @@
          else if ((nchar(Sys.which("gzip")))&&(isZip <- .lgrep("\\.gz$",dsn)>0)) {
             dsn0 <- dsn
             dsn <- tempfile();on.exit(file.remove(dsn))
-            system2("gzip",c("-f -d -c",dsn0),stdout=dsn)
+            system2("gzip",c("-f -d -c",.dQuote(dsn0)),stdout=dsn)
          }
          if (isCDF <- .lgrep("\\.(nc|hdf)$",dsn)>0) {
             obj <- .read_ncdf(dsn,".+")
@@ -409,6 +409,9 @@
       }
      # Sys.setlocale("LC_CTYPE",lc)
      # str(asf)
+   }
+   if (!exists("obj")) {
+      stop("Object cannot be recognized as spatial")
    }
    if (isSF) {
       if (TRUE) { ## not tested for multiple geometries POLYGON/MULTIPOLYGON

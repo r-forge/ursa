@@ -469,11 +469,12 @@
                src <- unlist(s1)
                src <- .gsub("^=","",paste(names(src),src,sep="=",collapse="&"))
             }
-            fname <- tempfile()
-            download.file(src,fname,mode="wb",quiet=!verbose)
+           # fname <- tempfile()
+           # download.file(src,fname,mode="wb",quiet=!verbose)
+            fname <- .webCacheDownload(src,mode="wb",quiet=!verbose)
             j <- if (i==1) 0 else sum(col2[seq(i-1)])
             img[,j+seq(col2[i]),] <- png::readPNG(fname)
-            file.remove(fname)
+           # file.remove(fname)
          }
          basemap <- as.integer(255*as.ursa(img,aperm=TRUE,flip=TRUE))
       }
@@ -499,11 +500,12 @@
             src <- unlist(s1)
             src <- .gsub("^=","",paste(names(src),src,sep="=",collapse="&"))
          }
-         fname <- tempfile()
-         download.file(src,fname,mode="wb",quiet=!verbose)
+        # fname <- tempfile()
+        # download.file(src,fname,mode="wb",quiet=!verbose)
+         fname <- .webCacheDownload(src,mode="wb",quiet=!verbose)
          basemap <- as.integer(255L*as.ursa(png::readPNG(fname)
                                            ,aperm=TRUE,flip=TRUE))
-         file.remove(fname)
+        # file.remove(fname)
       }
       mul <- unique(c(ursa_ncol(basemap)/ursa_ncol(g0)
                      ,ursa_nrow(basemap)/ursa_nrow(g0)))

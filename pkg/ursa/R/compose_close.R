@@ -72,7 +72,7 @@
                op <- par(mar=c(0,0,0,0))
                plot(grDevices::as.raster(png::readPNG(fileout)))
                if (TRUE) {
-                  ann <- png::readPNG(system.file("sponsorship/annotation.png"
+                  ann <- png::readPNG(system.file("optional/sponsorship/annotation.png"
                                   ,package="ursa"))
                   plot(grDevices::as.raster(ann),add=TRUE)
                }

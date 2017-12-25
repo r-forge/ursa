@@ -15,6 +15,8 @@
    obj <- .getPrm(arglist,name="",default=NULL
                  ,class=list(c("list","ursaRaster"),"ursaRaster"
                             ,c("list","ursaColorTable"),"ursaColorTable"))
+   if (is.null(obj))
+      obj <- ursa_colortable(arglist[[1]])
    if (!.is.colortable(obj)) {
       ind <- which(sapply(obj,.is.colortable))
       if (length(ind)) {
@@ -243,6 +245,12 @@
             }
            # print(c(have=(length(label)+1)*height,lim=mheight))
          }
+         if ((!isRegular)&&(is.numeric(label))) {
+            y <- as.numeric(label)
+            uniy <- unique(diff(y))
+            if (length(uniy)==1)
+               isRegular <- TRUE
+         }
         # adj <- if ((side %in% c(4L))&&())
          if (isRegular) {
             a0 <- (max(x)-min(x))/(max(y)-min(y))
@@ -251,7 +259,8 @@
             at1 <- at2[at2>=min(x) & at2<=max(x)]
             label <- label[match(at1,at2)]
             rm(at2)
-         } else {
+         }
+         else {
             if (!isManual) {
                val <- reclass(ct) ## 20160128 reclass(obj) -> reclass(ct)
                if (is.ursa(val))
@@ -579,8 +588,20 @@
       return(invisible(10L))
   # b <- 2*width+0.5+height
   # print(b)
-   if (is.character(units))
-      units <- as.expression(substitute(bold(u),list(u=units)))
+  ## TODO: how to use UTF8 in "as.expressions" 
+   if (is.character(units)) {
+      if (getOption("ursaPngDevice") %in% c("windows"))
+         toE <- TRUE
+      else {
+         opWE <- options(warn=2)
+         toE <- .try(abbreviate(units,minlength=2,strict=TRUE),silent=TRUE)
+         options(opWE)
+      }
+      if (toE)
+         units <- as.expression(substitute(bold(u),list(u=units)))
+      else
+         message(paste("Note: unable to make bold caption for",.dQuote(units)))
+   }
    else if (is.list(units))
       units <- as.expression(substitute(bold(u)
                             ,list(u=paste(unlist(units),collapse=", "))))

@@ -6,11 +6,14 @@
       if ((is.null(ref))||(!.is.grid(ref)))
       {
         # fname <- system.file("template","default.hdr",package="ursa")
-         fname <- file.path(getOption("ursaTemplate"),"default.hdr")
-         if (file.exists(fname))
-            ref <- .read.hdr(fname)$grid
-         else
-            ref <- .read.hdr("default")$grid ## read.idr
+         fname <- file.path(getOption("ursaRequisite"),"template.hdr")
+         if (file.exists(fname)) {
+            fname <- system.file("requisite/template.hdr",package="ursa")
+            if (file.exists(fname))
+               ref <- .read.hdr(fname)$grid
+            else
+               ref <- .read.hdr("default")$grid ## read.idr
+         }
          options(ursaSessionGrid=ref)
       }
       return(invisible(ref))

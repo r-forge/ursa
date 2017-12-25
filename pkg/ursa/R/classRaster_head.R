@@ -21,8 +21,14 @@
 'series' <- function(x,n=3L,s=170,...)
 {
    if (!is.ursa(x)) {
-      if (is.null(dim(x)))
+      if (is.null(dim(x))) {
+         if (is.list(x)) {
+            ind <- seq_along(x)
+            ind <- unique(c(head(ind,n),tail(ind,n)))
+            return(lapply(x[ind],series,n)) ## RECURSIVE
+         }
          return(c(head(x,n),tail(x,n)))
+      }
       return(rbind(head(x,n),tail(x,n)))
    }
    s2 <- with(ursa_grid(x),columns*rows*4)

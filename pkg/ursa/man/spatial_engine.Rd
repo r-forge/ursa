@@ -1,11 +1,16 @@
 \name{spatial_engine}
 \alias{spatial_engine}
 \alias{spatial_crs}
+\alias{spatial_crs<-}
 \alias{spatial_proj4}
+\alias{spatial_proj4<-}
 \alias{spatial_bbox}
 \alias{spatial_data}
 \alias{spatial_geometry}
+\alias{spatial_geotype}
 \alias{spatial_transform}
+\alias{spatial_coordinates}
+\alias{spatial_fields}
 \title{
 Wrapper functions for manipulation with non-raster objects
 }
@@ -19,14 +24,22 @@ spatial_engine(obj, verbose = FALSE)
 spatial_crs(obj, verbose = FALSE)
 spatial_proj4(obj, verbose = FALSE)
 
+spatial_crs(obj, verbose = FALSE) <- value
+spatial_proj4(obj, verbose = FALSE) <- value
+
 spatial_bbox(obj, verbose = FALSE)
 
 spatial_data(obj, verbose = FALSE)
 
 spatial_geometry(obj, verbose = FALSE)
 
+spatial_geotype(obj, verbose = FALSE)
+
 spatial_transform(obj, crs, verbose = FALSE, ...)
 
+spatial_coordinates(obj, verbose = FALSE)
+
+spatial_fields(obj, verbose = FALSE)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -36,6 +49,9 @@ Simple feature (package \pkg{sf}) or Spatial abstrac class (package \pkg{sp}).
 }
   \item{crs}{
 Projection EPSG code or projection PROJ.4 string.
+}
+  \item{value}{
+Value for property assignment. Either numeric EPSG code or character PROJ.4 string for \code{spatial_crs} and \code{spatial_proj4}.
 }
   \item{verbose}{
 Logical. Value \code{TRUE} provides information on console. Default is \code{FALSE}.
@@ -47,7 +63,7 @@ Further arguments passed to \code{sf::st_transform} or to \code{sp::spTransform}
 \value{
 \code{spatial_engine} returns package name (character string \code{"sf"} or \code{"sp"}), which functionality is used for manipulation with spatial object \code{obj}.
 
-\code{spatial_crs} and \code{spatial_proj4} are synonyms; they return projection string in the PROJ.4 notation.
+\code{spatial_crs} and \code{spatial_proj4} are synonyms, The \emph{Extract} functions return projection string in the PROJ.4 notation; the \emph{Replace} functions change projection property of the object.
 
 \code{spatial_bbox} returns numeric vector of length 4 with names "xmin", "ymin", "xmax" and "ymax".
 
@@ -56,6 +72,12 @@ Further arguments passed to \code{sf::st_transform} or to \code{sp::spTransform}
 \code{spatial_geometry} returns only geometry, which format is depended on class of \code{obj}.
 
 \code{spatial_transform} does a transformation of spatial coordinates to the new CRS and returns object of the same class as class of \code{obj}.
+
+\code{spatial_geotype} returns type of spatial data: "POINTS", "LINESTRINGS", "POLYGON", "MULTIPOLYGON", \dots.
+
+\code{spatial_coordinates} returns simpliefied matrix or list of coordinates of original object.
+
+\code{spatial_filds} returns column names of spatial attributive table.
 
 }
 \references{

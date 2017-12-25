@@ -20,9 +20,10 @@
            # download.file(obj,fname,method="curl")
             ind <- .grep("(method|mode|cache|extra)",names(arglist))
             args2 <- c(url=obj,destfile=fname,arglist[ind])
-            do.call("download.file",args2)
+           # do.call("download.file",args2)
+            fname <- do.call(".webCacheDownload",c(url=obj,arglist[ind]))
             obj <- read_gdal(fname,...)
-            try(file.remove(fname))
+           # try(file.remove(fname))
          }
          else {
             obj <- if (envi_exists(obj)) read_envi(obj,...) else read_gdal(obj,...)
@@ -68,7 +69,7 @@
          panel_new(...)
          panel_decor(...)
          if (TRUE) { #(.isPackageInUse())
-            ann <- png::readPNG(system.file("sponsorship/annotation.png"
+            ann <- png::readPNG(system.file("optional/sponsorship/annotation.png"
                             ,package="ursa"))
             panel_annotation(ann,alpha=0.5,pos="bottomright",cex=0.5)
          }

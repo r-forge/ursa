@@ -199,7 +199,10 @@
 }
 '.ursaOptions' <- function() {
    op <- options()
-   op <- op[.grep("^ursaPng.+",names(op))]
+   op <- op[.grep("^ursa(Png|[A-Z]).+",names(op))]
+   indPng <- .grep("^ursaPng.+",names(op))
+   if (length(indPng))
+      return(str(op[indPng]))
    str(op)
 }
 '.skipPlot' <- function(onPanel=TRUE) {
@@ -359,4 +362,78 @@
    if (!is.ursa(obj))
       return(NA)
    !is.null(dim(obj$value))
+}
+'.webCacheDir' <- function() getOption("ursaWebCacheDir")
+'.webCacheFile' <- function(pattern="cache") {
+   fpath <- getOption("ursaWebCacheDir")
+   if (!dir.exists(fpath))
+      dir.create(fpath)
+   tempfile(tmpdir=fpath,pattern=pattern)
+}
+'.webCacheDirClear' <- function(completely=FALSE) {
+   fpath <- .webCacheDir()
+   if (!file.exists(fpath))
+      return(invisible(NULL))
+   if (completely) {
+      if (!dir.exists(fpath))
+         return(invisible(NULL))
+      file.remove(.dir(path=fpath,full.names=TRUE))
+      unlink(fpath)
+      return(invisible(NULL))
+   }
+   fname <- file.path(fpath,"_inventory.txt")
+   if (!file.exists(fname))
+      return(.webCacheDirClear(completely=TRUE)) ## RECURSIVE
+   was <- utils::read.table(fname,sep=",")
+   colnames(was) <- c("time","size","src","dst")
+   was <- was[rev(seq(nrow(was))),]
+   was0 <- was
+   was$src <- NULL
+   was$time <- as.POSIXct(was$time,format="%Y-%m-%dT%H:%M:%SZ",tz="UTC")
+   t0 <- as.POSIXct(as.numeric(Sys.time()),origin="1970-01-01",tz="UTC")
+   was$p1 <- unclass(difftime(t0,was$time,units="days"))
+   was$p2 <- cumsum(was$size)
+   was$p3 <- row(was[,1,drop=FALSE])
+   ind <- which(was$p1>7 | was$p2>128*1024*1024 | was$p3>10000)
+   if (!length(ind))
+      return(invisible(NULL))
+   if (length(ind)==nrow(was))
+      return(.webCacheDirClear(completely=TRUE)) ## RECURSIVE
+   file.remove(file.path(fpath,was0$dst[ind]))
+   was0 <- was0[-ind,]
+   was0 <- was0[rev(seq(nrow(was0))),]
+   utils::write.table(was0,quote=TRUE,col.names=FALSE,row.name=FALSE,sep=",",file=fname)
+   return(invisible(NULL))
+}
+'.webCacheDownload' <- function(src,dst,method,quiet=FALSE,mode="w") {
+   enc <- "UTF-8"
+   inventory <- file.path(.webCacheDir(),"_inventory.txt")
+   src0 <- src
+   if (.lgrep("\\{..+}",src)) {
+      dom <- unlist(strsplit(.gsub2("\\{(.+)\\}","\\1",gsub("\\{.\\}","",src)),""))
+      src <- .gsub("{.+}",sample(dom,1),src0)
+   }
+   if (missing(dst))
+      dst <- NULL
+   if (file.exists(inventory)) {
+      was <- utils::read.table(inventory,sep=",",encoding=enc)
+      colnames(was) <- c("time","size","src","dst")
+      if (is.character(dst)) {
+         stop("dst")
+      }
+      ind <- match(src0,was$src)
+      if (!is.na(ind)) {
+         dst <- file.path(.webCacheDir(),was$dst[ind[1]])
+      }
+   }
+   if (is.null(dst)) {
+      dst <- .webCacheFile()
+      download.file(url=URLencode(iconv(src,to="UTF-8")) 
+                   ,destfile=dst,method=method,quiet=quiet,mode=mode)
+      utils::write.table(data.frame(time=format(Sys.time(),"%Y-%m-%dT%H:%M:%SZ",tz="UTC")
+                            ,size=file.size(dst),src=src0,dst=basename(dst))
+                 ,quote=TRUE,col.names=FALSE,row.name=FALSE,sep=","
+                 ,file=inventory,append=TRUE,fileEncoding=enc)
+   }
+   dst
 }

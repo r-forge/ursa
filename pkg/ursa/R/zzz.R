@@ -11,25 +11,28 @@
    rm(p)
    session_pngviewer()
    session_tempdir()
+   fpath <- getOption("ursaWebCacheDir")
+   if ((is.null(fpath))||(!file.exists(fpath)))
+       try(options(ursaWebCacheDir=file.path(dirname(tempdir()),"RtmpUrsaWebCache")))
+   .webCacheDirClear()
   # if ((FALSE)&&(interactive()))
   #    print(data.frame(pngviewer=session_pngviewer()
   #                    ,tempdir=session_tempdir()
   #                    ,row.names="session"))
   # welcome2 <- .elapsedTime("ursa -- onload 1111",toPrint=FALSE)
-   fpath <- file.path(chartr("\\","/",Sys.getenv("R_USER")),"template.idr")
-   if (file.exists(fpath)) {
+  # fpath <- file.path(chartr("\\","/",Sys.getenv("R_USER")),"template.idr")
+   fpath0 <- system.file("requisite",package="ursa")
+   fpath <- getOption("ursaRequisite") ## e.g., from .Rprofile
+   if ((!is.null(fpath))&&(file.exists(fpath))) {
      # ok <- try(Sys.setenv(R_RMAP_TEMPLATE=fpath))
-      ok <- try(options(ursaTemplate=fpath))
+      ok <- try(options(ursaRequisite=fpath))
       if (!inherits(ok,"try-error")) {
-         if (("plutil" %in% loadedNamespaces())&&(.isPackageInUse())) {
-            .ursaEnviron <- new.env()
-            list1 <- unclass(utils::lsf.str(envir=asNamespace("ursa"),all=TRUE))
-            list1 <- .grep("^\\..+",list1,value=TRUE)
-            list1 <- .grep("(zzz|hide)",list1,value=TRUE,invert=TRUE)
-            '.assign' <- function(v) assign(v,get(v),envir=.ursaEnviron)
-            for (a in list1)
-               .assign(a)
-         }
+         sapply(.dir(path=fpath0),function(x)
+                               file.copy(file.path(fpath0,x),file.path(fpath,x)
+                                        ,overwrite=FALSE,copy.date=TRUE))
+        # if (("plutil" %in% loadedNamespaces())&&(.isPackageInUse())) {
+        #    NULL
+        # }
         # .spatialize <<- ursa:::.spatialize
         # assign(".spatialize",ursa:::.spatialize,envir=.GlobalEnv) ## OK
         # assign(".spatialize",get(".spatialize"),envir=.GlobalEnv) ## OK
@@ -37,9 +40,8 @@
          return(invisible(0L))
       }
    }
-   fpath <- system.file("template",package="ursa")
   # try(Sys.setenv(R_RMAP_TEMPLATE=fpath))
-   try(options(ursaTemplate=fpath))
+   try(options(ursaRequisite=fpath0))
    invisible(0L)
 }
 .onAttach <- function(lib, pkg) { ## FAILED for 'Rscript -e "ursa::display()"'

@@ -9,11 +9,11 @@ Overview
 }
 
 \description{
-Some description.
+Have a great work with \pkg{ursa}!
 }
 
 \details{
- Details
+See table of content.
 }
 
 \author{

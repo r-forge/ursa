@@ -5,11 +5,32 @@
       stop("package 'ncdf4' is required for reading NetCDF")
      # return(NULL)
    }
+   if (isZip <- .lgrep("\\.zip$",fname)>0) {
+      ziplist <- unzip(fname,exdir=tempdir());on.exit(file.remove(ziplist))
+      fname <- .grep("\\.(nc)$",ziplist,value=TRUE)
+   }
+   else if ((nchar(Sys.which("gzip")))&&(isZip <- .lgrep("\\.gz$",fname)>0)) {
+      fname0 <- fname
+      fname <- tempfile()
+     # on.exit(file.remove(fname))
+      system2("gzip",c("-f -d -c",.dQuote(fname0)),stdout=fname)
+   }
+   else if ((nchar(Sys.which("bzip2")))&&(isZip <- .lgrep("\\.bz2$",fname)>0)) {
+      fname0 <- fname
+      fname <- tempfile()
+     # on.exit(file.remove(fname))
+      system2("bzip2",c("-f -d -k",.dQuote(fname0)),stdout=fname)
+   }
    nc <- try(ncdf4::nc_open(fname,suppress_dimvals=FALSE))
    if (inherits(nc,"try-error")) {
      # cat(geterrmessage())
       return(NULL) 
    }
+   on.exit({
+      ncdf4::nc_close(nc)
+      if (isZip)
+         file.remove(fname)
+   })
    level0 <- level
    var0 <- var
    varList <- names(nc$var)
@@ -72,7 +93,6 @@
          }
       }
    }
-  # ncdf4::nc_close(nc)
    if ((length(varName)==1)&&(toggle))
       return(res[[1]])
    if (isDF <- all(sapply(res,inherits,"data.frame"))) {
@@ -108,12 +128,30 @@
    if (inherits(fname,"ncdf4"))
       nc <- fname
    else if (is.character(fname)) {
+      if (isZip <- .lgrep("\\.zip$",fname)>0) {
+         ziplist <- unzip(fname,exdir=tempdir());on.exit(file.remove(ziplist))
+         dsn <- .grep("\\.(nc)$",ziplist,value=TRUE)
+      }
+      else if ((nchar(Sys.which("gzip")))&&(isZip <- .lgrep("\\.gz$",fname)>0)) {
+         fname0 <- fname
+         fname <- tempfile();on.exit(file.remove(fname))
+         system2("gzip",c("-f -d -c",.dQuote(fname0)),stdout=fname)
+      }
+      else if ((nchar(Sys.which("bzip2")))&&(isZip <- .lgrep("\\.bz2$",fname)>0)) {
+         fname0 <- fname
+         fname <- tempfile();on.exit(file.remove(fname))
+         system2("bzip2",c("-f -d -k",.dQuote(fname0)),stdout=fname)
+      }
       nc <- try(ncdf4::nc_open(fname,suppress_dimvals=FALSE))
       if (inherits(nc,"try-error")) {
         # cat(geterrmessage())
          return(NULL) 
       }
-      on.exit(ncdf4::nc_close(nc))
+      on.exit({
+         ncdf4::nc_close(nc)
+         if (isZip)
+            file.remove(fname)
+      })
    }
    else
       return(NULL)
