@@ -280,7 +280,7 @@
          ind <- .grep("(method|cache|extra|quiet)",names(arglist)) ## -- "|mode|"
          args2 <- c(url=obj,mode="wb",arglist[ind])
         # do.call("download.file",args2)
-         fname <- do.call(".webCacheDownload",args2)
+         fname <- do.call(".ursaCacheDownload",args2)
          return(read_gdal(fname,...))
       }
    }

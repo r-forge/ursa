@@ -19,8 +19,9 @@
    if (!.lgrep(tilePatt,style))
       art <- "none"
    else {
-     # print(style)
-      if (style %in% tileList)
+      if (length(style)>1)
+         art <- "none"
+      else if (style %in% tileList)
          art <- style
       else
          art <- .gsub2(tilePatt,"\\1",style)
@@ -385,27 +386,43 @@
          tgr$lon2 <- x2
          tgr$lat2 <- y2
       }
-      init <- TRUE
-      for (i in seq(nrow(tgr))) {
-         img2 <- .tileGet(z=zoom,x=tgr[i,"x"],y=tgr[i,"y"]
-                         ,minx=tgr[i,"minx"],miny=tgr[i,"miny"]
-                         ,maxx=tgr[i,"maxx"],maxy=tgr[i,"maxy"]
-                         ,url=tile$url
-                         ,fileext=tile$fileext,verbose=verbose)
-         if (!is.array(img2))
-            next
-         if (init) {
-            nb <- dim(img2)[3]
-            img <- array(0L,dim=c(256*length(v),256*length(h),nb))
-            init=FALSE
-         }
-         if (init)
-            next
-         ##~ img[igr[i,"y"]*256L+seq(256),igr[i,"x"]*256+seq(256),] <- img2[,,1:3]
-         img[igr[i,"y"]*256L+seq(256),igr[i,"x"]*256+seq(256),] <- img2[,,seq(nb)]
-      }
-      if (init)
+      img1 <- vector("list",nrow(tgr))
+      for (i in sample(seq(nrow(tgr))))
+         img1[[i]] <- .tileGet(z=zoom,x=tgr[i,"x"],y=tgr[i,"y"]
+                              ,minx=tgr[i,"minx"],miny=tgr[i,"miny"]
+                              ,maxx=tgr[i,"maxx"],maxy=tgr[i,"maxy"]
+                              ,url=tile$url
+                              ,fileext=tile$fileext,verbose=verbose)
+      nb <- sapply(img1,function(x) {
+         if (!is.array(x))
+            return(NULL)
+         dim(x)[3]
+      })
+      if (!length(nb))
          stop("all tiles are failed")
+      nbmax <- max(nb)
+      if (length(unique(nb))>1) {
+         img1 <- lapply(img1,function(x) {
+            if (!is.array(x))
+               return(x)
+            dima <- dim(x)
+            if (dima[3]==nbmax)
+               return(x)
+            dim(x) <- c(dima[1]*dima[2],dima[3])
+            for (i in (dima[3]+1L):nbmax)
+               x <- cbind(x,255L)
+            dim(x) <- c(dima[1],dima[2],nbmax)
+            x
+         })
+      }
+      img <- array(0L,dim=c(256*length(v),256*length(h),nbmax))
+      for (i in sample(seq(nrow(tgr)))) {
+        # img2 <- img1[[i]]
+        # img[igr[i,"y"]*256L+seq(256),igr[i,"x"]*256+seq(256),] <- img2[,,1:3]
+        # img[igr[i,"y"]*256L+seq(256),igr[i,"x"]*256+seq(256),] <- img2[,,seq(nb)]
+        # img[igr[i,"y"]*256L+seq(256),igr[i,"x"]*256+seq(256),seq(nb)] <- img2[,,seq(nb)]
+         img[igr[i,"y"]*256L+seq(256),igr[i,"x"]*256+seq(256),] <- img1[[i]]#[,,]
+      }
       basemap <- as.ursa(img,aperm=TRUE,flip=TRUE)
       ursa(basemap,"grid") <- g1
      # basemap <- as.integer(regrid(basemap,g0,resample=FALSE))
@@ -471,7 +488,7 @@
             }
            # fname <- tempfile()
            # download.file(src,fname,mode="wb",quiet=!verbose)
-            fname <- .webCacheDownload(src,mode="wb",quiet=!verbose)
+            fname <- .ursaCacheDownload(src,mode="wb",quiet=!verbose)
             j <- if (i==1) 0 else sum(col2[seq(i-1)])
             img[,j+seq(col2[i]),] <- png::readPNG(fname)
            # file.remove(fname)
@@ -502,7 +519,7 @@
          }
         # fname <- tempfile()
         # download.file(src,fname,mode="wb",quiet=!verbose)
-         fname <- .webCacheDownload(src,mode="wb",quiet=!verbose)
+         fname <- .ursaCacheDownload(src,mode="wb",quiet=!verbose)
          basemap <- as.integer(255L*as.ursa(png::readPNG(fname)
                                            ,aperm=TRUE,flip=TRUE))
         # file.remove(fname)

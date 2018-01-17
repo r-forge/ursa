@@ -72,8 +72,9 @@
                op <- par(mar=c(0,0,0,0))
                plot(grDevices::as.raster(png::readPNG(fileout)))
                if (TRUE) {
-                  ann <- png::readPNG(system.file("optional/sponsorship/annotation.png"
-                                  ,package="ursa"))
+                  fann <- .dir(path=system.file("optional/sponsorship",package="ursa")
+                              ,pattern="\\.png$",full.names=TRUE)
+                  ann <- png::readPNG(sample(fann,1))
                   plot(grDevices::as.raster(ann),add=TRUE)
                }
                par(op)
@@ -153,6 +154,13 @@
          system(cmd)
       }
    }
+   if (proposed <- TRUE) {
+      if (.isKnitr()) {
+         execute <- FALSE
+         retK <- knitr::include_graphics(fileout,dpi=96)
+         return(retK)
+      }
+   }
    if (execute)
    {
       if (!toOpen) {
@@ -193,7 +201,8 @@
       else
          file.remove(fileout)
    }
-   if (file.exists(fileout))
+   if (file.exists(fileout)) {
       return(fileout)
+   }
    invisible(NULL)
 }

@@ -12,5 +12,5 @@
   # do.call("compose_plot",c(quote(obj),arglist))
    compose_plot(obj,...)
    compose_close(...)
-   invisible(.Last.value)
+  # invisible(.Last.value)
 }

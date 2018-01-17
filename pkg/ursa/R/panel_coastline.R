@@ -499,7 +499,7 @@
    toUnloadMethods <- !("methods" %in% .loaded())
    .require("methods",quietly=!verbose)
    src <- "http://data.openstreetmapdata.com/simplified-land-polygons-complete-3857.zip"
-   dst <- .webCacheDownload(src,mode="wb",quiet=FALSE)
+   dst <- .ursaCacheDownload(src,mode="wb",quiet=FALSE)
    list1 <- unzip(dst,exdir=tempdir())
    a <- sf::st_read(list1[.grep("\\.shp$",basename(list1))],quiet=TRUE)
    file.remove(list1)
@@ -647,8 +647,11 @@
          for (m in seq_along(g3)) {
             g4 <- g3[[m]]
             isATA <- try(as.integer(any(g4[,2]<(-84.9))))
-            if ((verbose)&&(isATA))
-               print(c('Antarctida FID'=a$FID[i]))  # Antarctida 43705
+            if (isATA) {
+               a$FID[i] <- -abs(a$FID[i])
+               if (verbose)
+                  print(c('Antarctida FID'=a$FID[i]))  # Antarctida 43705
+            }
             k <- k+1
             if (isATA) {
                indX <- which(abs(g4[,1])>180-1e-3)
@@ -675,8 +678,9 @@
    xy <- do.call("rbind",lapply(xy,I))
    xy <- xy[-nrow(xy),]
    indA <- which(xy[,3]>0)
-   colnames(xy) <- c("lon","lat","flag")
-   xy <- xy[,1:2]
+   colnames(xy) <- c("lon","lat","spole")
+   if (TRUE)
+      xy <- xy[,1:2]
    if (length(indA))
       attr(xy,"antarctic") <- indA
    indP <- which(xy[,2]<(-84.99))

@@ -1,6 +1,6 @@
 \name{blank}
 \alias{band_blank}
-%%~ \alias{which.blank}
+%%~ \alias{which_blank}
 \alias{ursa_blank}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
@@ -10,8 +10,8 @@
 Set of functions for checking is any or all bands have no data, and for retrieving indices for non-data bands.
 }
 \usage{
-band_blank(obj)
-%%~ which.blank(obj)
+band_blank(obj, verbose = FALSE)
+%%~ which_blank(obj)
 ursa_blank(obj)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -19,9 +19,12 @@ ursa_blank(obj)
   \item{obj}{
 Object of class \code{ursaRaster}
 }
+  \item{verbose}{
+Logical. Value \code{TRUE} provides progress bar. Default is \code{FALSE}.
+}
 }
 \details{
-It is defined locally that if all values of band are \code{NA} or 0, then such band band_blank. The fact is \code{\link[ursa]{ursa_new}} create new object in memory with default values \code{NA}, but \code{\link[ursa:conn.create_any]{create_envi}} writes zeros to disk quick. It is decided to consider both these cases as blank. Function \code{band_blank} checks blanks for each band of image. If all bands are blank then function \code{ursa_blank} returns \code{TRUE}.
+It is defined locally that if all values of band are \code{NA} or 0, then such band is blank. The fact is \code{\link[ursa]{ursa_new}} create new object in memory with default values \code{NA}, but \code{\link[ursa:conn.create_any]{create_envi}} writes zeros to disk quick. It is decided to consider both these cases as blank. Function \code{band_blank} checks blanks for each band of image. If all bands are blank then function \code{ursa_blank} returns \code{TRUE}.
 %%~ Function \code{which.blank} gives band numbers of blank bands.
 }
 \value{

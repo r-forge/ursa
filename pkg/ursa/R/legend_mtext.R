@@ -9,14 +9,24 @@
    verbose <- .getPrm(arglist,name="verb(ose)*",kwd=kwd,default=FALSE)
    .legend_mtext(text=text,cex=cex)
 }
-'.legend_mtext' <- function(text="Annotation",cex=1)
-{
+'.legend_mtext' <- function(text="Annotation",cex=1) {
    '.mtext' <- function(text,...) {
-      if (!is.expression(text))
-         txt <- as.expression(substitute(bold(u),list(u=text)))
-      else
-         txt <- text
-     .try(mtext(txt,...))
+      if (is.character(text)) {
+         if (getOption("ursaPngDevice") %in% c("windows"))
+            toE <- TRUE
+         else {
+            opWE <- options(warn=2)
+            toE <- .try(abbreviate(text,minlength=2,strict=TRUE),silent=TRUE)
+            options(opWE)
+         }
+         if (toE)
+            txt <- as.expression(substitute(bold(u),list(u=text)))
+         else {
+            message(paste("Note: unable to make bold label for",.dQuote(text)))
+            txt <- text
+         }
+      }
+      .try(mtext(txt,...))
    }
    if (.skipPlot(FALSE))
       return(NULL)

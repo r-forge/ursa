@@ -1,4 +1,4 @@
-'band_blank' <- function(obj)
+'band_blank' <- function(obj,verbose=FALSE)
 {
    if (!is.ursa(obj))
       return(NULL)
@@ -14,8 +14,19 @@
    }
    else
    {
-      for (i in chunk_band(obj))
-         res[i] <- apply(obj[i]$value,2,function(z) all(is.na(z)) | all(z==0))
+      cb <- chunk_band(obj)
+      if (pr <- verbose & length(cb)>1)
+         pb <- ursaProgressBar(min=0,max=length(cb))
+      for (i in cb) {
+         res[i] <- apply(obj[i]$value,2,function(z) {#(all(is.na(z)))||(all(z==0)))
+            r <- unique(z)
+            (length(r)==1)&&(r==0 | is.na(r))
+         })
+         if (pr)
+            setUrsaProgressBar(pb)
+      }
+      if (pr)
+         close(pb)
    }
    res
 }

@@ -10,7 +10,8 @@ open_envi file
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-open_envi(fname, resetGrid = FALSE, headerOnly = FALSE, decompress = !headerOnly, ...)
+open_envi(fname, resetGrid = FALSE, headerOnly = FALSE, decompress = !headerOnly,
+          cache = 0L, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -27,6 +28,9 @@ Logical. If \code{TRUE} then only reading of ENVI header file without creating c
   \item{decompress}{
 If ENVI binary file is compressed and you have not to use ENVI values then put \code{decompress=FALSE} to avoid useless operation
 %%     ~~Describe \code{decompress} here~~
+}
+  \item{cache}{
+Integer. Using cache for compressed files. If \code{0L} then cache is not used. If \code{1L}, then cache is used. Any value, which is differed from \code{0L} and \code{1L}, resets cache. Default is \code{0L}.
 }
   \item{\dots}{
 %%     ~~Describe \code{\dots} here~~

@@ -96,9 +96,10 @@
    if (is.na(useRaster))
       useRaster <- getOption("ursaPngDevice")!="windows"
   # isChar <- length(grep("([A-Za-d]|[f-z]|/|\\*)",names(ct)))>0
-   label <- .deintervale(ct,verbose=TRUE)
+   label <- .deintervale(ct,verbose=!TRUE)
    isChar <- is.character(label)
-   if (isChar)
+   isInterval <- length(label)!=length(ct)
+   if ((isChar)&&(!isInterval))
       label <- names(ct)
    if ((isChar)&&(abbrev>0)) {
       if (.isRscript())
@@ -364,6 +365,10 @@
    scol <- paste0(tcol,"7F")
    if (length(z)>32767)
       useRaster <- FALSE
+   if (any(substr(col,1,1)!="#")) {
+      .col <- col2rgb(col)
+      col <- rgb(.col[1,],.col[2,],.col[3,],maxColorValue=255)
+   }
    ocol <- substr(col,8,9)
   # print(all(nchar(ocol)==2))
   # print(any(as.integer(paste0("0x",ocol))))

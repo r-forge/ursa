@@ -10,8 +10,8 @@ Get indices for partial image reading/writing
 In the case of 'Cannot allocate vector of size ...' error message \code{chunk_band} returns list of bands indices, which are suitable for allocation in memory at once, \code{chunk_line} returns list of lines (rows) indices, which are suitable for allocation in memory at once. \code{chunk_expand} is used to expand lines indices and can by applied in focal functions.
 }
 \usage{
-chunk_band(obj, mem = 100)
-chunk_line(obj, mem = 100)
+chunk_band(obj, mem = 100, mul = 1)
+chunk_line(obj, mem = 100, mul = 1)
 chunk_expand(ind, size = 3)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -20,7 +20,10 @@ chunk_expand(ind, size = 3)
 Object of class \code{ursaRaster}
 }
   \item{mem}{
-Nunmeric. Memory size in GB, which is suitable for allocation.
+Numeric. Memory size in GB, which is suitable for allocation.
+}
+  \item{mul}{
+Numeric. Expansion or reduction factor (multiplier) of default value of memory allocation.
 }
   \item{ind}{
 Integer. Line indices.

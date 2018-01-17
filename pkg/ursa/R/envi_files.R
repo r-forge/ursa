@@ -170,7 +170,7 @@
       ind <- integer()
    if (length(ind))
       return(.noESRI(list2[ind]))
-   if (.lgrep("\\.(tif|tiff|png|bmp)$",patt2)) { 
+   if (.lgrep("\\.(tif|tiff|png|bmp|shp|sqlite|geojson|json|gpkg|kml|mif)$",patt2)) {
       return(character()) ## if exist TIF and HDR, then HDR is not associated with TIF
    }
    patt2a <- .gsub("(\\..+)$","",patt2)

@@ -7,6 +7,7 @@
    subset <- .getPrm(arglist,name="(^$|band|subset)",class=c("integer","character")
                     ,default=NULL)
    nodata <- .getPrm(arglist,name="(nodata|ignorevalue)",default=NaN)
+   cache <- .getPrm(arglist,name="cache",class=c("integer","logical"),default=0L)
    ref <- .getPrm(arglist,class=c("ursaRaster","ursaGrid"),default=NULL)
    resetGrid <- .getPrm(arglist,name="reset(Grid)*",default=FALSE)
    verbose <- .getPrm(arglist,name="verb(ose)*",default=FALSE)
@@ -49,7 +50,7 @@
    if ((resetGrid)||(!theSame)) { ## added 20161002
       session_grid(NULL)
    }
-   obj <- open_envi(fname,decompress=FALSE) ## ,nodata=nodata
+   obj <- open_envi(fname,cache=cache,decompress=FALSE) ## ,nodata=nodata
    bname <- bandname(obj)
    if (.is.grid(obj))
       return(NULL)

@@ -14,8 +14,8 @@ read_envi(fname, ...)
   \item{fname}{
 Character. Filename for ENVI .hdr Labelled Raster file.
 }
-   \item{\dots}{For \code{readENVI}: arguments, which are passed to \code{read_envi} function.
-   
+   \item{\dots}{
+%%~    For \code{readENVI}: arguments, which are passed to \code{read_envi} function.
    
    For \code{read_envi}: Set of argumetns, which are recognized via their names (using \link[base:regex]{regular expressions}) and classes. In the case of grids mismatch some arguments (e.g., \code{resample}) are passed to \code{\link[ursa:regrid]{regrid}} function.
       \describe{
@@ -23,6 +23,7 @@ Character. Filename for ENVI .hdr Labelled Raster file.
          \item{\code{(ref)*}}{\emph{Name can be omitted.} \code{ursaRaster} or \code{ursaGrid} object. Reference grid for raster image resizing. By default (\code{ref=NULL}) there is no resizing.}
          \item{\code{(nodata|ignorevalue)}}{Numeric. Value, which is ignored. By default (\code{nodata=NaN}) igrore value is taken from ENVI metadata (*.hdr or *.aux.xml).}
          \item{\code{reset(Grid)*}}{Logical. If \code{TRUE}, then \link[ursa:session]{session grid} is ignored, and new session grid is assigned from input file. If \code{FALSE}, then input file is nested in the session grid.}
+         \item{\code{cache}}{Integer. Using cache for compressed files. \code{0L} - do not use cache, \code{1L} - use cache; any other value resets cache. Default is \code{FALSE}.}
          \item{\code{verb(ose)*}}{Logical. Value \code{TRUE} may provide some additional information on console. Default is \code{FALSE}.}
       }
    }

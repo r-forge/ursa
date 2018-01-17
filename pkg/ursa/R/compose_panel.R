@@ -26,7 +26,7 @@
          if (length(indSF)) {
             do.call("panel_plot",c(arglist[indSF],arglist[other]))
          }
-         indD <- .grep("^(coast|grid|graticul|scale|ruler)",aname)
+         indD <- .grep("^(decor|coast|grid|graticul|scale|ruler)",aname)
          do.call("panel_decor",arglist[indD])
          indA <- .grep("^(caption|ann)",aname)
          do.call("panel_annotation",arglist[indA])

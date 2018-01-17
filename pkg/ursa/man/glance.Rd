@@ -16,8 +16,9 @@ glance(...)
         border = 27, lat0 = NA, lon0 = NA, resetProj = FALSE, style = "auto",
         feature = c("auto", "field", "geometry"), alpha = NA,
         basemap.order = c("after", "before"), basemap.alpha = NA,
-        engine = c("native", "sp", "sf"), geocode = "",
-        place="", zoom = NA, gdal_rasterize = FALSE,verbose = FALSE, ...)
+        engine = c("native", "sp", "sf"), geocode = "",place="",
+        area = c("bounding", "point"), zoom = NA, gdal_rasterize = FALSE,
+        verbose = FALSE, ...)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -93,6 +94,9 @@ Character. Keyword for geocode service. Valid values are \code{"google"}, \code{
 }
    \item{place}{
 Character. Type of geographical object (river, island) in the geocoding request. If \code{geocode} service is \code{"nominatim"}, then \code{place} is searched among attributes "class" and "type". Default is \code{""}; any object is acceptable.
+}
+   \item{area}{
+Character. Keyword of spatial class of geocoded object. \code{"bounding"} is used for boundary box; \code{"point"} is used for point. Default value is extracted by \code{match.arg(area)}.
 }
    \item{zoom}{
 Positive integer or character. Zooming if web-cartography is applied for basemap. If integer, then value of zoom for tile services and staticmap. If character, then \code{"0"} means zoom by default (defined internally), \code{"+1"} means increment on 1 of default zoom, \code{"+2"} means zoom increment on 2, \code{"-1"} means zoom decrement on 1, \code{"-2"} means zoom decrement on 2, \emph{etc}. Default is \code{NA}; zoom is defined internally.

@@ -106,11 +106,12 @@
    if (anyNA(res)) {
       if (l1==l2)
          return(ivalue)
+      else if (l1==l2+1) ## ++ 20170107
+         return(ivalue)
       else
          return(value)
    }
    ivalue <- res
-  # print(c(l1=l1,l2=l2))
    if (l1==l2)
       return(ivalue)
    if ((l1-1)*2!=l2)

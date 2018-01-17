@@ -27,7 +27,10 @@
             ind <- unique(c(head(ind,n),tail(ind,n)))
             return(lapply(x[ind],series,n)) ## RECURSIVE
          }
-         return(c(head(x,n),tail(x,n)))
+         objAttr <- attributes(x)
+         ret <- c(head(x,n),tail(x,n))
+         attributes(ret) <- objAttr
+         return(ret)
       }
       return(rbind(head(x,n),tail(x,n)))
    }

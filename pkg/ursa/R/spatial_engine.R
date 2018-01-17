@@ -166,7 +166,7 @@
       }
       if (geoType=="POINT") {
         # ret <- do.call("rbind",lapply(sf::st_geometry(obj),unclass))
-         ret <- sapply(sf::st_geometry(obj),unclass)
+         ret <- t(sapply(sf::st_geometry(obj),unclass))
          rownames(ret) <- seq(nrow(ret))
          return(ret)
       }

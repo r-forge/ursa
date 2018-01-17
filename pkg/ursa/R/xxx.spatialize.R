@@ -1,7 +1,7 @@
 '.read_spatial' <- 
 '.spatialize' <- function(dsn,engine=c("native","sp","sf")
                          ,layer=".*",field=".+"
-                         ,geocode="",place=""
+                         ,geocode="",place="",area=c("bounding","point")
                          ,grid=NULL,size=NA,cell=NA,expand=1,border=NA
                          ,lat0=NA,lon0=NA,resetProj=FALSE,style="auto"#,zoom=NA
                          ,subset="",verbose=FALSE,...) {
@@ -23,8 +23,14 @@
       isSP <- !isSF
    }
    else {
-      isSF <- NA
-      isSP <- NA
+      loaded <- loadedNamespaces() #.loaded()
+      if ("sf" %in% loaded)
+         isSF <- TRUE
+      else if (("sp" %in% loaded)||("rgdal" %in% loaded))
+         isSF <- FALSE
+      else
+         isSF <- requireNamespace("sf",quietly=.isPackageInUse())
+      isSP <- !isSF
    }
    isEPSG <- FALSE
    isPROJ4 <- nchar(style)>36 ## need more accurate detecton of proj4
@@ -51,8 +57,9 @@
             }
             toUnloadMethods <- TRUE
          }
-         if ((!isNative)&&(isSF))
+         if ((!isNative)&&(isSF)) {
             obj <- sf::st_as_sf(dsn)
+         }
          else {
             isSP <- TRUE
             isSF <- !isSP
@@ -211,14 +218,23 @@
             dsn <- .grep("\\.shp$",ziplist,value=TRUE)
          }
          else {
-            geocodeList <- eval(as.list(args(.geocode))$service)
+            geocodeArgs <- as.list(args(.geocode))
+            geocodeList <- eval(geocodeArgs$service)
             if ((length(geocode)==1)&&(!nchar(geocode)))
                geocode <- geocodeList
+            if (FALSE) {
+               arglist <- list(...)
+               if (length(ind <- .grep("area",names(arglist)))) {
+                  area <- arglist[[ind]]
+               }
+               else
+                  area <- eval(geocodeArgs$area)
+            }
             da <- .geocode(dsn,service=geocode[1],place=place
-                          ,area="bounding",select="top",verbose=verbose)
+                          ,area=area,select="top",verbose=verbose)
             if ((is.null(da))&&(length(geocode)==2)) {
                geocode <- geocode[2]
-               da <- .geocode(dsn,service=geocode,area="bounding",select="top"
+               da <- .geocode(dsn,service=geocode,area=area,select="top"
                              ,verbose=verbose)
             }
             else if (length(geocode)==2)
@@ -227,8 +243,15 @@
                cat(paste("unable to geocode request",dQuote(dsn),"\n"))
                return(NULL)
             }
-            if (is.null(dim(da)))
-               da <- da[c("minx","miny","maxx","maxy")]
+            if (is.null(dim(da))) {
+               if (length(da)==4)
+                  da <- da[c("minx","miny","maxx","maxy")]
+               else if (length(da)==2) {
+                  arglist <- as.list(match.call())
+                  arglist$dsn <- da
+                  return(do.call(as.character(arglist[[1]]),arglist[-1])) ## RECURSIVE!!!
+               }
+            }
             else
                da <- da[,c("minx","miny","maxx","maxy")]
             if (da[1]>da[3])
@@ -387,13 +410,14 @@
          if (is.character(da)) {
             isDateTime <- FALSE
             if (dev <- TRUE) {
-               a <- as.POSIXct(da,format="%Y-%m-%dT%H:%M:%SZ",tz="UTC")
-               if (all(is.na(a)))
+               a <- as.POSIXct(as.POSIXlt(da,format="%Y-%m-%dT%H:%M:%SZ",tz="UTC"))
+               if (all(is.na(a))) {
                   a <- as.POSIXct(da,"",format="%Y-%m-%d %H:%M")
+               }
                if (!all(is.na(a))) {
                   da <- a
                   rm(a)
-                  if (!is.null(tz <- Sys.getenv("TZ")))
+                  if (nchar(tz <- Sys.getenv("TZ")))
                      da <- as.POSIXct(as.POSIXlt(da,tz=tz))
                   isDateTime <- TRUE
                }

@@ -1,5 +1,5 @@
 'open_envi' <- function(fname,resetGrid=FALSE,headerOnly=FALSE
-                       ,decompress=!headerOnly,...)
+                       ,decompress=!headerOnly,cache=0L,...)
 {
    ##~ str(nodata);q()
    if (resetGrid)
@@ -408,24 +408,37 @@
    }
    else if ((file.exists(fname.envigz))&&(!file.info(fname.envigz)$isdir))
    {
-      if (!decompress)
-      {
+      verbose <- Sys.Date()<=as.Date("2018-01-31") & !.isPackageInUse()
+      solved <- FALSE
+      if (nchar(Sys.which("gzip"))) {
+         if (cache) {
+            if (verbose)
+               message("trying cache")
+            con$fname <- .ursaCacheRaster(fname.envigz
+                              ,ifelse(decompress,"gzip","gzip"),reset=cache!=1)
+            solved <- !is.null(con$fname)
+         }
+         else if (decompress) {
+            if (verbose)
+               message("local unpack")
+            con$fname <- paste0(fname,".unpacked",.maketmp(),"~")
+            system2("gzip",c("-f -d -c",.dQuote(fname.envigz)),stdout=con$fname)
+            solved <- !is.null(con$fname)
+         }
+         if (solved) {
+            con$connection <- "file"
+            con$compress <- ifelse(cache,0,-1L)
+         }
+      }
+      if ((!solved)&&(!decompress)) {
+         if (verbose)
+            message("internal ungzip")
          con$connection <- "gzfile"
          con$fname <- fname.envigz
+         solved <- TRUE
       }
-      else
-      {
-         con$connection <- "file"
-        # con$fname <- paste0(fname,".unpacked~")
-         con$fname <- paste0(fname,".unpacked",.maketmp(),"~")
-         if (FALSE) {
-            system(paste("gzip -f -d -k -Sgz",fname.envigz))
-            file.rename(fname.envi,con$fname)
-         }
-         else ## without "-k" key
-            system2("gzip",c("-f -d -c",.dQuote(fname.envigz)),stdout=con$fname)
-         con$compress <- -1L
-      }
+      if (!solved)
+         stop("Unable to open gzipped file")
       fname.aux <- paste0(fname.envi,".aux.xml")
    }
    else if ((file.exists(fname.bingz))&&(!file.info(fname.bingz)$isdir))

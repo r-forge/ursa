@@ -28,11 +28,20 @@
      # try(print(c(d=head(names(as.list(args(ursa::colorize))))),quote=FALSE))
       argname <- names(as.list(args(colorize)))
       rname <- names(rel)
-      for (i in seq_along(rel)[-c(1,2)]) {
-         if ((is.language(rel[[i]]))&&(rname[i] %in% argname))
-            rel[[i]] <- eval.parent(rel[[i]])
+      j <- NULL
+      for (i in seq_along(rel)[-1]) {
+         if (rname[i]=="obj")
+            next
+         if ((is.language(rel[[i]]))&&(rname[i] %in% argname)) {
+            res <- eval.parent(rel[[i]])
+            if (is.null(res))
+               j <- c(j,i)
+            else
+               rel[[i]] <- res 
+         }
       }
-     # str(rel)
+      if (length(j))
+         rel <- rel[-j]
      # .elapsedTime("===")
    }
    if (is.numeric(alpha)) {
@@ -56,7 +65,7 @@
          v <- length(breakvalue)+1L
       else if ((is.character(pal))&&(length(pal)))
          v <- length(pal)
-      obj <- seq_along(v)
+      obj <- seq_len(v)
       dropIndex <- TRUE
    }
    isList <-  .is.ursa_stack(obj)
@@ -278,8 +287,17 @@
    if ((length(value)>0)&&(length(name)>0)) {
       if ((interval==0)&&(length(value)!=length(name)))
          name <- NULL
-      else if ((interval>0)&&((length(value)+1)!=length(name)))
-         name <- NULL
+      else if (interval>0) {
+         if ((interval==1)&&(length(name) %in% (length(value)+c(0)))) {
+            n0 <- name
+            if (length(n0)>1)
+               name <- paste0("(",n0[-length(n0)],";",n0[-1],"]")
+            name <- c(paste0("<= ",n0[1]),name,paste0("> ",n0[length(n0)]))
+         }
+         if ((interval>0)&&((length(value)+1)!=length(name))) {
+            name <- NULL
+         }
+      }
    }
    if (is.null(palname)) {
       if (FALSE) ## 20170105 test for disabling RColorBrewer

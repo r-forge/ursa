@@ -16,6 +16,7 @@
   # print(getOption("ursaPngBackground"))
    default.dark <- ifelse(bg>127,.dark,255-.light)
    default.light <- ifelse(bg>127,.light,255-.dark)
+   autobright <- TRUE
    if ((is.na(dark))&&(is.na(light))) {
       dark <- default.dark/255
       light <- default.light/255
@@ -24,11 +25,13 @@
       if (light>1)
          light <- light/255
       dark <- default.dark/255
+      autobright <- FALSE
    }
    else if ((!is.na(dark))&&(is.na(light))) {
       if (dark>1)
          dark <- dark/255
       light <- default.light/255
+      autobright <- FALSE
    }
    if ((dark>1)||(light>1)) {
       dark <- dark/255
@@ -39,7 +42,10 @@
       n <- if (length(value)) length(value) else 256L
    if (is.na(verbose))
       verbose <- FALSE #is.na(rich) || is.na(rotate) || is.na(hue)
-   k <- round(1/(exp(n^0.5)),6)
+   if (autobright)
+      k <- round(1/(exp(n^0.5)),6)
+   else
+      k <- 0
    divergent <- length(value)>0 ## 20170705 -- length(value)>0
    if (divergent) {
       isCategory <- length(value)==n

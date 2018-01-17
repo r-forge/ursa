@@ -4,6 +4,9 @@
 \alias{ursa_colortable<-}
 \alias{print.ursaColorTable}
 \alias{[.ursaColorTable}
+\alias{names.ursaColorTable}
+\alias{names<-.ursaColorTable}
+
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Color Tables of raster images.
@@ -20,6 +23,11 @@ Color Tables of raster images.
 ursa_colortable(x)
 
 ursa_colortable(x) <- value
+
+\method{names}{ursaColorTable}(x)
+
+\method{names}{ursaColorTable}(x) <- value
+
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -27,7 +35,11 @@ ursa_colortable(x) <- value
 \code{ursaRaster} object.
 }
   \item{value}{
-Named character vector. Values are colors in \dQuote{#RRGGBB} notation or \R color names (\code{\link[grDevices]{colors}}). \code{names(value)} are names of categories.
+Named character vector. In Replacement functions:
+
+For \code{ursa_colortable()}: values are colors in \dQuote{#RRGGBB} notation or \R color names (\code{\link[grDevices]{colors}}). \code{names(value)} are names of categories.
+
+For \code{names()}: values are names of categories. If length of names is \code{n-1}, where \code{n} is length of colors, then intervaling is assumed, and code{value} are assing to interval breaks.
 }
   \item{i}{
 Integer vector. Indices specifying elements to extract part (subset) of color table.
@@ -54,6 +66,10 @@ If color tables describe continuous and non-intersecting intervals, then \code{p
 Class of \code{$colortable} element is \dQuote{ursaColorTable}. This is named character vector, where names are categories, and values are \dQuote{#RRGGBB} or \R color names. 
 
 \emph{Extract} function \code{[]} for \code{ursaColorTable} object returns object of class \code{ursaColorTable}.
+
+\emph{Extract} function \code{names} for \code{ursaColorTable} object returns character vector (names of categories).
+
+\emph{Replace} function \code{names<-} for \code{ursaColorTable} object returns \code{ursaColorTable} with changed names of categories.
 
 Color tables are written to ENVI header file.
 }

@@ -29,7 +29,8 @@
       return(NULL)
    n <- sapply(obj,nband)
    nodata <- unique(sapply(obj,ignorevalue))
-   res <- ursa_new(nband=sum(n),bandname=unlist(lapply(obj,bandname)))
+   rname <- unname(unlist(lapply(obj,bandname)))
+   res <- ursa_new(nband=sum(n))#,bandname=rname)
    oname <- names(obj)
    k <- 0L
    for (i in seq_along(obj)) {
@@ -43,13 +44,23 @@
       nl <- nband(img)
       k2 <- k+seq(nl)
       res[k2] <- img
-      if ((!is.null(oname))&&(nl==1))
-         bandname(res)[k2] <- oname[i]
+      if ((!is.null(oname))&&(nl==1)) {
+        # bandname(res)[k2] <- oname[i]
+         rname[k2] <- oname[i]
+      }
       k <- k+nl
    }
+   if (all(tail(duplicated(lapply(obj,ursa_colortable)),-1)))
    if (length(nodata)==1)
       ignorevalue(res) <- nodata
-  # bandname(res) <- sapply(obj,bandname)
+   bandname(res) <- rname
+   if (all(tail(duplicated(lapply(obj,ursa_colortable)),-1))) {
+      ct <- ursa_colortable(obj[[1]])
+      if (length(ct)) {
+         ursa_colortable(res) <- ct
+         class(ursa_value(res)) <- "ursaCategory"
+      }
+   }
   # class(res) <- c(class(res),"ursaBrick") ## not necessary
    res
 }

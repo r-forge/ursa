@@ -45,6 +45,8 @@
       names(value) <- myname
    class(value) <- "ursaColorTable"
    x$colortable <- value
+   if ((inherits(x$con$handle,"connection"))&&(is.null(dim(x$value))))
+      .write.hdr(x,clear=FALSE)
    x
 }
 'print.ursaColorTable' <- function(x,...)
@@ -84,4 +86,22 @@
 }
 '.be.category' <- function(obj) {
    (.is.colortable(obj))&&(!.is.category(obj))
+}
+'names.ursaColorTable' <- function(x) NextMethod("names",x)
+'names<-.ursaColorTable' <- function(x,value) {
+   if (!is.null(value)) {
+      if (length(x)==length(value)+1) {
+         n0 <- value
+         if (length(n0)>1)
+            value <- paste0("(",n0[-length(n0)],";",n0[-1],"]")
+         value <- c(paste0("<= ",n0[1]),value,paste0("> ",n0[length(n0)]))
+      }
+   }
+   if (!FALSE)
+      return(NextMethod("names<-",x))
+   cl <- class(x)
+   x <- unclass(x)
+   names(x) <- value
+   class(x) <- cl
+   x
 }

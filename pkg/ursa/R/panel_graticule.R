@@ -31,6 +31,8 @@
    language <- .getPrm(arglist,name="language",kwd=kwd,default=NA_character_)
    verbose <- .getPrm(arglist,name="verb(ose)*",kwd=kwd,default=FALSE)
    if (is.integer(marginalia)) {
+      if ((length(panel)==1)&&(panel==0))
+         panel <- seq(getOption("ursaPngLayout")$image)
       panel <- -panel
       ind <- match(marginalia,-panel)
       panel[ind] <- -panel[ind]

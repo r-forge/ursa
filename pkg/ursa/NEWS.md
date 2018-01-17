@@ -1,4 +1,4 @@
-2017-12-25
+2018-01-17
 
 <style>
    code,
@@ -11,6 +11,26 @@
      background-color: #E6F1FF;
    }
 </style>
+
+### version 3.8-2
+
+  - Changed registration of native routines.
+
+  - Package `knitr` is added as suggested.
+
+  - In `spatial_coordinates()`: fixed return value for ‘POINT’ geometry
+    for ‘sf’ engine.
+
+  - In `glance()`: if all attributes are `NA`, then plot only geometry.
+
+  - In `band_blank()` 1) fixed inaccuracy for values not in memory 2)
+    added argument `verbose`.
+
+  - In `cubehelix()` canceled auto brightness changing if `dark` and
+    `light` are specified
+
+  - In `read_envi` and `open_envi` added argument `cache` to use cache
+    for compressed files.
 
 ### version 3.8-1
 

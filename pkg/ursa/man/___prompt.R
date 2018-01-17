@@ -1,5 +1,5 @@
 invisible({
-   plutil::mysource(ursa)
+   plutil::ursula(2)
    session_grid(NULL)
-   prompt(filename="zzz.new.Rd",name=c("spatial_engine"),forceFunction=TRUE)
+   prompt(filename="zzz.new.Rd",name=c("diff.ursaRaster"),forceFunction=TRUE)
 })

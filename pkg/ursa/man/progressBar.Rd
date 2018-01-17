@@ -13,8 +13,7 @@ ursaProgressBar(kind = c("tk", "txt"),title = .argv0(),
                 label = "", min = 0, max = 1, initial = min, width = NA, style = 1)
 
 setUrsaProgressBar(pb, value, title = NULL, label = NULL)
-
-\method{close}{ursaProgressBar}(con, ...)
+%%~ \method{close}{ursaProgressBar}(con, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -27,7 +26,7 @@ Character. Type or progress bar. Valid values are \code{"tk"} to display progres
 \item{width}{
    See description for the same argument in \code{\link[tcltk:tkProgressBar]{tkProgressBar}}.
 }
-\item{title, label, min, max, initial, value, pb, con, \dots}{
+\item{title, label, min, max, initial, value, pb, \dots}{
    See description for the same arguments in \code{\link[tcltk:tkProgressBar]{tkProgressBar}} and \code{\link[utils:txtProgressBar]{txtProgressBar}}.
 }
 %%~ \item{label}{
@@ -62,16 +61,18 @@ Wrapper to one of
 \code{\link[tcltk:tkProgressBar]{tkProgressBar}}
 . 
 
-Method \code{close(con,...)} depends on class of progress bar.
+%%~ Method \code{close(con,...)} depends on class of progress bar.
 
-Visualization of progress bar is updates each 0.5 seconds, it is efeective for multiple short-term iterations.
+Visualization of progress bar is updates each 0.5 seconds, it is effective for multiple short-term iterations.
+
+Progress bars should be closed by calling of appropriate method of generic function \code{\link{close}} depending of class of reference progress bar.
 }
 \value{
 %%  ~Describe the value returned
 %%  If it is a LIST, use
 %%  \item{comp1 }{Description of 'comp1'}
 %%  \item{comp2 }{Description of 'comp2'}
-\code{ursaProgressBar} returns object of refererence progress bar.
+\code{ursaProgressBar} returns object of reference progress bar.
 }
 %%~ \references{
 %%~ %% ~put references to the literature/web site here ~

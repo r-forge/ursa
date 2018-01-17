@@ -57,7 +57,7 @@
   #   # return(do.call(".glance",arglist))
   # }
    if (is.character(arglist[[1]])) {
-      if (envi_exists(arglist[[1]])) {
+      if (envi_exists(arglist[[1]],exact=TRUE)) {
          return(do.call("display",arglist))
       }
       else if (.lgrep("\\.(tif|tiff|img|png|bmp|dat)$",arglist[[1]])) {
@@ -87,7 +87,7 @@
                   indY <- 2L
                colnames(obj)[c(indX,indY)] <- c("x","y")
             }
-            stop("Development has been stoped")
+            stop("Development has been stopped")
             ##~ p4s <- attr(obj,"proj4")
             ##~ if (isSF) {
                ##~ if (!is.null(p4s))
@@ -144,7 +144,7 @@
                         ,feature=c("auto","field","geometry"),alpha=NA
                         ,basemap.order=c("after","before"),basemap.alpha=NA
                         ,engine=c("native","sp","sf")
-                        ,geocode="",place=""
+                        ,geocode="",place="",area=c("bounding","point")
                         ,zoom=NA,gdal_rasterize=FALSE
                         ,verbose=FALSE,...) {
    a <- as.list(match.call())
@@ -181,7 +181,7 @@
      # requireNamespace("methods",quietly=.isPackageInUse())
    }
    obj <- .spatialize(dsn=dsn,engine=engine,layer=layer,field=field,geocode=geocode
-                   ,place=place,grid=grid,size=size
+                   ,place=place,area=area,grid=grid,size=size
                   # ,expand=expand,border=border
                    ,expand=expand,border=0
                    ,lat0=lat0,lon0=lon0,resetProj=resetProj,style=style#,zoom=NA
@@ -384,6 +384,7 @@
         # print(ct[[i]])
         # print("-----------------------------------------")
       }
+      hasField <- any(sapply(ct,function(x) any(!is.na(x$index))))
       if (!gdal_rasterize) {
          if (length(dname))
             res <- lapply(rep(NA,length(ct)),ursa_new)
@@ -408,7 +409,7 @@
             panel_plot(basemap,alpha=basemap.alpha)
          }
         # if ((!length(ct))||(all(is.na(ct[[i]]$index)))) {
-         if (!length(ct)) {
+         if ((!length(ct))||(!hasField)) {
             if (isSF) {
                panel_plot(obj_geom)
             }

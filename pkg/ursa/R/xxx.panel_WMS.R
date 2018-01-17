@@ -62,11 +62,24 @@
       }
       else {
         # src1 <- paste0(src,"&service=WMS&request=GetCapabilities")
+<<<<<<< .mine
+        # if (!file.exists(dst))
+        #    download.file(src1,dst,mode="wt",quiet=!verbose)
+        # else if ((verbose)&&(!isMetadata))
+        #    message(src1)
+         dst <- .ursaCacheDownload(src1,mode="wt",quiet=!verbose)
+||||||| .r51
+         if (!file.exists(dst))
+            download.file(src1,dst,mode="wt",quiet=!verbose)
+         else if ((verbose)&&(!isMetadata))
+            message(src1)
+=======
         # if (!file.exists(dst))
         #    download.file(src1,dst,mode="wt",quiet=!verbose)
         # else if ((verbose)&&(!isMetadata))
         #    message(src1)
          dst <- .webCacheDownload(src1,mode="wt",quiet=!verbose)
+>>>>>>> .r52
          if (!isMetadata)
             isMetadata <- TRUE
          md <- .parse_wms(dst,verbose=verbose)
@@ -125,11 +138,24 @@
       }
       else {
         # src1 <- paste0(sample(src,1),"&service=WMS&request=GetCapabilities")
+<<<<<<< .mine
+        # if (!file.exists(dst))
+        #    download.file(src1,dst,mode="wt",quiet=!verbose)
+        # else if ((verbose)&&(!isMetadata))
+        #    message(src1)
+         dst <- .ursaCacheDownload(src1,mode="wt",quiet=!verbose)
+||||||| .r51
+         if (!file.exists(dst))
+            download.file(src1,dst,mode="wt",quiet=!verbose)
+         else if ((verbose)&&(!isMetadata))
+            message(src1)
+=======
         # if (!file.exists(dst))
         #    download.file(src1,dst,mode="wt",quiet=!verbose)
         # else if ((verbose)&&(!isMetadata))
         #    message(src1)
          dst <- .webCacheDownload(src1,mode="wt",quiet=!verbose)
+>>>>>>> .r52
          if (!isMetadata)
             isMetadata <- TRUE
          md <- .parse_wms(dst,verbose=verbose)
@@ -185,11 +211,24 @@
       }
       else {
         # src1 <- paste0(sample(src,1),"&service=WMS&request=GetCapabilities")
+<<<<<<< .mine
+        # if (!file.exists(dst))
+        #    download.file(src1,dst,mode="wt",quiet=!verbose)
+        # else if ((verbose)&&(!isMetadata))
+        #    message(src1)
+         dst <- .ursaCacheDownload(src1,mode="wt",quiet=!verbose)
+||||||| .r51
+         if (!file.exists(dst))
+            download.file(src1,dst,mode="wt",quiet=!verbose)
+         else if ((verbose)&&(!isMetadata))
+            message(src1)
+=======
         # if (!file.exists(dst))
         #    download.file(src1,dst,mode="wt",quiet=!verbose)
         # else if ((verbose)&&(!isMetadata))
         #    message(src1)
          dst <- .webCacheDownload(src1,mode="wt",quiet=!verbose)
+>>>>>>> .r52
          if (!isMetadata)
             isMetadata <- TRUE
          md <- .parse_wms(dst,verbose=verbose)
@@ -251,11 +290,24 @@
    layer <- unlist(strsplit(paste(layers,collapse=","),split=","))#[1]
    arglist <- list(...)
    if ((length(layer)==1)&&(extend | toStop)) { 
+<<<<<<< .mine
+     # if (!file.exists(dst))
+     #    download.file(src1,dst,mode="wt",quiet=!verbose)
+     # else if ((verbose)&&(!isMetadata))
+     #    message(src1)
+      dst <- .ursaCacheDownload(src1,mode="wt",quiet=!verbose)
+||||||| .r51
+      if (!file.exists(dst))
+         download.file(src1,dst,mode="wt",quiet=!verbose)
+      else if ((verbose)&&(!isMetadata))
+         message(src1)
+=======
      # if (!file.exists(dst))
      #    download.file(src1,dst,mode="wt",quiet=!verbose)
      # else if ((verbose)&&(!isMetadata))
      #    message(src1)
       dst <- .webCacheDownload(src1,mode="wt",quiet=!verbose)
+>>>>>>> .r52
       if (!isMetadata)
          isMetadata <- TRUE
       md <- .parse_wms(dst,verbose=verbose)
@@ -334,11 +386,24 @@
    defineGrid <- is.null(getOption("ursaSessionGrid"))
    if (toStop | defineGrid) {
      # src1 <- paste0(sample(src,1),"&service=WMS&request=GetCapabilities")
+<<<<<<< .mine
+     # if (!file.exists(dst))
+     #    download.file(src1,dst,mode="wt",quiet=!verbose)
+     # else if ((verbose)&&(!isMetadata))
+     #    message(src1)
+      dst <- .ursaCacheDownload(src1,mode="wt",quiet=!verbose)
+||||||| .r51
+      if (!file.exists(dst))
+         download.file(src1,dst,mode="wt",quiet=!verbose)
+         else if ((verbose)&&(!isMetadata))
+         message(src1)
+=======
      # if (!file.exists(dst))
      #    download.file(src1,dst,mode="wt",quiet=!verbose)
      # else if ((verbose)&&(!isMetadata))
      #    message(src1)
       dst <- .webCacheDownload(src1,mode="wt",quiet=!verbose)
+>>>>>>> .r52
       if (!isMetadata)
          isMetadata <- TRUE
       md <- .parse_wms(dst,verbose=verbose)
@@ -753,9 +818,18 @@
          }
          src2 <- paste0(src2,"&width=",tg$width[i],"&height=",tg$height[i])
          src2 <- paste0(src2,"&service=WMS&request=GetMap")
+<<<<<<< .mine
+        # dst <- tempfile()
+        # download.file(src2,dst,mode="wb",quiet=!verbose)
+         dst <- .ursaCacheDownload(src2,mode="wb",quiet=!verbose)
+||||||| .r51
+         dst <- tempfile()
+         download.file(src2,dst,mode="wb",quiet=!verbose)
+=======
         # dst <- tempfile()
         # download.file(src2,dst,mode="wb",quiet=!verbose)
          dst <- .webCacheDownload(src2,mode="wb",quiet=!verbose)
+>>>>>>> .r52
          if (isPNG)
             a <- try(png::readPNG(dst))
          else if (isJPEG)
@@ -811,10 +885,20 @@
          a <- .grep("^(request|servce|bbox)=",a,value=TRUE,invert=TRUE)
          a <- .gsub("^(layer)(s)*(=.+)","\\1\\3",a)
          reqL <- paste(c(a,"service=WMS","request=GetLegendGraphic"),collapse="&")
+<<<<<<< .mine
+        # dst <- tempfile()
+        # if (.try(download.file(reqL,dst,mode="wb",quiet=!verbose))) {
+         dst <- try(.ursaCacheDownload(reqL,mode="wb",quiet=!verbose))
+         if (!inherits(dst,"try-error")) {
+||||||| .r51
+         dst <- tempfile()
+         if (.try(download.file(reqL,dst,mode="wb",quiet=!verbose))) {
+=======
         # dst <- tempfile()
         # if (.try(download.file(reqL,dst,mode="wb",quiet=!verbose))) {
          dst <- try(.webCacheDownload(reqL,mode="wb",quiet=!verbose))
          if (!inherits(dst,"try-error")) {
+>>>>>>> .r52
             if (isPNG)
                logo2 <- try(png::readPNG(dst))
             else if (isJPEG)
@@ -853,9 +937,17 @@
         # dst <- tempfile()
          isOK <- TRUE
          for (i in seq_along(logo)) {
+<<<<<<< .mine
+           # if (.try(download.file(reqL[i],dst,mode="wb",quiet=!verbose))) {
+            dst <- try(.ursaCacheDownload(reqL,mode="wb",quiet=!verbose))
+            if (!inherits(dst,"try-error")) {
+||||||| .r51
+            if (.try(download.file(reqL[i],dst,mode="wb",quiet=!verbose))) {
+=======
            # if (.try(download.file(reqL[i],dst,mode="wb",quiet=!verbose))) {
             dst <- try(.webCacheDownload(reqL,mode="wb",quiet=!verbose))
             if (!inherits(dst,"try-error")) {
+>>>>>>> .r52
                if (isPNG)
                   logo[[i]] <- try(png::readPNG(dst))
                else if (isJPEG)

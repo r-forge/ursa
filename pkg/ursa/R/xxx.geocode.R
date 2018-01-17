@@ -35,7 +35,7 @@
                   # ,"&polygon_text=1"
                    ,"&format=xml","&bounded=0","&accept-language=en-US,ru")
      # dst <- tempfile() # "nominatim.xml" # tempfile()
-      dst <- .webCacheDownload(src,quiet=!verbose)
+      dst <- .ursaCacheDownload(src,quiet=!verbose)
       xmlstring <- scan(dst,character(),quiet=!verbose)
      # if (dirname(dst)==tempdir())
      #    file.remove(dst)
@@ -109,7 +109,7 @@
             src <- paste0("http://nominatim.openstreetmap.org/search.php?q=",loc
                          ,"&polygon_text=1"
                          ,"&format=xml","&bounded=0","&accept-language=en-US,ru")
-            dst <- .webCacheDownload(src,quiet=!verbose)
+            dst <- .ursaCacheDownload(src,quiet=!verbose)
             if (verbose)
                .elapsedTime("correct bounds (180 degree) -- parsing")
             b <- readLines(dst,encoding="UTF-8",warn=FALSE)
@@ -159,7 +159,7 @@
    else if (service=="google") {
       src <- paste0("https://maps.googleapis.com/maps/api/geocode/xml?"
                    ,"address=",loc)
-      dst <- .webCacheDownload(src,quiet=!verbose)
+      dst <- .ursaCacheDownload(src,quiet=!verbose)
       xmlstring <- scan(dst,character(),quiet=!verbose)
       ilat <- .grep("<lat>",xmlstring)
       ilon <- .grep("<lng>",xmlstring)

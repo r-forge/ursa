@@ -60,7 +60,8 @@
    if ((is.na(allow))||(!is.logical(allow))) {
       if (is.logical(opV))
          return(opV)
-      allow <- .isRscript()
+      allow <- .isRscript() | .isKnitr()
+
    }
    opA <- options(ursaAllowPngViewer=allow)[[1]]
    if (is.null(opV))

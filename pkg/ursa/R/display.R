@@ -21,7 +21,7 @@
             ind <- .grep("(method|mode|cache|extra)",names(arglist))
             args2 <- c(url=obj,destfile=fname,arglist[ind])
            # do.call("download.file",args2)
-            fname <- do.call(".webCacheDownload",c(url=obj,arglist[ind]))
+            fname <- do.call(".ursaCacheDownload",c(url=obj,arglist[ind]))
             obj <- read_gdal(fname,...)
            # try(file.remove(fname))
          }
@@ -54,7 +54,7 @@
    if ((!is.na(ind))&&(is.logical(arglist[[ind]]))&&(arglist[[ind]]))
       verb <- TRUE
    else
-      verb <- !FALSE
+      verb <- !.isPackageInUse()
    if ((toBrick)||(.is.brick(obj,verbose=verb))) {
       if (!TRUE) {
          arglist <- list(...)
@@ -69,8 +69,9 @@
          panel_new(...)
          panel_decor(...)
          if (TRUE) { #(.isPackageInUse())
-            ann <- png::readPNG(system.file("optional/sponsorship/annotation.png"
-                            ,package="ursa"))
+            fann <- .dir(path=system.file("optional/sponsorship",package="ursa")
+                         ,pattern="\\.png$",full.names=TRUE)
+            ann <- png::readPNG(sample(fann,1))
             panel_annotation(ann,alpha=0.5,pos="bottomright",cex=0.5)
          }
          compose_close(...)
@@ -89,7 +90,7 @@
    }
    stop("unreachable code")
 }
-'.is.brick' <- function(obj,tol=0.8,verbose=!FALSE) {
+'.is.brick' <- function(obj,tol=0.8,verbose=!.isPackageInUse()) {
   # verbose <- TRUE
    if (nband(obj)==1)
       return(TRUE)

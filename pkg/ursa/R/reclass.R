@@ -1,3 +1,4 @@
+# ?findInterval
 #'levels.ursaRaster' <- function(obj) names(ursa_colortable(obj))
 'reclass' <- function(obj,dst=NULL,src=NULL,sparse=FALSE,...) {
    verbose <- .getPrm(list(...),name="verb(ose)*",default=FALSE)
@@ -153,8 +154,9 @@
             x1 <- seq(v1)
             x2 <- seq(length(v1)-1)+0.5
             x12 <- sort(c(x1,x2))
+            opLoess <- options(warn=-1)
             for (s in seq(0.99,0.19,by=-0.1)) {
-               m1 <- try(loess(v1~x1,span=s))
+               m1 <- try(loess(v1~x1,span=s),silent=TRUE)
                if (inherits(m1,"try-error"))
                   next
                v12 <- predict(m1,x12)
@@ -164,6 +166,7 @@
                if (length(unique(sign(diff(v3))))==1)
                   break
             }
+            options(opLoess)
             args$dst <- v3
             rm(v1,x1,x12,m1,v12,v3)
          }

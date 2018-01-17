@@ -17,7 +17,7 @@
       names(res) <- sprintf(sprintf("%s%%0%dd",name,nchar(length(1:i))),1:i)
    res
 }
-'chunk_line' <- function(obj,mem=100)
+'chunk_line' <- function(obj,mem=100,mul=1)
 {
    if (!is.ursa(obj))
       return(NULL)
@@ -32,10 +32,10 @@
       nr <- y$lines
       nc <- y$samples
    }
-   a <- as.integer(ceiling(1e6*mem/(8*nc*nb)))
+   a <- as.integer(ceiling(1e6*mem*mul/(8*nc*nb)))
    return(.chunk(nr,a,"line"))
 }
-'chunk_band' <- function(obj,mem=100)
+'chunk_band' <- function(obj,mem=100,mul=1)
 {
    if (!is.ursa(obj))
       return(NULL)
@@ -50,7 +50,7 @@
       nr <- y$lines
       nc <- y$samples
    }
-   a <- as.integer(ceiling(1e6*mem/(8*nc*nr)))
+   a <- as.integer(ceiling(1e6*mem*mul/(8*nc*nr)))
    return(.chunk(nb,a,"band"))
 }
 'chunk_expand' <- function(ind,size=3) {

@@ -15,7 +15,7 @@
    message(tile)
   # fname <- "tile.png"
   # download.file(tile,fname,mode="wb",quiet=!verbose)
-   fname <- .webCacheDownload(tile,mode="wb",quiet=!verbose)
+   fname <- .ursaCacheDownload(tile,mode="wb",quiet=!verbose)
    return(tile)
 }
 # https://leaflet-extras.github.io/leaflet-providers/preview/
@@ -147,9 +147,9 @@
    else if (.lgrep("(\\.|image/)png",pattExt))
       tile$fileext <- "png"
    else {
-      cat(paste("Unable to detect either 'png' or 'jpg' format in url:"
-               ,tile$url,"\n"))
-      stop()
+     # cat(paste("Unable to detect either 'png' or 'jpg' format in url:"
+     #          ,tile$url,"\n"))
+     # stop()
    }
    if (length(indCite))
       tile$copyright <- style[indCite]
@@ -182,14 +182,15 @@
                  ,2,function(x) strtoi(paste(x,collapse=""),base=2L))
       tile <- .gsub("{q}",paste(b5,collapse=""),tile)
    }
-   ##~ if (.lgrep("\\{..+}",tile)) {
-      ##~ dom <- unlist(strsplit(.gsub2("\\{(.+)\\}","\\1",gsub("\\{.\\}","",tile)),""))
+   if ((FALSE)&&(.lgrep("\\{..+}",tile))) {
+      dom <- unlist(strsplit(.gsub2("\\{(.+)\\}","\\1",gsub("\\{.\\}","",tile)),""))
       ##~ print(tile)
       ##~ print(dom)
-      ##~ tile <- .gsub("{.+}",sample(dom,1),tile)
-   ##~ }
+      tile <- .gsub("{.+}",sample(dom,1),tile)
+   }
   # fname <- tempfile(fileext=".tile")
-   a <- try(fname <- .webCacheDownload(tile,mode="wb",quiet=!verbose))
+  # print(tile)
+   a <- try(fname <- .ursaCacheDownload(tile,mode="wb",quiet=!verbose))
    if (inherits(a,"try-error")) {
       return(a)
      # message(a)
@@ -199,9 +200,14 @@
   # download.file(tile,fname,method="curl",mode="wb",quiet=FALSE
   #              ,extra="-H Accept-Language:de")
    if (fileext %in% c("png"))
-      a <- try(255*png::readPNG(fname))
+      a <- try(255*png::readPNG(fname),silent=!verbose)
    else if (fileext %in% c("jpg","jpeg"))
-      a <- try(255*jpeg::readJPEG(fname))
+      a <- try(255*jpeg::readJPEG(fname),silent=!verbose)
+   else {
+      a <- try(255*png::readPNG(fname),silent=!verbose)
+      if (inherits(a,"try-error"))
+         a <- try(255*jpeg::readJPEG(fname),silent=!verbose)
+   }
    if (inherits(a,"try-error")) {
       cat(geterrmessage())
       return(a)
