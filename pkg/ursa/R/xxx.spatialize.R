@@ -45,8 +45,12 @@
    isNative <- engine=="native"
    if (!((is.character(dsn))&&(length(dsn)==1))) {
       nextCheck <- TRUE
-      spcl <- paste0("Spatial",c("Points","Lines","Polygons"))
-      spcl <- c(spcl,paste0(spcl,"DataFrame"))
+      if (FALSE) { ## 20180125--
+         spcl <- paste0("Spatial",c("Points","Lines","Polygons"))
+         spcl <- c(spcl,paste0(spcl,"DataFrame"))
+      }
+      else
+         spcl <- "Spatial"
       if ((nextCheck)&&(inherits(dsn,spcl))) {
          if ((!toUnloadMethods)&&(!("methods" %in% .loaded()))) {
             if (FALSE) {
@@ -217,6 +221,9 @@
             ziplist <- unzip(aname,exdir=tempdir());on.exit(file.remove(ziplist))
             dsn <- .grep("\\.shp$",ziplist,value=TRUE)
          }
+         else if (.lgrep("^(http|https|ftp)://",dsn)) {
+            dsn <- .ursaCacheDownload(dsn)
+         }
          else {
             geocodeArgs <- as.list(args(.geocode))
             geocodeList <- eval(geocodeArgs$service)
@@ -288,6 +295,11 @@
             dsn0 <- dsn
             dsn <- tempfile();on.exit(file.remove(dsn))
             system2("gzip",c("-f -d -c",.dQuote(dsn0)),stdout=dsn)
+         }
+         else if ((nchar(Sys.which("bzip2")))&&(isZip <- .lgrep("\\.bz2$",dsn)>0)) {
+            dsn0 <- dsn
+            dsn <- tempfile();on.exit(file.remove(dsn))
+            system2("bzip2",c("-f -d -c",.dQuote(dsn0)),stdout=dsn)
          }
          if (isCDF <- .lgrep("\\.(nc|hdf)$",dsn)>0) {
             obj <- .read_ncdf(dsn,".+")

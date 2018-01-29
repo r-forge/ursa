@@ -5,7 +5,7 @@
 'compose_plot' <- function(...) {
    ct <- compose_panel(...)
    if (is.null(ct))
-      return(NULL)
+      return(invisible(NULL))
    arglist <- list(...)
    myname <- names(arglist)
    if (is.null(myname))

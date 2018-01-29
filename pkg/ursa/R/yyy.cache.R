@@ -42,8 +42,10 @@
    ind <- which(was$p1>age | was$p2>size*1024*1024*1024 | was$p3>count)
    if (!length(ind))
       return(invisible(NULL))
-   if (length(ind)==nrow(was))
+   if (length(ind)==nrow(was)) {
+      message("cache was removed completely")
       return(.ursaCacheDirClear(completely=TRUE)) ## RECURSIVE
+   }
    file.remove(file.path(fpath,was0$dst[ind]))
    was0 <- was0[-ind,]
    was0 <- was0[rev(seq(nrow(was0))),]
@@ -120,6 +122,8 @@
       dst <- .ursaCacheFile()
       if (unpack=="gzip") {
          system2("gzip",c("-f -d -c",.dQuote(src)),stdout=dst)
+         file.copy(paste0(envi_list(src,exact=TRUE),".hdr")
+                  ,paste0(dst,".hdr"),copy.date=TRUE)
       }
       da <- data.frame(time=format(Sys.time(),"%Y-%m-%dT%H:%M:%SZ",tz="UTC")
                       ,stamp=ftime,size=file.size(dst)

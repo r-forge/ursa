@@ -178,8 +178,16 @@
       if (is.numeric(zman))
          zman <- round(zman)
       else if (is.character(zman)) { ## "+1" "---"
+         zpos <- .grep("\\+",zman,value=TRUE)
+         zneg <- .grep("\\-",zman,value=TRUE)
          if (.lgrep("^(\\+|\\-)\\d$",zman)) {
             zman <- eval(parse(text=paste0(zoom,zman)))
+         }
+         else if ((length(zpos))&&(zman==zpos)) {
+            zman <- zoom+nchar(zman)
+         }
+         else if ((length(zneg))&&(zman==zneg)) {
+            zman <- zoom-nchar(zman)
          }
          else {
             zman <- round(as.numeric(zman))

@@ -199,6 +199,10 @@
       md <- .grep(patt,md,value=TRUE)
       dname <- .grep(dmask,.gsub(patt,"\\1",md),value=TRUE)
    }
+   fext <- .gsub(".+\\.(.+)$","\\1",basename(dsn))
+   fromZero <- .lgrep("^(sqlite|gpkg)$",fext)==0 & .lgrep("^fid$",dname)==0
+   if (verbose)
+      print(c(FID_starts_from_zero=fromZero))
    if (feature=="attribute") {
       if (inMemory)
          dname <- mname ## restore dbf coersion
@@ -228,10 +232,6 @@
       tavalue <- as.integer(names(ta))
       if (TRUE) { ## ++ 20171127
         # print(ursa_table(va))
-         fext <- .gsub(".+\\.(.+)$","\\1",basename(dsn))
-         fromZero <- .lgrep("^(sqlite|gpkg)$",fext)==0 & .lgrep("^fid$",dname)==0
-         if (verbose)
-            print(c(FID_starts_from_zero=fromZero))
          if (fromZero)
             va <- va+1L
       }
@@ -263,19 +263,19 @@
          cmd <- with(g0,paste("gdal_rasterize"
               ,"-a FID",optF
               ,"-sql",.dQuote(paste("select FID,* from",.dQuote(.dQuote(lname))
-                             ,"where",paste0(.dQuote("FID"),"=",i)))
+                             ,"where",paste0(.dQuote("FID"),"=",i-fromZero)))
               ,"-dialect",c("SQLITE","OGRSQL")[2]
              # ,"-where",paste0(.dQuote("FID"),"=",i)
               ,"-tr",resx,resy
               ,"-te",minx,miny,maxx,maxy
               ,"-of ENVI -ot Int16",ifelse(verbose,"","-q")
+              ,"-a_nodata -1 -init -1"
               ,shpname,ftemp))
          if (verbose)
             message(cmd)
          system(cmd)
          va <- read_envi(ftemp)
          envi_remove(ftemp)
-         va[va==0] <- NA
          va
       })
       if (verbose)
@@ -284,7 +284,7 @@
    res
 }
 '.gdalwarp' <- function(src,dst=NULL,grid=NULL,resample="near",nodata=NA
-                       ,resetGrid=FALSE,opt=NULL,verbose=0L) {
+                       ,resetGrid=FALSE,opt=NULL,close=FALSE,verbose=0L) {
    if (is.null(grid)) {
       if (is.ursa(dst,"grid")) {
          grid <- dst
@@ -363,8 +363,10 @@
    session_grid(NULL)
    if (inMemory)
       ret <- read_envi(dst)
-   else
+   else if (!close)
       ret <- open_envi(dst)
+   else
+      ret <- NULL
    if (!is.na(nodata)) {
       ignorevalue(ret) <- nodata
       if (inMemory)

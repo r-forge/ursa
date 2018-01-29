@@ -3,6 +3,8 @@
                            ,title=.argv0()
                            ,label=""
                            ,min=0,max=1,initial=min,width=NA,style=1) {
+  # if (.isKnitr())
+  #    return(NULL)
    kind <- match.arg(kind)
    if ((kind=="tk")&&(!requireNamespace("tcltk",quietly=.isPackageInUse())))
       kind <- "txt"
@@ -35,6 +37,8 @@
    pb
 }
 'setUrsaProgressBar' <- function(pb,value,title=NULL,label=NULL) {
+  # if (.isKnitr())
+  #    return(pb)
    t2 <- unname(proc.time()[3])
    cl <- class(pb)
    st <- getOption(pb$optionName)

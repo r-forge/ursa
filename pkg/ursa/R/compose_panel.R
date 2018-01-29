@@ -28,7 +28,7 @@
          }
          indD <- .grep("^(decor|coast|grid|graticul|scale|ruler)",aname)
          do.call("panel_decor",arglist[indD])
-         indA <- .grep("^(caption|ann)",aname)
+         indA <- .grep("^(caption|ann|label)",aname)
          do.call("panel_annotation",arglist[indA])
       }
       return(invisible(NULL))
@@ -37,6 +37,7 @@
   # decor <- .getPrm(arglist,name="decor",default=TRUE)
   # scalebar <- .getPrm(arglist,name="scalebar",default=FALSE)
    verbose <- .getPrm(arglist,name="verb",kwd="plot",default=NA) ## FALSE?
+   forceRGB <- .getPrm(arglist,name="rgb",kwd="plot",default=FALSE)
   # if ((!is.na(verbose))&&(verbose))
   #    str(list(annotation=annotation,verbose=verbose))
   # isBox <- getOption("ursaPngBox")
@@ -62,6 +63,8 @@
    }
    isRGB <- nb/3==np || nb/4==np || nb/2==np
    if ((!.is.integer(nb/np))&&(!isRGB)&&(canRGB))
+      isRGB <- TRUE
+   if (forceRGB)
       isRGB <- TRUE
    if (isRGB)
       nl <- nb/np ## ??? not used after
@@ -155,7 +158,7 @@
    if (verbose)
       close(pb)
    if (isRGB)
-      return(NULL)
+      return(invisible(NULL))
    if (FALSE) {
      # compose_legend(...)
      # compose_legend(img,...)

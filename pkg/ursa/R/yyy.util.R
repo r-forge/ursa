@@ -365,8 +365,14 @@
 }
 '.normalizePath' <- function(path) normalizePath(path,winslash="/",mustWork=FALSE)
 '.isKnitr' <- function() {
-   cond1 <- requireNamespace("knitr",quietly=.isPackageInUse())
-   if (!cond1)
-      return(FALSE)
-   is.character(knitr::current_input())
+  # cond1 <- requireNamespace("knitr",quietly=.isPackageInUse())
+  # if (!cond1)
+  #    return(FALSE)
+  # is.character(knitr::current_input())
+   ("knitr" %in% loadedNamespaces())&&(is.character(knitr::current_input()))
 }
+'.isJupyter' <- function() {
+   "jupyter:irkernel" %in% search()
+  # "IRkernel" %in% loadedNamespaces()
+}
+`.open` <- function(...) system2("R",c("CMD","open",list(...)))

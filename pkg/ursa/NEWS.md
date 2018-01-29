@@ -1,4 +1,4 @@
-2018-01-17
+2018-01-29
 
 <style>
    code,
@@ -11,6 +11,12 @@
      background-color: #E6F1FF;
    }
 </style>
+
+### version 3.8-3
+
+  - Visualization output is included to R-markdown document and
+    R-Jupyter code without additional controls. Currently, some outputs
+    are not supported (e.g., bookdown::gitbook)
 
 ### version 3.8-2
 

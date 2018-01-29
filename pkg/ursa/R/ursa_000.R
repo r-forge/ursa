@@ -63,6 +63,8 @@
       return(nband(obj))
    if (.lgrep("(info|meta(data)*)",attr))
       return(ursa_info(obj))
+   if (.lgrep("^file(name)*",attr))
+      return(obj$con$fname)
    return(NULL)
 }
 'ursa<-' <- function(obj,attr,...,value) {

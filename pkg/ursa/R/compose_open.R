@@ -51,6 +51,7 @@
                           ,indent=NA,frame=NA,box=TRUE,delafter=NA,wait=1
                           ,device=NA,antialias=NA,font=NA,background="white"
                           ,dev=FALSE,verbose=FALSE) {
+  # session_pngviewer()
    if (FALSE) {
       str(list(mosaic=if (is.list(mosaic)) sapply(mosaic,class) else class(mosaic)
               ,fileout=fileout,dpi=dpi,pointsize=pointsize,scale=scale
@@ -61,7 +62,7 @@
    }
    if (!nchar(fileout))
    {
-      if ((!.isRscript())||(!session_pngviewer()))
+      if ((!.isRscript())||(!session_pngviewer())||(.isKnitr()))
          fileout <- file.path(tempdir(),.maketmp()) ## CRAN Repository Policy
       else
          fileout <- .maketmp()
@@ -179,9 +180,14 @@
    if (verbose)
       print(c(png_width=png_width,png_height=png_height
              ,scale=scale,autoscale=autoscale,pointsize=pointsize,dpi=dpi))
-   png(filename=fileout,width=png_width,height=png_height,res=dpi
-      ,bg=background,pointsize=pointsize
-      ,type=device,antialias=antialias,family=font)
+   a <- try(png(filename=fileout,width=png_width,height=png_height,res=dpi
+           ,bg=background,pointsize=pointsize
+           ,type=device,antialias=antialias,family=font))
+   if (inherits(a,"try-error")) { ## 20180117 patch for conda without cairo
+      png(filename=fileout,width=png_width,height=png_height,res=dpi
+         ,bg=background,pointsize=pointsize
+         ,antialias=antialias,family=font)
+   }
      # ,family=c("Tahoma","Verdana","Georgia","Calibri","sans")[1]
    nf <- layout(panel,widths=lcm(sizec)
                                ,heights=lcm(sizer),respect=TRUE)

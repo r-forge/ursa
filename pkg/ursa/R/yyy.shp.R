@@ -260,7 +260,8 @@
       }
       opW <- options(warn=1)
       if (interim) {
-         ind <- head(seq_along(obj),-1)
+        # ind <- head(seq_along(obj),-1)
+         ind <- which(is.na(match(colnames(obj),attr(obj,"sf_column"))))
          names(obj)[ind] <- iname <- sprintf("fld%03d",ind)
       }
       sf::st_write(obj,dsn=fname,layer=lname,driver=driver

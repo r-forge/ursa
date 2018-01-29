@@ -63,9 +63,12 @@
       else if (.lgrep("\\.(tif|tiff|img|png|bmp|dat)$",arglist[[1]])) {
          return(do.call("display",arglist))
       }
-      else if (.lgrep("\\.(gpkg|tab|kml|json|geojson|mif|sqlite|shp|osm)(\\.(zip|gz))*$"
+      else if (.lgrep("\\.(gpkg|tab|kml|json|geojson|mif|sqlite|shp|osm)(\\.(zip|gz|bz2))*$"
                      ,arglist[[1]])) {
-         return(do.call(".glance",arglist))
+         ret <- do.call(".glance",arglist)
+         if (.isKnitr())
+            return(ret)
+         return(invisible(ret))
       }
       else {
          if ((!.isPackageInUse())&&
@@ -131,8 +134,8 @@
         # }
          else {
            # message("Cannot complete without suggested package 'sf'.")
-            do.call(".glance",arglist)
-            return(invisible(1L))
+            ret <- do.call(".glance",arglist)
+            return(invisible(ret))
          }
       }
    }
@@ -517,7 +520,7 @@
          names(ct) <- dname
          compose_legend(ct,las=2,trim=2L)
       }
-      compose_close(...)#res)
+      ret <- compose_close(...) #res)
    }
    else if (feature=="geometry") {
      # print(geoType)
@@ -608,16 +611,16 @@
          setUrsaProgressBar(pb)
       }
       close(pb)
-      compose_close(...)
+      ret <- compose_close(...)
      # str(n)
    }
    if ((toUnloadMethods)&&("package:methods" %in% search())) {
-     # print(search())
+      if (!(any(c("package:sp","zzzzzzzzzz") %in% search())))
       detach("package:methods",unload=FALSE) 
      # but namespace "methods" is not unloaded, because namespace "sp" is loaded
      # 'as' is not found now
    }
-   invisible(0L)
+   invisible(ret)
 }
 '.cmd.glance' <- function() {
    a <- .args2list()

@@ -74,18 +74,24 @@
             ann <- png::readPNG(sample(fann,1))
             panel_annotation(ann,alpha=0.5,pos="bottomright",cex=0.5)
          }
+         if (.isKnitr())
+            return(compose_close(...))
          compose_close(...)
-         return(NULL)
+         return(invisible(NULL))
       }
       else {
          if (verbose)
             print("display_brick")
+         if (.isKnitr())
+            return(display_brick(obj,...))
          return(invisible(display_brick(obj,...)))
       }
    }
    else {
       if (verbose)
          print("display stack")
+      if (.isKnitr())
+         return(display_stack(obj,...))
       return(invisible(display_stack(obj,...)))
    }
    stop("unreachable code")

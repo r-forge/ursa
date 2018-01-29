@@ -1,13 +1,15 @@
 '.buildAndInstall' <- function() {
    wd <- setwd("C:/platt/R/ursa-package")
+   patt <- "^ursa_.*\\.tar\\.gz$"
+   file.remove(dir(patt))
    system("R --vanilla CMD build ursa")
-   pkg <- tail(plutil::filelist("^ursa_.*\\.tar\\.gz$"))
+   pkg <- tail(plutil::filelist(patt))
    if (length(pkg)==1) {
       opt1 <- "--fake" ## --no-multiarch
       opt2 <- "--no-html"
       opt3 <- "--no-html --build"
       system(paste("R --vanilla CMD INSTALL",opt2,pkg)) 
-      file.remove(pkg)
+     # file.remove(pkg)
    }
    setwd(wd)
    NULL

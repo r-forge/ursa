@@ -9,7 +9,7 @@
    p <- proc.time()
    options(ursaTimeStart=p,ursaTimeDelta=p)
    rm(p)
-   session_pngviewer()
+  # session_pngviewer()
    session_tempdir()
    fpath <- getOption("ursaCacheDir")
    if ((is.null(fpath))||(!file.exists(fpath)))

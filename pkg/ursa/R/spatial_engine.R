@@ -42,6 +42,24 @@
    }
    return(NULL)
 }
+'spatial_geometry<-' <- function(obj,verbose=FALSE,value) {
+   isSF <- inherits(value,c("sf","sfc"))
+   isSP <- inherits(value,"Spatial")
+   if (verbose)
+      print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
+   if (isSF) {
+      obj <- sf::st_sf(obj,geom=spatial_geometry(value))
+   }
+   if (isSP) {
+      geotype <- spatial_geotype(value)
+      obj <- switch(geotype
+                   ,POLYGON=sp::SpatialPolygonsDataFrame(value,obj,match.ID=FALSE)
+                   ,LINESTRING=sp::SpatialLinesDataFrame(value,obj,match.ID=FALSE)
+                   ,POINT=sp::SpatialPointsDataFrame(value,obj,match.ID=FALSE)
+                   ,stop(paste("unimplemented selection:",geotype)))
+   }
+   obj
+}
 'spatial_bbox' <- function(obj,verbose=FALSE) {
    isSF <- inherits(obj,c("sf","sfc"))
    isSP <- inherits(obj,"Spatial")
@@ -93,7 +111,7 @@
    }
    return(NULL)
 }
-'spatial_data' <- function(obj,verbose=FALSE) {
+'spatial_data' <- function(obj,subset=".+",drop=NA,verbose=FALSE) {
    isSF <- inherits(obj,c("sf","sfc"))
    isSP <- inherits(obj,"Spatial")
    if (verbose)
@@ -102,12 +120,18 @@
       res <- obj
       sf::st_geometry(res) <- NULL
       attributes(res) <- attributes(res)[c("names","row.names","class")]
+   }
+   else if (isSP) {
+      res <- obj@data
+   }
+   else 
+      return(NULL)
+   ind <- .grep(subset,colnames(res))
+   if (!length(ind))
       return(res)
-   }
-   if (isSP) {
-      return(obj@data)
-   }
-   return(NULL)
+   if (is.na(drop))
+      drop <- length(ind)==1
+   return(res[,ind,drop=drop])
 }
 'spatial_transform' <- function(obj,crs,verbose=FALSE,...) {
    isSF <- inherits(obj,c("sf","sfc"))
@@ -181,7 +205,8 @@
             stop(paste("Unimplemented MULTILINESTRING (sf)"))
       }
       if (geoType=="MULTIPOLYGON") {
-         ret <- lapply(sf::st_geometry(obj),unclass)
+         ret <- lapply(sf::st_geometry(obj),unclass) ## Holes are not ignored
+        # ret <- lapply(sf::st_geometry(obj),unlist,recursive=FALSE) ## ignore holes
          names(ret) <- seq_along(ret)
          return(ret)
       }
@@ -193,6 +218,11 @@
      # ret <- lapply(sf::st_geometry(obj),unclass) ## dummy
       stop(paste("Unimplemented for geometry (sf): "
                 ,paste(geoType,collapse=", ")))
+     ## back to sf 
+     # g1 <- lapply(geom,function(x1) {
+     #    y1 <- sf::st_multilinestring(x1)
+     #   # y1 <- sf::st_multipolygon(list(x1))
+     # })
    }
    if (isSP) {
       if (geoType=="POINT") {
@@ -260,6 +290,8 @@
                      }
                   }
                }
+              # ret2 <- unlist(ret2,recursive=FALSE) ## TRUE ignores holes
+               message("-----")
                ret2
             }
             else 
@@ -272,4 +304,20 @@
                 ,paste(geoType,collapse=", ")))
    }
    return(NULL)
+}
+'spatial_area' <- function(obj,verbose=FALSE) {
+   isSF <- inherits(obj,c("sf","sfc"))
+   isSP <- inherits(obj,"Spatial")
+   if (verbose)
+      print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
+   if (isSF) {
+      return(sf::st_area(obj))
+   }
+   if (isSP) {
+     if (!("POLYGON" %in% spatial_geotype(obj)))
+        return(NULL)
+     return(sapply(obj@polygons,function(x) sapply(x@Polygons,methods::slot,"area")))
+
+   }
+   NULL
 }
