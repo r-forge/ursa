@@ -155,7 +155,7 @@
       }
    }
    if (proposed <- TRUE) {
-      if (.isKnitr()) {
+      if ((execute)&&(.isKnitr())) {
          execute <- FALSE
          retK <- knitr::include_graphics(fileout,dpi=getOption("ursaPngDpi"))
          return(retK)

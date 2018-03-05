@@ -1,10 +1,10 @@
 '.project' <- function(xy,proj,inv=FALSE,verbose=FALSE) {
    ## because of quicker load of 'proj4' package
   # show.error.messages=verbose
-   if (isSF <- inherits(xy,c("sf","sfc"))) {
+   if (isSF <- .isSF(xy)) {
       return(sf::st_transform(xy,proj))
    }
-   else if (inherits(xy,"Spatial")) {
+   else if (isSP <- .isSP(xy)) {
       return(sp::spTransform(xy,proj))
    }
   # print("---")

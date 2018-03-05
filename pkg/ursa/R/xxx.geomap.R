@@ -70,10 +70,12 @@
       print(data.frame(art=art,color=isColor,grey=isGrey,static=isStatic
                       ,canTile=canTile,tile=isTile,web=isWeb))
    geocodeStatus <- FALSE
-   if (inherits(loc,"Spatial")) {
+   if (.isSP(loc)) {
       proj4 <- sp::proj4string(loc)
       if (!.lgrep("\\+proj=longlat",proj4)) {
          loc <- sp::bbox(loc)
+         if (length(loc)==6)
+            loc <- loc[c(1,2,4,5)]
          loc <- c(.project(matrix(c(loc),ncol=2,byrow=TRUE),proj4
                           ,inv=TRUE))[c(1,3,2,4)]
       }
@@ -141,14 +143,17 @@
       bbox <- c(xmin=bbox[1,1],ymin=bbox[1,2],xmax=bbox[2,1],ymax=bbox[2,2])
       res <- max(c((bbox["xmax"]-bbox["xmin"])/size[1]
            ,(bbox["ymax"]-bbox["ymin"])/size[2]))
+      s <- 2*6378137*pi/(2^(1:21+8))
       if (!notYetGrid) {
          res0 <- with(g0,sqrt(resx*resy))
+         zoom0 <- which.min(abs(s-res0))
       }
-      s <- 2*6378137*pi/(2^(1:21+8))
+      else
+         zoom0 <- -99
       zman <- zoom
       zoom <- which.min(abs(s-res))
       fixRes <- FALSE
-      for (i in seq(zoom+1,1,by=-1)) {
+      for (i in seq(max(zoom0,zoom+1),1,by=-1)) {
          if (i<1)
             break
          res <- s[i]
@@ -425,11 +430,17 @@
       }
       img <- array(0L,dim=c(256*length(v),256*length(h),nbmax))
       for (i in sample(seq(nrow(tgr)))) {
-        # img2 <- img1[[i]]
         # img[igr[i,"y"]*256L+seq(256),igr[i,"x"]*256+seq(256),] <- img2[,,1:3]
         # img[igr[i,"y"]*256L+seq(256),igr[i,"x"]*256+seq(256),] <- img2[,,seq(nb)]
         # img[igr[i,"y"]*256L+seq(256),igr[i,"x"]*256+seq(256),seq(nb)] <- img2[,,seq(nb)]
-         img[igr[i,"y"]*256L+seq(256),igr[i,"x"]*256+seq(256),] <- img1[[i]]#[,,]
+         img2 <- img1[[i]]
+         dima <- dim(img2)
+         if (!((dima[1]==256)&&(dima[2]==256))) {
+           # .elapsedTime("everytime 0205a")
+            img2 <- as.array(regrid(as.ursa(img2),res=c(dima[1]/256,dima[2]/256)))
+           # .elapsedTime("everytime 0205b")
+         }
+         img[igr[i,"y"]*256L+seq(256),igr[i,"x"]*256+seq(256),] <- img2
       }
       basemap <- as.ursa(img,aperm=TRUE,flip=TRUE)
       ursa(basemap,"grid") <- g1

@@ -8,7 +8,8 @@
    isList <- .is.ursa_stack(img)
    if ((is.null(img))||((!isList)&&(all(is.na(ursa_value(img)))))) { ## was 'missing'
   # if (is.null(img)) { 
-      if (!length(arglist)) {
+      ret <- NULL
+      if ((is.ursa(img))||(!length(arglist))) {
          panel_new(...)
          panel_decor(...)
       }
@@ -16,22 +17,30 @@
          aname <- names(arglist)
          indB <- .grep("^blank",aname)
          do.call("panel_new",arglist[indB])
-         indSP <- which(sapply(arglist,inherits,"Spatial"))
-         indSF <- which(sapply(arglist,inherits,c("sfc","sf")))
-         other <- seq_along(arglist)[-c(indSP,indSF)]
+        # indSP <- which(sapply(arglist,inherits,"Spatial"))
+        # indSF <- which(sapply(arglist,inherits,c("sfc","sf")))
+         indSP <- which(sapply(arglist,.isSP))
+         indSF <- which(sapply(arglist,.isSF))
+         other <- seq_along(arglist)
+         indS <- c(indSP,indSF)
+         if (length(indS))
+            other <- other[-indS]
          if (length(indSP)) {
            # panel_plot(...)
-            do.call("panel_plot",c(arglist[indSP],arglist[other]))
+            ret <- do.call("panel_plot",c(arglist[indSP],arglist[other]))$col
          }
          if (length(indSF)) {
-            do.call("panel_plot",c(arglist[indSF],arglist[other]))
+            ret <- do.call("panel_plot",c(arglist[indSF],arglist[other]))$col
+         }
+         if ((!length(indS))&&(length(other))) {
+            ret <- do.call("panel_plot",c(arglist[other]))$col
          }
          indD <- .grep("^(decor|coast|grid|graticul|scale|ruler)",aname)
          do.call("panel_decor",arglist[indD])
          indA <- .grep("^(caption|ann|label)",aname)
          do.call("panel_annotation",arglist[indA])
       }
-      return(invisible(NULL))
+      return(invisible(ret))
    }
   # annotation <- .getPrm(arglist,name="annotation",default=NA)#_character_)
   # decor <- .getPrm(arglist,name="decor",default=TRUE)
@@ -69,7 +78,7 @@
    if (isRGB)
       nl <- nb/np ## ??? not used after
   # print(img)
-  # print(c(nb=nb,np=np,ng=ng,isRGB=as.integer(isRGB)))
+   print(c(nb=nb,np=np,ng=ng,isRGB=as.integer(isRGB)))
    annotation <- nb>1 & !isRGB #& !isList
    if (is.na(verbose))
       verbose <- nb>2
@@ -86,8 +95,7 @@
    if (is.null(myname))
       myname <- ""
    arglist <- arglist[nchar(myname)>0]
-   if (!.lgrep("(caption|ann(otation)*)\\.label",myname))
-      arglist[["caption.label"]] <- txt
+   blankAnnotation <- .lgrep("(caption|ann(otation)*)\\.label",myname)==0
    ct <- vector("list",ng)
   # names(ct) <- if (isList) ln else ""
    if (length(ct)==length(units))
@@ -106,7 +114,10 @@
       }
       else if (!isRGB) {
         # obj <- img
-         p <- do.call("colorize",c(list(img),arglist))
+         if (is.ursa(img,"colortable"))
+            p <- img
+         else
+            p <- do.call("colorize",c(list(img),arglist))
          ct[[j]] <- p$colortable
          nl <- nband(p)
       }
@@ -148,6 +159,9 @@
          else {
             panel_coastline(coast)
             panel_graticule(ll)
+         }
+         if (blankAnnotation) {
+            arglist[["caption.label"]] <- if (length(txt)==nl) txt[i] else txt
          }
          do.call("panel_annotation",arglist) ## only through 'do.call'
          do.call("panel_scalebar",arglist) ## panel_scalebar(...)

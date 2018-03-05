@@ -37,9 +37,9 @@
    was$time <- as.POSIXct(was$time,format="%Y-%m-%dT%H:%M:%SZ",tz="UTC")
    t0 <- as.POSIXct(as.numeric(Sys.time()),origin="1970-01-01",tz="UTC")
    was$p1 <- unclass(difftime(t0,was$time,units="days"))
-   was$p2 <- cumsum(was$size)
+   was$p2 <- cumsum(was$size/1024)
    was$p3 <- row(was[,1,drop=FALSE])
-   ind <- which(was$p1>age | was$p2>size*1024*1024*1024 | was$p3>count)
+   ind <- which(was$p1>age | was$p2>size*1024*1024 | was$p3>count)
    if (!length(ind))
       return(invisible(NULL))
    if (length(ind)==nrow(was)) {
@@ -74,8 +74,9 @@
          dst <- file.path(.ursaCacheDir(),was$dst[ind[1]])
       }
    }
-   if (is.null(dst)) {
-      dst <- .ursaCacheFile()
+   if ((is.null(dst))||(!file.exists(dst))) {
+      if (is.null(dst))
+         dst <- .ursaCacheFile()
       download.file(url=URLencode(iconv(src,to="UTF-8")) 
                    ,destfile=dst,method=method,quiet=quiet,mode=mode)
       utils::write.table(data.frame(time=format(Sys.time(),"%Y-%m-%dT%H:%M:%SZ",tz="UTC")
@@ -101,12 +102,29 @@
       if (is.character(dst)) {
          stop("dst")
       }
-      ind1 <- match(.normalizePath(src),was$src)
-      ind2 <- match(ftime,was$stamp)
-      ind3 <- ind2 ## dummy for one more check
-      if (!anyNA(c(ind1,ind2,ind3))&&(ind1==ind2)&&(ind2==ind3)) {
-         dst <- file.path(.ursaCacheDir(),was$dst[ind1[1]])
-         ind <- ind1
+      if (FALSE) {
+         wasP <- was
+         wasP$src <- substr(wasP$src,1,12)
+         print(wasP)
+      }
+      if (FALSE) {
+         ind1 <- match(.normalizePath(src),was$src)
+         ind2 <- match(ftime,was$stamp)
+         ind3 <- ind2 ## dummy for one more check
+         if (!anyNA(c(ind1,ind2,ind3))&&(ind1==ind2)&&(ind2==ind3)) {
+            dst <- file.path(.ursaCacheDir(),was$dst[ind1[1]])
+            ind <- ind1
+         }
+      }
+      else {
+         ind1 <- which(!is.na(match(was$src,.normalizePath(src))))
+         ind2 <- which(!is.na(match(was$stamp,ftime)))
+         ta <- table(c(ind1,ind2))
+         ta <- ta[ta==2]
+         if (length(ta)) {
+            ind <- as.integer(names(ta))
+            dst <- file.path(.ursaCacheDir(),was$dst[ind[1]])
+         }
       }
    }
    if (reset) {

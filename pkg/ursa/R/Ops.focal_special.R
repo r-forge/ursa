@@ -1,6 +1,6 @@
 'focal_special' <- function(x,type=c("custom","gaussian","laplacian","osisaf"
                                     ,"hires","correl","LoG","sobel","sobelG")
-                           ,fmask=NULL,size=3,alpha=0.5,sigma=0.5,cover=1-1e-6
+                           ,fmask=NULL,size=3,alpha=0.5,sigma=(size-1)/4,cover=1-1e-6
                            ,fillNA=FALSE,saveMargin=FALSE,verbose=0L)
 {
    type <- match.arg(type)

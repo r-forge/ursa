@@ -1,19 +1,40 @@
 'compose_legend' <- function(...)
 {
+   nlegend <- getOption("ursaPngLayout")$legend
    arglist <- list(...)
    colorbar <- .getPrm(arglist,name="^colorbar$",default=TRUE)
    if (!as.logical(colorbar))
       return(invisible(NULL))
    units <- NULL
+   aname2 <- sapply(arglist,function(x) {
+      y <- names(x)
+      if (is.null(y))
+         return("")
+      if (.is.colortable(x)) {
+         return("")
+      }
+      if (length(y)>1) {
+         y <- paste0(head(y,1),"...",tail(y,1))
+      }
+      y
+   })
    arglist <- lapply(arglist,function(x1) {
       if (identical(c("index","colortable"),names(x1)))
          return(x1$colortable)
+      if (is.ursa(x1))
+         return(x1$colortable)
+      if ((is.list(x1))&&(length(x1)==1)) {
+         return(x1[[1]])
+      }
       x1
    })
    ind <- sapply(arglist,is.ursa,"colortable")
    if (length(which(ind))) {
       obj <- vector("list",length(ind))
       myname <- names(ind)
+      if (length(ind2 <- which(!nchar(myname)))) {
+         myname[ind2] <- aname2[ind2]
+      }
       names(obj) <- myname
       ind2 <- rep(TRUE,length(ind))
       for (i in seq_along(obj)) {
@@ -34,6 +55,17 @@
       units <- names(obj)
    }
    else {
+      arglist[[1]] <- lapply(arglist[[1]],function(x1) {
+         if (identical(c("index","colortable"),names(x1)))
+            return(x1$colortable)
+         if ((is.list(x1))&&(length(x1)==1)) {
+            if (is.ursa(x1))
+               return(x1$colortable)
+            else
+               return(x1[[1]])
+         }
+         x1
+      })
       ind <- sapply(arglist[[1]],is.ursa,"colortable")
       if ((is.list(ind))&&(!length(ind)))
          return(invisible(NULL))
@@ -96,19 +128,21 @@
             units <- rep(units,len=length(obj))
       }
       for (i in seq_along(obj)) {
-         if (!(i %in% skip)) {
-           # legend_colorbar(obj=obj[[i]],units=units[i],...)
-            arglist <- c(quote(obj[[i]]),arglist)
-           # arglist[[1]] <- quote(obj[[i]])
-            if (.is.colortable(obj[[i]])) {
-               arglist[["units"]] <- units[i]
-               do.call("legend_colorbar",arglist)
-               arglist[["units"]] <- NULL
-            }
-            else {
-               do.call("legend_mtext",arglist)
-              # legend_mtext(obj[[i]])
-            }
+         if (i %in% skip)
+            next
+         if (i>nlegend)
+            break
+        # legend_colorbar(obj=obj[[i]],units=units[i],...)
+         arglist <- c(quote(obj[[i]]),arglist)
+        # arglist[[1]] <- quote(obj[[i]])
+         if (.is.colortable(obj[[i]])) {
+            arglist[["units"]] <- units[i]
+            do.call("legend_colorbar",arglist)
+            arglist[["units"]] <- NULL
+         }
+         else {
+            do.call("legend_mtext",arglist)
+           # legend_mtext(obj[[i]])
          }
       }
    }

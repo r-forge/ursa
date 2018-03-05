@@ -61,8 +61,12 @@
 '.is.colortable' <- function(obj) {
    if (is.ursa(obj))
       obj <- obj$colortable
-   else if ((is.list(obj))&&(!is.null(obj$colortable)))
-      obj <- obj$colortable
+   else if (is.list(obj)) {
+      if (!is.null(obj$colortable))
+         obj <- obj$colortable
+      else if (length(obj)==1)
+         obj <- obj[[1]]
+   }
    ((length(obj)>0)&&(inherits(obj,"ursaColorTable")))
 }
 '.is.nominal' <- function(obj) {

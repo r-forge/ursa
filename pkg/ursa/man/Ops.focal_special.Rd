@@ -10,8 +10,8 @@ For each band and for each cell, function calculates value using specific matrix
 \usage{
 focal_special(x, type = c("custom", "gaussian", "laplacian", "osisaf",
                           "hires", "correl", "LoG", "sobel", "sobelG"),
-             fmask = NULL, size = 3, alpha = 0.5, sigma = 0.5, cover = 1 - 1e-06,
-             fillNA = FALSE, saveMargin = FALSE, verbose = 0L)
+             fmask = NULL, size = 3, alpha = 0.5, sigma = (size-1)/4,
+             cover = 1 - 1e-06, fillNA = FALSE, saveMargin = FALSE, verbose = 0L)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

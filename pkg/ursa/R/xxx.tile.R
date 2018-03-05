@@ -50,6 +50,10 @@
   # http://a.basemaps.cartocdn.com/light_only_labels/6/39/18.png
    s$CartoDB <- c("http://{abcd}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
                  ,paste0(osmCr,", \uA9 CartoDB"))
+   s$'Positron' <- c("http://{abcd}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
+                    ,paste0(osmCr,", \uA9 CartoDB"))
+   s$'Dark Matter' <- c("http://{abcd}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
+                       ,paste0(osmCr,", \uA9 CartoDB"))
    s$kosmosnimki <- c("http://{abcd}.tile.osm.kosmosnimki.ru/kosmo/{z}/{x}/{y}.png"
                      ,paste0(osmCr,", \uA9 ScanEx"))
    s$Esri.Ocean <- c("https://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}.jpg"
@@ -199,14 +203,20 @@
   # message(tile)
   # download.file(tile,fname,method="curl",mode="wb",quiet=FALSE
   #              ,extra="-H Accept-Language:de")
-   if (fileext %in% c("png"))
+   isPNG <- FALSE
+   isJPEG <- FALSE
+   if (isPNG <- fileext %in% c("png"))
       a <- try(255*png::readPNG(fname),silent=!verbose)
-   else if (fileext %in% c("jpg","jpeg"))
+   else if (isJPEG <- fileext %in% c("jpg","jpeg"))
       a <- try(255*jpeg::readJPEG(fname),silent=!verbose)
    else {
       a <- try(255*png::readPNG(fname),silent=!verbose)
-      if (inherits(a,"try-error"))
+      if (inherits(a,"try-error")) {
          a <- try(255*jpeg::readJPEG(fname),silent=!verbose)
+         isJPEG <- !inherits(a,"try-error")
+      }
+      else
+         isPNG <- !inherits(a,"try-error")
    }
    if (inherits(a,"try-error")) {
       cat(geterrmessage())
@@ -215,6 +225,21 @@
   # file.remove(fname)
    if (TRUE) {
       dima <- dim(a)
+      reduce <- (TRUE)&&((dima[1]!=256)||(dima[2]!=256))
+      if (reduce) {
+        # .elapsedTime("firstrun 0205a")
+         a <- as.array(regrid(as.ursa(a)
+               ,res=c(dima[1]/256,dima[2]/256),resample=1,cover=1e-6,verbose=0L))
+         dima <- dim(a)
+         if (isPNG)
+            png::writePNG(a/256,fname)
+         else if (isJPEG)
+            jpeg::writeJPEG(a/256,fname)
+         else
+            stop("unable to update file")
+         a <- .round(a)
+        # .elapsedTime("firstrun 0205b")
+      }
       a <- as.integer(c(a))
       dim(a) <- dima
    }

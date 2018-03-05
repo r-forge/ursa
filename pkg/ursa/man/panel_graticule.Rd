@@ -15,7 +15,7 @@ panel_graticule(...)
 compose_graticule(...)
 
 # non-public
-.compose_graticule(panel = 0L, col = "grey70", lon = NA, lat = NA,
+.compose_graticule(panel = 0L, col = "grey70", border = "grey70", lon = NA, lat = NA,
                 lwd = 0.5, lty = 2, marginalia = rep(FALSE, 4), trim = FALSE,
                 language = NA, cex = 0.75, verbose = FALSE)
 
@@ -29,7 +29,8 @@ compose_graticule(...)
           \emph{Matched pattern} \tab \emph{Used argument} \tab \emph{Description}
           \cr\code{(graticule|grid(line)*)} \tab \code{   } \tab Logical. Responsible for should grid lines be displayed or not. If \code{TRUE} then grid lines are plotted. If \code{FALSE} then grid lines are not displayed. Default is \code{TRUE}.
           \cr \code{^(graticule|grid(line)*)$} \tab \code{panel} \tab \emph{See below}.
-          \cr \code{(grid.)*col} \tab \code{col} \tab \emph{See below}. Default value in \code{compose_graticule} depends on background color, \code{"#0000002F"} for ligth background, and \code{"#0000002F"} for dark background.
+          \cr \code{(graticule|grid(line)\\.)*col} \tab \code{col} \tab \emph{See below}. Default value in \code{compose_graticule} depends on panel background color, \code{"#0000002F"} for ligth panel background, and \code{"#FFFFFF4F"} for dark panel background.
+          \cr \code{(graticule|grid(line)\\.)*border} \tab \code{border} \tab \emph{See below}. Default value in \code{compose_graticule} depends on figure background color, \code{"#0000002F"} for ligth figure background, and \code{"#FFFFFF4F"} for dark figure background.
           \cr \code{(graticule|grid(line)\\.)*lon} \tab \code{lon} \tab \emph{See below}.
           \cr \code{(graticule|grid(line)\\.)*lat} \tab \code{lat} \tab \emph{See below}.
           \cr \code{(graticule|grid(line)\\.)*lwd} \tab \code{lwd} \tab \emph{See below}.
@@ -43,7 +44,8 @@ compose_graticule(...)
 %%~    \item{\code{grid(line)*}}{Logical. Responsible for should grid lines be displayed or not. If \code{TRUE} then grid lines are plotted. If \code{FALSE} then grid lines are not displayed. Default is \code{TRUE}.}
    \item{obj}{Objects of the class \code{ursaGridLine}. It is internal structure, which is returned by function \code{.compose_graticule}.}
    \item{panel}{Integer vector. Panel for which coastline will be displayed. \code{0L} means that coastline will bw displayed for all panels. Default is \code{0L}.}
-   \item{col}{Character. Color code/name for grid lines. Default is \verb{\dQuote{grey70}}.}
+   \item{col}{Character. Color code/name for grid lines. Default is \verb{"grey70"}.}
+   \item{border}{Character. Color code/name for marginal labels and ticks. Default is \verb{"grey70"}. }
    \item{lon}{Numeric vector. Set of longitudes for grid. If \code{NA} then set of logitudes is formed internally. Default is \code{NA}.}
    \item{lat}{Numeric vector. Set of latitudes for grid. If \code{NA} then set of latidudes is formed internally. Default is \code{NA}.}
    \item{lwd}{Positive numeric. Width of grid line. Default is \code{0.5}. See \code{lwd} in \code{\link[graphics]{par}}.}

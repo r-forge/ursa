@@ -1,6 +1,6 @@
 'session_grid' <- function(obj)
 {
-   if (missing(obj))
+   if (missing(obj)) ## 'Extract'
    {
       ref <- getOption("ursaSessionGrid")
       if ((is.null(ref))||(!.is.grid(ref)))
@@ -16,8 +16,10 @@
          }
          options(ursaSessionGrid=ref)
       }
-      return(invisible(ref))
+     # return(invisible(ref))
+      return(ref)
    }
+  # above - 'Extract' (visible), below - 'Replace' (invisible)
    if (is.null(obj))
       return(options(ursaSessionGrid=NULL))
    if (.is.grid(obj)) {
@@ -30,13 +32,26 @@
       options(ursaSessionGrid=obj$grid)
       return(invisible(obj$grid))
    }
+   if (is_spatial(obj)) {
+      bbox <- spatial_bbox(obj)
+      nc <- (bbox["xmax"]-bbox["xmin"])
+      nr <- (bbox["ymax"]-bbox["ymin"])
+      res <- max(nc,nr)/640
+      p <- pretty(res)
+      res <- p[which.min(abs(res-p))]
+      g1 <- regrid(setbound=unname(bbox),proj4=spatial_proj4(obj),res=res)
+      return(session_grid(g1))
+   }
    if ((!envi_exists(obj))&&(nchar(Sys.getenv("R_IDRISI")))&&(exists("read.idr"))) {
       g1 <- do.call("read.idr",list((obj)))$grid
       options(ursaSessionGrid=g1)
       return(invisible(g1))
    }
    if (is.character(obj)) {
-      a <- open_envi(obj,resetGrid=TRUE,decompress=FALSE)
+      a <- try(open_envi(obj,resetGrid=TRUE,decompress=FALSE))
+      if (inherits(a,"try-error")) {
+         a <- open_gdal(obj)
+      }
       g1 <- a$grid
       close(a)
       if (!.is.grid(g1))
@@ -47,11 +62,14 @@
    str(obj)
    stop('Unable to recognize paramaters for new grid')
 }
-#'session_grid<-' <- function(obj,value) {
-#   options(ursaSessionGrid=value)
-#   return(session_grid())
+## .Unable to implement 'session_grid() <- val' for missing object
+#'session_grid<-' <- function(value) {
+#   stop("<-s")
+#  # options(ursaSessionGrid=value)
+#   session_grid(value)
+#  # return(session_grid())
 #}
-'session_proj4' <- function() session_grid()$proj4
+'session_proj4' <- 'session_crs' <- function() session_grid()$proj4
 'session_cellsize' <- function() with(session_grid(),sqrt(resx*resy))
 'session_bbox' <- function() with(session_grid()
                                  ,c(minx=minx,miny=miny,maxx=maxx,maxy=maxy))
@@ -83,4 +101,19 @@
    dst <- ifelse(.isRscript(),getwd(),tempdir())
    options(ursaTempDir=dst)
    return(dst)
+}
+'session_use_experimental_functions' <- function() {
+   list1 <- readLines(system.file("NAMESPACE",package="ursa"))
+   list1 <- grep("^export\\(",list1,value=TRUE)
+   list1 <- gsub("^export\\(\\\"(.+)\\\"\\)","\\1",list1)
+   ns <- asNamespace("ursa")
+   list2 <- ls(envir=ns)
+   list2 <- grep("^[A-Za-z]",list2,value=TRUE)
+   list2 <- grep("\\.(ursa(Raster|Grid|ColorTable|Connection|Numeric|Category|Stack))"
+                ,list2,value=TRUE,invert=TRUE)
+   list2 <- grep("^(as\\.Raster|djqwotrhfndh)\\.",list2,value=TRUE,invert=TRUE)
+   list2 <- list2[which(is.na(match(list2,list1)))]
+   for (v in list2)
+      assign(v,get(v,envir=ns),envir=.GlobalEnv)
+   invisible(list2)
 }

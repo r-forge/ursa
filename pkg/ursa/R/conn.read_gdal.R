@@ -9,13 +9,14 @@
       session_grid(res)
    res
 }
-'.read_gdal' <- function(fname,fileout=NULL,verbose=FALSE,...) {
+'.read_gdal' <- function(fname,fileout=NULL,verbose=!FALSE,...) {
    if (!is.character(fname))
       return(NULL)
   # suppressMessages(require("rgdal"))
    requireNamespace("rgdal",quietly=.isPackageInUse())
    if (verbose)
       .elapsedTime("rgdal has been loaded")
+  # print(geterrmessage())
    op <- options(warn=0-!verbose)
    a <- rgdal::GDALinfo(fname,returnStats=FALSE,returnRAT=FALSE
                 ,returnColorTable=TRUE,returnCategoryNames=TRUE)

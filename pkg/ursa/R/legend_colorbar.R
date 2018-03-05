@@ -17,6 +17,8 @@
                             ,c("list","ursaColorTable"),"ursaColorTable"))
    if (is.null(obj))
       obj <- ursa_colortable(arglist[[1]])
+   if (is.null(obj))
+      return(invisible(NULL))
    if (!.is.colortable(obj)) {
       ind <- which(sapply(obj,.is.colortable))
       if (length(ind)) {
@@ -97,6 +99,11 @@
       useRaster <- getOption("ursaPngDevice")!="windows"
   # isChar <- length(grep("([A-Za-d]|[f-z]|/|\\*)",names(ct)))>0
    label <- .deintervale(ct,verbose=!TRUE)
+   fmtLabel <- attr(ct,"label")
+   if (length(label)==length(fmtLabel)) {
+      label <- fmtLabel
+      isChar <- TRUE
+   }
    isChar <- is.character(label)
    isInterval <- length(label)!=length(ct)
    if ((isChar)&&(!isInterval))
@@ -216,7 +223,9 @@
             label <- labels
             labels <- length(label)
          }
-         else {
+         else if (TRUE) {
+            if (!isRegular)
+               keepIrreg <- label
             isW <- side %in% c(1,3) & las %in% c(0,1) |
                    side %in% c(2,4) & las %in% c(0,3)
             isManual <- FALSE
@@ -244,7 +253,9 @@
                })
               # print(label)
             }
-           # print(c(have=(length(label)+1)*height,lim=mheight))
+            if (!isRegular)
+               label <- keepIrreg
+          # print(c(have=(length(label)+1)*height,lim=mheight))
          }
          if ((!isRegular)&&(is.numeric(label))) {
             y <- as.numeric(label)
@@ -259,6 +270,9 @@
             at2 <- a0*label+b0
             at1 <- at2[at2>=min(x) & at2<=max(x)]
             label <- label[match(at1,at2)]
+            if (all(is.na(label))) {
+               label <- unique(y)
+            }
             rm(at2)
          }
          else {
@@ -334,7 +348,9 @@
                   at1[i] <- x[ind2]
               # print(data.frame(i=i,lab=lab,ind2=ind2,at=at1[i]))
             }
-            rm(ind1,ind2)
+            if (exists("ind1"))
+               rm(ind1)
+            rm(ind2)
          }
          if (!is.null(keepLabel))
             label <- keepLabel[unique(as.integer(round(label)))]
@@ -436,6 +452,50 @@
    }
    else
       skipLabel <- FALSE
+  # return(NULL)
+  # a <- 2*adj*width#*scale[2]
+  # print(a)
+  ## dependence on compose_open(pointsize=...)
+   usr <- par()$usr
+   fin <- par()$fin
+   if (!skipLabel) {
+      if (is.numeric(label)) {
+         if (TRUE) {
+            label1 <- format(label,trim=TRUE,scientific=NA)
+            label2 <- as.character(label)
+            label3 <- format(label,trim=TRUE,scientific=FALSE)
+            sci <- length(.grep("e(\\+|\\-)\\d+$",label2))
+            if (sci) {
+               dig <- max(nchar(gsub("^(.+)\\.(\\d+)$","\\2",label2)))
+               label2 <- format(label,trim=TRUE,scientific=FALSE,nsmall=dig)
+            }
+            cond1 <- max(nchar(label1))+0<=max(nchar(label2))
+            cond2 <- (!sci)||(sci==length(label))
+            cond3 <- length(unique(label1))==length(label)
+            label <- if (((cond1)||(!cond2))&&(cond3)) label1
+                     else label2
+            if (localVerb <- FALSE) {
+               print(label1)
+               print(label2)
+               print(label3)
+               print(c(cond1=cond1,cond2=cond2,cond3=cond3))
+               print(label)
+               q()
+            }
+         }
+         else {
+            if (length(label)>2) {
+               difL <- diff(label)
+               if (length(which(!is.na(.is.near(difL,mean(difL)))))==length(difL))
+                  label <- format(label,trim=TRUE,scientific=NA)
+               else
+                  label <- as.character(label)
+            }
+            else
+               label <- format(label,trim=TRUE,scientific=NA)
+         }
+      }
+   }
    if (!length(align)) {
       width <- max(strwidth(label,units="inches",cex=cex,family=family))
    }
@@ -455,15 +515,7 @@
                        ,units="inches",cex=cex,family=family)
       width <- strheight("000",units="inches",cex=cex,family=family)
    }
-  # return(NULL)
-  # a <- 2*adj*width#*scale[2]
-  # print(a)
-  ## dependence on compose_open(pointsize=...)
-   usr <- par()$usr
-   fin <- par()$fin
    if (!skipLabel) {
-      if (is.numeric(label))
-         label <- format(label,trim=TRUE,scientific=NA)
       if (side==4)
       {
          adj1 <- adj

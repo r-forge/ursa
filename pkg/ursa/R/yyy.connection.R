@@ -266,8 +266,8 @@
             next
          }
       }
-      if ((is.null(ignore))&&((is.numeric(var))||(is.na(var)))&&(length(name))&&
-          (length(.grep("(^bg$|nodata|ignore)",name))))
+      if ((is.null(ignore))&&(!is.ursa(var))&&((is.numeric(var))||(is.na(var)))&&
+          (length(name))&&(length(.grep("(^bg$|nodata|ignore)",name))))
       {
          ignore <- var
          next
@@ -802,7 +802,7 @@
           (as.numeric(p[2])==6378137)&&(as.numeric(p[3])==6356752.314245179)&&
           (as.numeric(p[4])==70)&&(as.numeric(p[5])==-45)) {
          .epsg <- "3408"
-         wkt <- paste0("{PROJCS[\"WGS_84_NSIDC_Sea_Ice_Polar_Stereographic_North\""
+         wkt <- paste0("PROJCS[\"WGS_84_NSIDC_Sea_Ice_Polar_Stereographic_North\""
                     ,",GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\""
                     ,",SPHEROID[\"WGS_1984\",6378137,298.257223563]]"
                     ,",PRIMEM[\"Greenwich\",0]"

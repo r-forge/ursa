@@ -33,10 +33,10 @@
         # if (("plutil" %in% loadedNamespaces())&&(.isPackageInUse())) {
         #    NULL
         # }
-        # .spatialize <<- ursa:::.spatialize
-        # assign(".spatialize",ursa:::.spatialize,envir=.GlobalEnv) ## OK
-        # assign(".spatialize",get(".spatialize"),envir=.GlobalEnv) ## OK
-        # assign(".spatialize",get("ursa:::.spatialize"),envir=.GlobalEnv) ## FAIL
+        # spatialize <<- ursa:::spatialize
+        # assign("spatialize",ursa:::spatialize,envir=.GlobalEnv) ## OK
+        # assign("spatialize",get("spatialize"),envir=.GlobalEnv) ## OK
+        # assign("spatialize",get("ursa:::spatialize"),envir=.GlobalEnv) ## FAIL
          return(invisible(0L))
       }
    }

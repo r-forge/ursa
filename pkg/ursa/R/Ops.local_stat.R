@@ -30,11 +30,17 @@
       obj$con$lines <- obj$grid$rows
    if (is.na(obj$con$samples))
       obj$con$samples <- obj$grid$columns
-   r <- if (is.na(obj$con$posR[1])) seq(obj$con$lines) else obj$con$posR
-   if ((is.na(obj$con$posR))&&(length(r)!=res$grid$rows))
+   if (FALSE) ## 20180220 --
+      r <- if (is.na(obj$con$posR[1])) seq(obj$con$lines) else obj$con$posR
+   else {
+      r <- if (is.na(obj$con$indexR[1])) seq(obj$con$lines) else seq_along(obj$con$indexR)
+      if (!is.na(obj$con$posR[1]))
+         r <- obj$con$posR
+   }
+   if ((is.na(obj$con$posR[1]))&&(length(r)!=res$grid$rows))
    {
       if (verbose)
-         message(paste(fun,"warning *** probable incorrect resampling",sep=":"))
+         message(paste(fun,"warning *** probably incorrect resampling",sep=":"))
       r <- seq(res$grid$rows)
    }
   ##~ # print(str(ret))

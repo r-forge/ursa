@@ -10,10 +10,14 @@
             return(session_proj4())
          if (.lgrep("(cell)",obj))
             return(session_cellsize())
+         if (.lgrep("(dummy)",obj))
+            return(ursa_dummy())
       }
       return(as.ursa(obj,...))
    }
    if (!is.character(attr)) {
+      if (.lgrep("dummy",obj)) 
+         return(ursa_dummy(attr,...))
       return(as.ursa(obj,attr,...))
    }
    if (is.array(obj))
@@ -23,12 +27,27 @@
    if (is.numeric(obj))
       return(as.ursa(obj))
    if (.is.ursa_stack(obj)) {
-      if (.lgrep("brick",attr))
-         return(ursa_brick(obj))
       return(NULL)
    }
    if (.lgrep("^(color|ct)",attr))
       return(ursa_colortable(obj))
+   if (is.ursa(obj,"grid")) {
+      if (.lgrep("^(proj|crs)",attr))
+         return(ursa_proj(obj))
+      if (.lgrep("^grid",attr))
+         return(ursa_grid(obj))
+      if (.lgrep("brick",attr))
+         return(ursa_brick(obj))
+      if (.lgrep("^cell",attr))
+         return(with(ursa_grid(obj),sqrt(resx*resy)))
+      if (.lgrep("^(extent|bbox)",attr))
+         return(with(ursa_grid(obj),c(xmin=minx,ymin=miny,xmax=maxx,ymax=maxy)))
+      if (.lgrep("(ncol|columns|samples)",attr))
+         return(ursa_grid(obj)$columns)
+      if (.lgrep("(nrow|rows|lines)",attr))
+         return(ursa_grid(obj)$rows)
+      return(NULL)
+   }
    if (!is.ursa(obj))
       return(obj)
    if (.lgrep("^grid",attr))
@@ -65,6 +84,9 @@
       return(ursa_info(obj))
    if (.lgrep("^file(name)*",attr))
       return(obj$con$fname)
+   if (.lgrep("(dummy)",attr)) {
+      return(obj$con$fname)
+   }
    return(NULL)
 }
 'ursa<-' <- function(obj,attr,...,value) {

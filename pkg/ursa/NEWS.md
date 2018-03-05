@@ -1,4 +1,4 @@
-2018-01-29
+2018-03-05
 
 <style>
    code,
@@ -11,6 +11,21 @@
      background-color: #E6F1FF;
    }
 </style>
+
+### version 3.8-4
+
+  - Added argument `coords` for function `allocate`.
+
+  - New wrappers and checkers for spatial (vector GIS) objects.
+
+  - Some issues for web services are fixed.
+
+  - in DESCRIPTION file ‘exportPattern’ is replaced by multiple ‘export’
+    for ability to use non-public funstions which names don’t start with
+    “.”
+
+  - In `panel_coastline` improved detection of polygons’ coodrinates
+    spreading in result of reprojection
 
 ### version 3.8-3
 

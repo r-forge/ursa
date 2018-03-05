@@ -1,6 +1,6 @@
 # for interpoaltion: packages 'interp', 'MBA'. 'akima' is under ACM license
 # D:\ongoing\CloudMailRu\pdf\R\akima_ACM--alternatives_GPL.pdf 
-'allocate' <- function(vec,nodata=NA,attr=".+",fun=c("mean","sum","n")
+'allocate' <- function(vec,coords=c("x","y"),nodata=NA,attr=".+",fun=c("mean","sum","n")
                       ,cellsize=NA,verbose=FALSE)
 {
   # vec <- list(x=vec$x,y=vec$y,conc=vec$conc,speed=vec$speed)
@@ -11,7 +11,7 @@
    }
    if (inherits(vec,c("SpatialPointsDataFrame","SpatialPixelsDataFrame"))) {
       requireNamespace("sp",quietly=.isPackageInUse())
-      z <- vec@data
+      z <- methods::slot(vec,"data")
       lname <- colnames(z)
       proj4 <- sp::proj4string(vec)
       vec <- as.data.frame(sp::coordinates(vec),stringsAsFactors=FALSE)
@@ -47,6 +47,14 @@
          indY <- .grep("^lat",mname)
       if (!length(indY))
          indY <- .grep("^north",mname)
+      if ((!length(indX))&&(!length(indY))) {
+         indX <- .grep("^000x1$",mname)
+         indY <- .grep("^000x2$",mname)
+      }
+      if ((!length(indX))&&(!length(indY))) {
+         indX <- .grep(paste0("^",coords[1],"$"),mname)
+         indY <- .grep(paste0("^",coords[2],"$"),mname)
+      }
       ind <- c(indX[1],indY[1])
       if ((any(is.na(ind)))||(length(ind)!=2))
          stop("unable to detect 'x' and 'y' coordinates")
@@ -58,9 +66,15 @@
       else {
         # z <- vec[,-ind,drop=FALSE] ## remove 20160505
         # z <- subset(vec,select=lname) ## add 20150505
-         z <- vec[,lname,drop=FALSE] ## modified 20170128
+         if (inherits(vec,"data.table"))
+            z <- vec[,lname,with=FALSE]
+         else
+            z <- vec[,lname,drop=FALSE] ## modified 20170128
       }
-      vec <- vec[,ind,drop=FALSE]
+      if (inherits(vec,"data.table"))
+         vec <- vec[,ind,with=FALSE]
+      else
+         vec <- vec[,ind,drop=FALSE]
       colnames(vec) <- c("x","y")
       ind <- .grep("^(lon|lat)",mname)
       if ((length(ind)==2)&&(is.null(proj4)))
@@ -124,6 +138,8 @@
                else if (FALSE) ## extra quality
                   res <- median(c(difx,dify))
                else {
+                  if (inherits(vec,"data.table"))
+                     vec <- as.data.frame(vec)
                   d <- .dist2(vec,vec,verbose=FALSE)$dist
                   if (verbose) {
                      print(range(d),digits=16)
@@ -144,7 +160,7 @@
                   p <- pretty(res)
                   res <- p[which.min(abs(res-p))]
                }
-               resx <- resy <- res 
+               resx <- resy <- res
                if (verbose)
                   print(c(x=resx,y=resy))
             }
@@ -154,8 +170,10 @@
       miny <- min(y)-resy/2
       maxx <- max(x)+resx/2
       maxy <- max(y)+resy/2
+     # g0 <- regrid(minx=minx,miny=miny,maxx=maxx,maxy=maxy,resx=resx,resy=resy
+     #             ,columns=(maxx-minx)/resx,rows=(maxy-miny)/resy,proj4=proj4)
       g0 <- regrid(minx=minx,miny=miny,maxx=maxx,maxy=maxy,resx=resx,resy=resy
-                  ,columns=(maxx-minx)/resx,rows=(maxy-miny)/resy,proj4=proj4)
+                  ,proj4=proj4,verbose=verbose)
      # g0 <- regrid(setbound=)
       session_grid(g0)
    }

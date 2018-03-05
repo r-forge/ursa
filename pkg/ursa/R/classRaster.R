@@ -46,13 +46,15 @@
    if (!con) {
       if (!is.na(nodata <- ursa_nodata(object)))
          object$nodata <- nodata
-      object$con <- NULL
       if (identical(dim(object$value),object$dim))
          object$dim <- NULL
       if (!length(object$colortable)) {
          object$colortable <- NULL
         # attr(object$value,"category") <- NULL
       }
+      if (!is.na(object$con$posZ[1]))
+         object$name <- object$name[object$con$posZ]
+      object$con <- NULL
    }
    if (!grid)
       object$grid <- NULL

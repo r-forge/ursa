@@ -10,16 +10,23 @@
       return(allocate(obj,...))
    if (inherits(obj,c("SpatialGridDataFrame"))) {
       requireNamespace("sp",quietly=.isPackageInUse())
-      cs <- sp::getGridTopology(obj)@cellsize
-      bb <- c(bbox(obj))
+      cs <- methods::slot(sp::getGridTopology(obj),"cellsize")
+      bb <- c(sp::bbox(obj))
       pr <- sp::proj4string(obj)
      # g1 <- regrid(bbox=bb,res=cd,proj=p)
       g1 <- regrid(ursa_grid(),bbox=bb,res=cs,proj=pr)
       session_grid(g1)
-      res <- vector("list",ncol(obj@data))
-      names(res) <- colnames(obj@data)
-      for (i in seq_along(ncol(obj@data)))
-         res[[i]] <- ursa_new(obj@data[,i],flip=FALSE,permute=FALSE)#,bandname=names(res)[i])
+      res <- vector("list",ncol(methods::slot(obj,"data")))
+      names(res) <- colnames(methods::slot(obj,"data"))
+      for (i in seq_along(ncol(methods::slot(obj,"data")))) {
+         res[[i]] <- ursa_new(methods::slot(obj,"data")[,i],flip=FALSE
+                             ,permute=FALSE)#,bandname=names(res)[i])
+      }
+      if (length(ind <- which(sapply(res,is.null)))) {
+         res[ind] <- as.list(ursa_new(NA,nband=length(ind)))
+      }
+      for (i in seq_along(res))
+         names(res[[i]]) <- names(res)[i]
       return(res)
    }
    if (inherits(obj,c("SpatialPointsDataFrame","SpatialPixelsDataFrame"))) {
@@ -28,7 +35,6 @@
    if (inherits(obj,c("RasterBrick","RasterStack","RasterLayer"))) {
       g1 <- .grid.skeleton()
       e <- raster::extent(obj)
-      a <- e@ymax
       ##~ g1$minx <- round(e@xmin,5)
       ##~ g1$maxx <- round(e@xmax,5)
       ##~ g1$miny <- round(e@ymin,5)
@@ -59,7 +65,7 @@
          if (!inherits(obj,"RasterStack"))
             ct <- ursa_colortable(as.character(raster::colortable(obj)))
          else {
-            ct <- lapply(obj@layers,function(x) {
+            ct <- lapply(methods::slot(obj,"layers"),function(x) {
                ursa_colortable(as.character(raster::colortable(x)))
             })
          }
@@ -83,7 +89,7 @@
                            ,flip=FALSE,permute=FALSE)
          else {
             at <- obj@data@attributes#[[1]]#[,2,drop=FALSE]
-            if (!length(at))
+            if ((!length(at))||((length(at)==1)&&(!length(at[[1]]))))
                res <- ursa_new(raster::values(obj),flip=FALSE,permute=FALSE)
             else {
                at <- at[[1]]

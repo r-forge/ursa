@@ -174,8 +174,15 @@
    a
 }
 '.is.integer' <- function(x,tolerance=1e-11) {
+   if (inherits(x,c("Date","POSIXt")))
+      return(FALSE)
    if (is.ursa(x))
       x <- c(x$value)
+   else if ((is.character(x))||(is.factor(x))) {
+      ch <- grep("^\\s*(\\-)*\\d+(\\.\\d+)*((\\+|\\-)[eE]\\d+)*\\s*$",x,invert=TRUE)
+      if (length(ch))
+         return(FALSE)
+   }
    if (any(abs(x)>1e9))
       return(FALSE)
    y <- abs(x-as.integer(round(x)))
@@ -348,6 +355,8 @@
 '.argv0dir' <- function() dirname(.argv0path())
 '.argv0name' <- function() .gsub("^(.+)(\\.)(.+)*$","\\1",.argv0())
 '.argv0ext' <- function() .gsub("^(.+)(\\.)(.+)*$","\\2\\3",.argv0())
+'.argv0png' <- function() Fout <- sprintf("%s%%02d.png",.argv0name())
+'.argv0pdf' <- function() paste0(.argv0name(),".pdf")
 '.dQuote' <- function(ch) paste0("\"",ch,"\"")
 '.sQuote' <- function(ch) paste0("'",ch,"'")
 '.require' <- function(pkg,quietly=TRUE) do.call("require",list(pkg,quietly=quietly))
@@ -375,4 +384,39 @@
    "jupyter:irkernel" %in% search()
   # "IRkernel" %in% loadedNamespaces()
 }
-`.open` <- function(...) system2("R",c("CMD","open",list(...)))
+'.open' <- function(...) {
+   arglist <- lapply(list(...), function(x) {
+      if (!file.exists(x)) {
+         if (.lgrep("\\%(\\d)*d",x))
+            x <- sprintf(x,1L)
+         else
+            x <- NULL
+      }
+      x
+   })
+   system2("R",c("CMD","open",arglist))
+}
+'.isSF' <- function(obj) inherits(obj,c("sf","sfc"))
+'.isSP' <- function(obj) {
+   ((inherits(obj,"Spatial"))||
+    (.lgrep("Spatial(Points|Lines|Polygons)DataFrame",class(obj))))
+
+}
+'.is.numeric' <- function(obj) {
+   opW <- options(warn=-1)
+   res <- as.numeric(na.omit(obj))
+   options(opW)
+   !anyNA(res)
+}
+'.is.equal.crs' <- function(obj1,obj2=NULL) {
+   oprj <- spatial_proj4(obj1)
+   sprj <- if (is.null(obj2)) session_proj4() else spatial_proj4(obj2)
+   if (nchar(sprj)<3)
+      return(FALSE)
+   oprj2 <- .gsub("\\+wktext\\s","",oprj)
+   sprj2 <- .gsub("\\+wktext\\s","",sprj)
+   oprj2 <- .gsub("(^\\s|\\s$)","",oprj2)
+   sprj2 <- .gsub("(^\\s|\\s$)","",sprj2)
+   ret <- identical(oprj2,sprj2)
+   ret
+}

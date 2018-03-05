@@ -369,10 +369,13 @@
       g$maxy <- maxy
    if ((!step2)&&(any(!is.na(c(minx,miny,maxx,maxy)))))
       step2 <- TRUE
-   if ((FALSE)&&(!is.na(columns))&&(!is.na(rows))) { ## ++ 20170719
-      message("Not a good idea to define cell size from image dimension")
-      g$columns <- columns
-      g$rows <- rows
+   if ((!FALSE)&&(!is.na(columns))&&(!is.na(rows))) { ## ++ 20170719
+      if ((FALSE)&&(!.isPackageInUse()))
+         message("Not a good idea to define cell size from image dimension")
+      if ((is.na(g$columns))||(g$columns!=columns))
+         g$columns <- as.integer(round(columns))
+      if ((is.na(g$rows))||(g$rows!=rows))
+         g$rows <- as.integer(round(rows))
       g$resx <- with(g,(maxx-minx)/columns)
       g$resy <- with(g,(maxy-miny)/rows)
    }

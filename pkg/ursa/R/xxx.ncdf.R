@@ -142,6 +142,9 @@
          fname <- tempfile();on.exit(file.remove(fname))
          system2("bzip2",c("-f -d -k",.dQuote(fname0)),stdout=fname)
       }
+      else if (.lgrep("^(http|https|ftp)://",fname)) {
+         fname <- .ursaCacheDownload(fname,mode="wb")
+      }
       nc <- try(ncdf4::nc_open(fname,suppress_dimvals=FALSE))
       if (inherits(nc,"try-error")) {
         # cat(geterrmessage())

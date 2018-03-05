@@ -577,9 +577,10 @@
                                       ,band=b)
             }
             else {
-               for (b in seq(dimz[3]))
+               for (b in seq(dimz[3])) {
                   rgdal::putRasterData(con$handle,value$value[,,b,drop=TRUE]
                                       ,band=b)
+               }
             }
          }
       }

@@ -31,6 +31,11 @@
          scale <- 1
       }
    }
+   else if ((.lgrep("\\+proj=merc",session_proj4()))&&
+           (!is.na(.is.near(session_cellsize(),2*6378137*pi/(2^(1:21+8)))))) {
+      options(ursaPngWebCartography=TRUE)
+      scale <- 1
+   }
    if ((is.character(mosaic))&&(mosaic=="rgb"))
       mosaic <- compose_design(layout=c(1,1),legend=NULL)
    else if (!inherits(mosaic,"ursaLayout"))
@@ -177,6 +182,9 @@
    }
    png_height <- round(sum(sizer)*dpi/2.54+5*dpi/96+5*dpi*pointsize/pointsize0)
    png_width <- round(sum(sizec)*dpi/2.54+5*dpi/96+5*dpi*pointsize/pointsize0)
+   dname <- dirname(fileout)
+   if ((dname!=".")&&(!dir.exists(dname)))
+      dir.create(dname,recursive=TRUE)
    if (verbose)
       print(c(png_width=png_width,png_height=png_height
              ,scale=scale,autoscale=autoscale,pointsize=pointsize,dpi=dpi))

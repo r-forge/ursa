@@ -108,8 +108,7 @@
             obj <- readRDS(arglist[[1]])
            # print(class(obj))
            # print(inherits(obj,"Spatial"))
-            if ((inherits(obj,"Spatial"))||
-                (.lgrep("Spatial(Points|Lines|Polygons)DataFrame",class(obj)))) {
+            if (.isSP(obj)) {
               # print(isS4(obj))
               # print(loadedNamespaces())
               # requireNamespace("methods")
@@ -135,6 +134,8 @@
          else {
            # message("Cannot complete without suggested package 'sf'.")
             ret <- do.call(".glance",arglist)
+            if (.isKnitr())
+               return(ret)
             return(invisible(ret))
          }
       }
@@ -173,7 +174,7 @@
    feature <- match.arg(feature)
    engine <- match.arg(engine)
   # print(c(dsn=class(dsn)))
-  # obj <- .spatialize(dsn)
+  # obj <- spatialize(dsn)
    if (missing(dsn)) {
       dsn <- if (style!="auto") .geomap(style=style) else .geomap()
    }
@@ -183,7 +184,7 @@
       .require("methods",quietly=.isPackageInUse())
      # requireNamespace("methods",quietly=.isPackageInUse())
    }
-   obj <- .spatialize(dsn=dsn,engine=engine,layer=layer,field=field,geocode=geocode
+   obj <- spatialize(dsn=dsn,engine=engine,layer=layer,field=field,geocode=geocode
                    ,place=place,area=area,grid=grid,size=size
                   # ,expand=expand,border=border
                    ,expand=expand,border=0
@@ -194,6 +195,9 @@
    isSF <- inherits(obj,c("sfc","sf"))
    isSP <- !isSF
    g0 <- attr(obj,"grid")
+   g1 <- getOption("ursaSessionGrid")
+  # if (identical(g0,g1))
+  #    border <- 0
    if ((FALSE)&&(expand!=1)) {
       bbox <- with(g0,c(minx,miny,maxx,maxy))
       .sc <- (expand-1)*sqrt(diff(bbox[c(1,3)])*diff(bbox[c(2,4)]))
@@ -307,8 +311,8 @@
                        ,SpatialPolygons="POLYGON"
                        ,SpatialPoints="POINT"
                        ,SpatialLines="LINE")
-      obj_geom <- switch(geoType,POLYGON=sp::geometry(obj)@polygons
-                                   ,LINE=sp::geometry(obj)@lines
+      obj_geom <- switch(geoType,POLYGON=methods::slot(sp::geometry(obj),"polygons")
+                                   ,LINE=methods::slot(sp::geometry(obj),"lines")
                                   ,POINT=sp::geometry(obj))
      # bbox <- c(sp::bbox(obj))
      # names(bbox) <- c("xmin","ymin","xmax","ymax")
@@ -377,7 +381,7 @@
             val <- obj[,dname[i],drop=TRUE]#[,1] ## sf>=0.5
          }
          if (isSP)
-            val <- obj@data[,dname[i],drop=TRUE]
+            val <- methods::slot(obj,"data")[,dname[i],drop=TRUE]
          if ((is.character(cpg))&&(is.character(val)))
             val <- iconv(val,"UTF-8","1251")
         # print(all(is.na(val)))
@@ -436,35 +440,16 @@
                bg.point[ind] <- "#0000002F"
                bg.polygon[ind] <- "#0000002F"
             }
-            if (!isSP) {
-               if (.lgrep("polygon",geoType)) {
-                  panel_plot(obj_geom,col=col,border=bg.polygon,lwd=0.1,lty="blank")
-                  panel_plot(obj_geom,col="transparent",border=bg.polygon,lwd=0.1)
-               }
-               if (.lgrep("point",geoType)) {
-                  panel_plot(obj_geom
-                            ,col=bg.point,bg=col,pch=21,lwd=0.25,cex=1)
-               }
-               if (.lgrep("line",geoType)) {
-                  panel_plot(obj_geom,lwd=3,col=bg.line)
-                  panel_plot(obj_geom,lwd=2,col=col)
-               }
+            if (.lgrep("polygon",geoType)) {
+               panel_plot(obj,col=col,border=bg.polygon,lwd=0.1,lty="blank")
+               panel_plot(obj,col="transparent",border=bg.polygon,lwd=0.1)
             }
-            else {
-               if (.lgrep("polygon",geoType)) {
-                  panel_plot(obj,col=col,border=bg.polygon,lwd=0.1,lty="blank")
-                           # ,add=TRUE)
-                  panel_plot(obj,col="transparent",border=bg.polygon,lwd=0.1)
-                           # ,add=TRUE)
-               }
-               if (.lgrep("point",geoType)) {
-                  panel_plot(obj,col=bg.point,bg=col,pch=21,lwd=0.25,cex=1)
-                           # ,add=TRUE)
-               }
-               if (.lgrep("line",geoType)) {
-                  panel_plot(obj,lwd=3,col=bg.line)#,add=TRUE)
-                  panel_plot(obj,lwd=2,col=col)#,add=TRUE)
-               }
+            if (.lgrep("point",geoType)) {
+               panel_plot(obj,col=bg.point,bg=col,pch=21,lwd=0.25,cex=1.2)
+            }
+            if (.lgrep("line",geoType)) {
+               panel_plot(obj,lwd=3,col=bg.line)
+               panel_plot(obj,lwd=2,col=col)
             }
          }
          if (after) {
@@ -534,7 +519,7 @@
          names(da) <- dname
       }
       if (isSP)
-         da <- obj@data[,dname,drop=FALSE]
+         da <- methods::slot(obj,"data")[,dname,drop=FALSE]
       da <- rbind(format(da),paste0(names(da),":"))
      # print(format(da))
      # print(da)
@@ -547,7 +532,10 @@
       if (!gdal_rasterize)
          res <- ursa_new(nband=n)
       ct <- lapply(seq(n),function(i) colorize(0L))
-      compose_open(res,legend=NULL,...)
+      if (isWeb)
+         compose_open(res,scale=1,legend=NULL,...)
+      else
+         compose_open(res,legend=NULL,...)
       gline <- compose_graticule(...)
       if (toCoast)
          cline <- compose_coastline(...)

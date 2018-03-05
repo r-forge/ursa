@@ -1,6 +1,6 @@
 ## ?groupGeneric
 # 'Summary.ursaRaster' <- function(x,cover=0.5-1e-3,weight=NULL,verbose=FALSE) {
-'.Summary.ursaRaster' <- function(x,cover=0.5-1e-3,weight=NULL,verbose=FALSE
+'.zzz1.Summary.ursaRaster' <- function(x,cover=0.5-1e-3,weight=NULL,verbose=FALSE
                                 ,na.rm=FALSE,bandname="") {
    res <- .groupSummary(x,generic=.Generic,cover=cover,weight=weight
                        ,bandname=bandname,verbose=verbose)
@@ -19,7 +19,7 @@
                        ,bandname=bandname,verbose=verbose)
    res
 }
-'.zzz.Summary.ursaRaster' <- function(x,na.rm=TRUE) {
+'.zzz2.Summary.ursaRaster' <- function(x,na.rm=TRUE) {
    print(.Generic)
    stop("GLOBAL")
   ## global

@@ -23,9 +23,16 @@
    panel <- .getPrm(arglist,name=paste0("^",kwd,"$"),default=0L)
    trim <- .getPrm(arglist,name="trim",kwd=kwd,default=TRUE)
    cex <- .getPrm(arglist,name="cex",kwd=kwd,default=0.75)
-   bg <- sum(c(col2rgb(getOption("ursaPngBackground")))*c(0.30,0.59,0.11))
-   defcol <- ifelse(bg<128,"#FFFFFF2F","#0000002F") # grey70
-   col <- .getPrm(arglist,name="col",kwd=kwd,default=defcol)
+  # defcol <- ifelse(bg2<128,"#FFFFFF4F","#0000002F") # grey70
+   bg1 <- sum(c(col2rgb(getOption("ursaPngBackground")))*c(0.30,0.59,0.11))
+   bg2 <- getOption("ursaPngPanel")
+   bg2 <- if (!nchar(bg2)) bg1 else sum(c(col2rgb(bg2))*c(0.30,0.59,0.11))
+   col <- .getPrm(arglist,name="col",kwd=kwd,default="defcol")
+   border <- .getPrm(arglist,name="border",kwd=kwd,default=col)
+   if (col=="defcol")
+      col <- ifelse(bg2<128,"#FFFFFF4F","#0000002F") # grey70
+   if (border=="defcol")
+      border <- ifelse(bg1<128,"#FFFFFF4F","#0000002F") # grey70
    lwd <- .getPrm(arglist,name="lwd",kwd=kwd,default=0.5)
    lty <- .getPrm(arglist,name="lty",kwd=kwd,default=2L)
    language <- .getPrm(arglist,name="language",kwd=kwd,default=NA_character_)
@@ -44,11 +51,11 @@
    if (verbose)
       str(list(col=col,lon=lon,lat=lat,col=col,lwd=lwd,lty=lty,panel=panel
               ,marginalia=marginalia,trim=trim,cex=cex))
-   .compose_graticule(panel=panel,col=col,lon=lon,lat=lat,lwd=lwd,lty=lty
+   .compose_graticule(panel=panel,col=col,border=border,lon=lon,lat=lat,lwd=lwd,lty=lty
                     ,marginalia=marginalia,trim=trim,language=language,cex=cex
                     ,verbose=verbose)
 }
-'.compose_graticule' <- function(panel=0L,col="grey70",lon=NA,lat=NA
+'.compose_graticule' <- function(panel=0L,col="grey70",border="grey70",lon=NA,lat=NA
                               ,lwd=0.5,lty=2,marginalia=rep(FALSE,4),trim=FALSE
                               ,language=NA,cex=0.75,verbose=FALSE) {
   # verbose <- TRUE
@@ -599,7 +606,7 @@
    }
    if (is.null(outframe)) {
       res <- list(gridline=gridline,grid=list(lon=lonSet,lat=latSet)
-                ,panel=panel,margin=NULL,col=col,lwd=lwd,lty=lty)
+                ,panel=panel,margin=NULL,col=col,border=border,lwd=lwd,lty=lty)
       class(res) <- "ursaGridLine"
       return(res)
    }
@@ -748,7 +755,7 @@
    outframe <- outframe[with(outframe,order(side,at)),]
    res <- list(gridline=gridline,grid=list(lon=lonSet,lat=latSet)
               ,panel=panel,margin=outframe
-              ,col=col,lwd=lwd,lty=lty)
+              ,col=col,border=border,lwd=lwd,lty=lty)
    class(res) <- "ursaGridLine"
    res
 }
@@ -774,9 +781,11 @@
       obj <- compose_graticule(...)
    if (is.null(obj$gridline))
       return(NULL)
-   if ((!is.null(attr(g1$seqx,"units"))&&(!is.null(attr(g1$seqy,"units"))))) {
-      g1$labx <- unique(obj$margin[obj$margin$kind==1,"at"])
-      g1$laby <- unique(obj$margin[obj$margin$kind==2,"at"])
+   if ((!is.null(attr(g1$columns,"units"))&&(!is.null(attr(g1$rows,"units"))))) {
+      if (is.null(g1$labx))
+         g1$labx <- unique(obj$margin[obj$margin$kind==1,"at"])
+      if (is.null(g1$laby))
+         g1$laby <- unique(obj$margin[obj$margin$kind==2,"at"])
       session_grid(g1)
       .repairForScatterPlot()
       return(NULL)
@@ -845,23 +854,23 @@
      # opT <- par(family="Arial Narrow")
       if (!is.null(da1))
          with(da1,{
-            axis(side=1,at=at,labels=NA,tcl=-0.2,col=col,lwd=0,lwd.ticks=lwd)
-            mtext(side=1,at=at,text=lab,padj=0.5,adj=adj,cex=cex,col=col)
+            axis(side=1,at=at,labels=NA,tcl=-0.2,col=border,lwd=0,lwd.ticks=lwd)
+            mtext(side=1,at=at,text=lab,padj=0.5,adj=adj,cex=cex,col=border)
          })
       if (!is.null(da2))
          with(da2,{
-            axis(side=2,at=at,labels=NA,tcl=-0.2,col=col,lwd=0,lwd.ticks=lwd)
-            mtext(side=2,at=at,text=lab,padj=0.4,adj=adj,line=0.6,cex=cex,col=col)
+            axis(side=2,at=at,labels=NA,tcl=-0.2,col=border,lwd=0,lwd.ticks=lwd)
+            mtext(side=2,at=at,text=lab,padj=0.4,adj=adj,line=0.6,cex=cex,col=border)
          })
       if (!is.null(da3))
          with(da3,{
-            axis(side=3,at=at,labels=NA,tcl=-0.2,col=col,lwd=0,lwd.ticks=lwd)
-            mtext(side=3,at=at,text=lab,padj=-0.25,adj=adj,line=0,cex=cex,col=col)
+            axis(side=3,at=at,labels=NA,tcl=-0.2,col=border,lwd=0,lwd.ticks=lwd)
+            mtext(side=3,at=at,text=lab,padj=-0.25,adj=adj,line=0,cex=cex,col=border)
          })
       if (!is.null(da4))
          with(da4,{
-            axis(side=4,at=at,labels=NA,tcl=-0.2,col=col,lwd=0,lwd.ticks=lwd)
-            mtext(side=4,at=at,text=lab,line=0,adj=adj,padj=0.4,cex=cex,col=col)
+            axis(side=4,at=at,labels=NA,tcl=-0.2,col=border,lwd=0,lwd.ticks=lwd)
+            mtext(side=4,at=at,text=lab,line=0,adj=adj,padj=0.4,cex=cex,col=border)
          })
      # options(opT)
    })

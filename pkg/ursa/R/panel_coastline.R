@@ -178,8 +178,15 @@
    }
    if ((!isLongLat)&&(!isMerc)) {
       lat0 <- .gsub("^.*\\+lat_[012]=(\\S+)\\s.*$","\\1",proj4)
-      if (lat0==proj4)
-         lat0 <- NA
+      if (lat0==proj4) {
+         epsg <- as.integer(.gsub("^.+init=epsg:(\\d+).*$","\\1",proj4))
+         if (epsg %in% c(3411,3413,3408,3571:3576,6931,6973))
+            lat0 <- 90
+         else if (epsg %in% c(3409,6932,6974,3412,3976))
+            lat0 <- -90
+         else
+            lat0 <- NA
+      }
       else
          lat0 <- as.numeric(lat0)
    }
@@ -217,29 +224,55 @@
          B <- .getMajorSemiAxis(proj4)*pi
         # B <- 7720000
          '.shift' <- function(seg) {
-            center <- mean(seg[,1])
+            if (all(seg[,2]<0))
+               return(NULL)
             j <- which(abs(diff(seg[,1]))>B)
             if (!length(j))
                return(NULL)
+           # plot(seg[,1],seg[,2],type="l")
+           # abline(v=c(-B,B),lty=2)
+            center <- sign(mean(seg[,1]))
             j1 <- c(1,j+1)
             j2 <- c(j,nrow(seg))
             if (center<0)
                k <- which(seg[j1,1]>0.9*B)
             else
                k <- which(seg[j1,1]<=(-0.9*B))
-            j1 <- j1[k]
-            j2 <- j2[k]
+           # da <- data.frame(j1=j1,j2=j2,center=center,s=0,seg=seg[j1,1])
+           # da2 <- apply(da,1,function(x) range(seg[x["j1"]:x["j2"],1]))
+           # da$s <- -sign(da$seg)
+           # da$min <- da2[1,]
+           # da$max <- da2[2,]
+           # print(da)
+           # print(da[k,])
+            if (TRUE) { ## added 20180207
+               nr <- length(j1)
+               if ((1 %in% k)&&(!(nr %in% k)))
+                  k <- c(k,nr)
+               else if ((nr %in% k)&&(!(1 %in% k)))
+                  k <- c(1,k)
+            }
+            j1k <- j1[k]
+            j2k <- j2[k]
            # print(data.frame(j1=j1,j2=j2,center=center,seg=seg[j1,1]))
-            found <- FALSE
-            if (center<0) {
-               for (m in seq_along(j1))
-                  seg[j1[m]:j2[m],1] <- seg[j1[m]:j2[m],1]-2*B
+            if (center<0) { 
+               for (m in seq_along(j1k))
+                  seg[j1k[m]:j2k[m],1] <- seg[j1k[m]:j2k[m],1]-2*B
             }
             else {
-               for (m in seq_along(j1))
-                  seg[j1[m]:j2[m],1] <- seg[j1[m]:j2[m],1]+2*B
+               for (m in seq_along(j1k))
+                  seg[j1k[m]:j2k[m],1] <- seg[j1k[m]:j2k[m],1]+2*B
             }
+           # for (m in c(1))
+           #    seg[j1[m]:j2[m],1] <- seg[j1[m]:j2[m],1]-2*B
+           # da <- data.frame(j1=j1,j2=j2,center=center,seg=seg[j1,1])
+           # da2 <- apply(da,1,function(x) range(seg[x["j1"]:x["j2"],1]))
+           # da$min2 <- da2[1,]
+           # da$max2 <- da2[2,]
+           # print(da)
+           # print(summary(seg))
            # plot(seg[,1],seg[,2],type="l")
+           # abline(v=c(-B,B),lty=2)
             seg
          }
          if ((TRUE)||(g1$minx<(-B))||(g1$maxx>(+B))) {
@@ -249,9 +282,21 @@
             for (i in seq(length(ind1))) {
                if (ind1[i]>ind2[i])
                   next
+              # if (nrow(coast_xy[ind1[i]:ind2[i],])<1e3) ## debug
+              #    next
                seg <- .shift(coast_xy[ind1[i]:ind2[i],])
                if (is.null(seg))
                   next
+              # str(seg)
+              # if (nrow(seg)<1e3)
+              #    next
+              # message("-----")
+              # str(seg)
+              # print(summary(coast_xy[ind1[i]:ind2[i],]))
+              # print(summary(seg))
+              # message("=====")
+              # if (nrow(seg)<1e3)
+              #    next
               # print(c(i=i,ind1=ind1[i],ind2=ind2[i]))
                coast_xy[ind1[i]:ind2[i],] <- seg
             }
@@ -551,7 +596,7 @@
          if (FALSE) {
             a180 <- subset(a180,FID %in% c180$FID[abs(c180$lat)<=20])
             if (FALSE)
-            .write_ogr(sf::st_transform(a180,prj2),"cross180.sqlite")
+            spatial_write(sf::st_transform(a180,prj2),"cross180.sqlite")
          }
       }
       a180 <- vector("list",length(pair))
@@ -690,6 +735,6 @@
    if (merge)
       saveRDS(xy,file.path(getOption("ursaRequisite"),paste0("coast-",detail,".rds")))
    if (!.isPackageInUse())
-      .write_ogr(a,paste0(paste0("coast-",detail,ifelse(merge,"","180")),".sqlite"))
+      spatial_write(a,paste0(paste0("coast-",detail,ifelse(merge,"","180")),".sqlite"))
    0L
 }

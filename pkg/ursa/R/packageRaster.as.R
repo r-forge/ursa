@@ -1,3 +1,5 @@
+# TODO: replace 'a@value' --> 'methods::slot(a,"value")'
+
 'as.Raster' <- function(obj) UseMethod("as.Raster",obj)
 'as.Raster.ursaRaster' <- function(obj) .as.Raster(obj)
 'as.Raster.list' <- function(obj) .as.Raster(obj)

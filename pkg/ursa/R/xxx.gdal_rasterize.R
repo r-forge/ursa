@@ -1,3 +1,4 @@
+# https://github.com/ecohealthalliance/fasterize
 '.gdal_rasterize' <- '.rasterize' <- function(obj,...) {
    if (!nchar(Sys.which("gdal_rasterize")))
       return(NULL)
@@ -5,20 +6,21 @@
    arglist <- list(...)
    verbose <- .getPrm(arglist,name="verb(ose)*",default=FALSE)
   # obj <- .getPrm(arglist,name=".*",class=list("character","ursaVectorExternal"))
-   inMemory <- inherits(obj,c("sf","Spatial"))
+  # inMemory <- inherits(obj,c("sf","Spatial"))
+   inMemory <- (.isSF(obj))||(.isSP(obj))
    if (inMemory) {
-      if (inherits(obj,"sf")) {
+      if (.isSF(obj)) {
          mname <- try(names(sf::st_agr(obj)),silent=TRUE)
          if (inherits(mname,"try-error"))
             mname <- character()
       }
-      else if (inherits(obj,"Spatial")) {
-         mname <- try(colnames(obj@data),silent=TRUE)
+      else if (.isSP(obj)) {
+         mname <- try(colnames(methods::slot(obj,"data")),silent=TRUE)
          if (inherits(mname,"try-error"))
             mname <- character()
       }
-      Ftemp <- .maketmp(ext=".shp")
-      .write_ogr(obj,Ftemp)
+      Ftemp <- .maketmp(ext=ifelse(spatial_dim(obj)==2,".shp",".gpkg"))
+      spatial_write(obj,Ftemp,verbose=verbose)
       obj <- Ftemp
       isShp <- .lgrep("\\.shp$",basename(Ftemp))>0
       if (isShp)
@@ -31,7 +33,7 @@
       dsnE <- obj
       if (verbose)
          .elapsedTime("read vector -- start")
-      obj <- .spatialize(obj,...)
+      obj <- spatialize(obj,...)
       if (verbose)
          .elapsedTime("read vector -- finish")
    }
@@ -43,10 +45,10 @@
    g0 <- attr(obj,"grid")
    dname <- attr(obj,"colnames")
    dmask <- .getPrm(arglist,name="(attr|field)",default=".+")
-   feature <- .getPrm(arglist,name="feature",valid=c("attribute","geometry"))
+   feature <- .getPrm(arglist,name="feature",valid=c("attribute","geometry","FID"))
    where <- .getPrm(arglist,name="subset",default="")
    ogropt <- .getPrm(arglist,name="ogropt",default="")
-   optF <- .getPrm(arglist,name="^opt$",default="")
+   optF <- .getPrm(arglist,name="^opt$",class="character",default="")
    clipsrc <- .getPrm(arglist,name="clipsrc",default=FALSE)
    clipdst <- .getPrm(arglist,name="clipdst",default=FALSE)
    wrapdateline <- .getPrm(arglist,name="wrapdateline",default=FALSE)
@@ -55,12 +57,16 @@
    fname1 <- .gsub("\\.zip$","",dsn)
    fname2 <- paste0(fname1,".zip")
    fname3 <- gsub("(\\..+$)",".zip",fname1)
+   fname4 <- paste0(fname1,".gz")
+   fname5 <- paste0(fname1,".bz2")
    cond1 <- file.exists(fname1)
    cond2 <- file.exists(fname2)
    cond3 <- file.exists(fname3)
+   cond4 <- file.exists(fname4)
+   cond5 <- file.exists(fname5)
   # print(dsn)
   # print(c(fname1=fname1,fname2=fname2,fname3=fname3))
-  # print(c(isZip=isZip,cond1=cond1,cond2=cond2,cond3=cond3))
+  # print(c(isZip=isZip,cond1=cond1,cond2=cond2,cond3=cond3,cond4=cond4,cond5=cond5))
    if (cond1)
       dsn <- fname1
    else if (cond2 | cond3) {
@@ -70,6 +76,16 @@
          ziplist <- unzip(fname3,exdir=tempdir())
       on.exit(file.remove(ziplist),add=TRUE)
       dsn <- .grep("\\.shp$",ziplist,value=TRUE)
+   }
+   else if ((cond4)&&(nchar(Sys.which("gzip")))) {
+      dsn0 <- dsn
+      dsn <- tempfile();on.exit(file.remove(dsn))
+      system2("gzip",c("-f -d -c",.dQuote(dsn0)),stdout=dsn)
+   }
+   else if ((cond5)&&(nchar(Sys.which("bzip2")))) {
+      dsn0 <- dsn
+      dsn <- tempfile();on.exit(file.remove(dsn))
+      system2("bzip2",c("-f -d -c",.dQuote(dsn0)),stdout=dsn)
    }
    else
       dsn <- NA
@@ -156,6 +172,8 @@
                                 ,proj4string=sp::CRS(g0$proj4))
          bb2 <- sp::spTransform(bb1,proj4)
          bb2 <- c(sp::bbox(bb2))
+         if (length(bb2)==6)
+            bb2 <- bb2[c(1,2,4,5)]
       }
      # print(proj4)
       if (.lgrep("\\+proj=longlat",proj4)) {
@@ -256,10 +274,18 @@
       names(res) <- dname ## or, comment it
    }
    else if (feature=="geometry") {
+      writeValue <- FALSE
+      if (length(dname)==1) {
+         if (is.numeric(obj[[dname]])) {
+            value <- obj[[dname]]
+            writeValue <- TRUE
+         }
+      }
       if (verbose)
          .elapsedTime(paste("rasterize",.sQuote(feature),"-- start"))
       nr <- nrow(obj)
-      res <- lapply(seq(nr),function(i){
+      res <- ursa_new(badname=paste("FID",seq(nr)))
+      for (i in seq(nr)) {
          cmd <- with(g0,paste("gdal_rasterize"
               ,"-a FID",optF
               ,"-sql",.dQuote(paste("select FID,* from",.dQuote(.dQuote(lname))
@@ -274,109 +300,41 @@
          if (verbose)
             message(cmd)
          system(cmd)
-         va <- read_envi(ftemp)
+         if (writeValue) {
+            va <- read_envi(ftemp)
+            va[!is.na(va)] <- value[i]
+            res[i] <- va
+         }
+         else
+            res[i] <- read_envi(ftemp)
          envi_remove(ftemp)
-         va
-      })
+      }
       if (verbose)
          .elapsedTime(paste("rasterize",.sQuote(feature),"-- finish"))
    }
+   else if (feature=="FID") {
+      cmd <- with(g0,paste("gdal_rasterize"
+              ,"-a FID",optF
+              ,"-sql",.dQuote(paste("select FID,* from",.dQuote(.dQuote(lname))))
+              ,"-dialect",c("SQLITE","OGRSQL")[2]
+              ,"-init -1 -a_nodata -1"
+              ,"-a_srs",.dQuote(proj4)
+              ,"-tr",resx,resy
+             # ,"-where",dQuote(subset)
+              ,"-te",minx,miny,maxx,maxy
+              ,"-of ENVI -ot Int32",ifelse(verbose,"","-q")
+              ,.dQuote(shpname),ftemp))
+      if (verbose) {
+         .elapsedTime(paste("rasterize",.sQuote(feature),"-- start"))
+         message(cmd)
+      }
+      system(cmd)
+      if (verbose)
+         .elapsedTime(paste("rasterize",.sQuote(feature),"-- finish"))
+      res <- c(FID=read_envi(ftemp,resetGrid=TRUE)+1*fromZero)
+      envi_remove(ftemp)
+   }
+   else
+      stop(paste("Unimplemented feature:",feature))
    res
-}
-'.gdalwarp' <- function(src,dst=NULL,grid=NULL,resample="near",nodata=NA
-                       ,resetGrid=FALSE,opt=NULL,close=FALSE,verbose=0L) {
-   if (is.null(grid)) {
-      if (is.ursa(dst,"grid")) {
-         grid <- dst
-         dst <- NULL
-      }
-      else
-         grid <- getOption("ursaSessionGrid")
-   }
-   else
-      grid <- ursa_grid(grid)
-   if (!nchar(Sys.which("gdalwarp"))) {
-      withRaster <- requireNamespace("raster",quietly=.isPackageInUse())
-      if (withRaster) {
-         r1 <- as.Raster(src)
-         session_grid(grid)
-         r2 <- as.Raster(ursa_new(0L))
-         r3 <- try(raster::resample(r1,r2,method=c("bilinear","ngb")[1]))
-         if (inherits(r3,"try-error")) {
-            if (verbose)
-               message('reprojection is failed')
-            return(src)
-         }
-      }
-      else if (verbose)
-         message(paste("'gdalwarp' is not found; package 'raster' is not found."
-                      ,"Reprojection is failed."))
-      return(src)
-   }
-  # a <- open_envi(src)
-  # ct <- ursa_colortable(a)
-  # close(a)
-   if (is.ursa(src)) {
-      removeSrc <- TRUE
-      .src <- src
-      nodata <- ignorevalue(src)
-      src <- .maketmp(ext=".")
-      write_envi(.src,src)
-   }
-   else {
-      removeSrc <- FALSE
-     # nodata <- NA
-   }
-   inMemory <- is.null(dst)
-   if (inMemory)
-      dst <- .maketmp(ext=".")
-   if (verbose)
-      print(c(inMemory=inMemory,removeSrc=removeSrc,isNullGrid=is.null(grid)))
-   if (is.null(opt)) {
-      optF <- ""
-   }
-   else if (!is.null(names(opt))) {
-      optS <- unlist(opt)
-      optF <- paste(paste0("-",names(optS)," ",.dQuote(unname(optS))),collapse=" ")
-   }
-   else
-      optF <- ""
-   if (!("r" %in% names(opt))) {
-      optF <- paste(optF,"-r",resample)
-   }
-   if (is.null(grid))
-      cmd <- paste("gdalwarp -overwrite -of ENVI"
-                  ,ifelse(is.na(nodata),"",paste("-srcnodata",nodata,"-dstnodata",nodata))
-                  ,ifelse(verbose==0L,"-q","")
-                  ,optF,src,dst)
-   else
-      cmd <- with(grid,paste("gdalwarp -overwrite -of ENVI"
-                        ,"-t_srs",.dQuote(proj4),"-tr",resx,resy,"-te",minx,miny,maxx,maxy
-                        ,ifelse(is.na(nodata),"",paste("-srcnodata",nodata,"-dstnodata",nodata))
-                        ,ifelse(verbose==0L,"-q","")
-                        ,optF,src,dst))
-   if (verbose)
-      message(cmd)
-   if (verbose>1)
-      return(NULL)
-   system(cmd)
-   session_grid(NULL)
-   if (inMemory)
-      ret <- read_envi(dst)
-   else if (!close)
-      ret <- open_envi(dst)
-   else
-      ret <- NULL
-   if (!is.na(nodata)) {
-      ignorevalue(ret) <- nodata
-      if (inMemory)
-         ret[ret==nodata] <- NA
-   }
-   if (inMemory)
-      envi_remove(dst)
-   if (removeSrc)
-      envi_remove(src)
-   if (resetGrid)
-      session_grid(ret)
-   ret
 }

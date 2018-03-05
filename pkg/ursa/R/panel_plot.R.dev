@@ -14,11 +14,7 @@
   # str(lapply(arglist,class))
    arglist2 <- list(...) ## remove dupe of 'add=TRUE'
    ct <- NULL
-   if (inherits(obj,c("raster"))) {
-      ret <- with(session_grid()
-                 ,rasterImage(as.raster(obj),minx,miny,maxx,maxy,...))
-   }
-   else if (is.character(obj)) {
+   if (is.character(obj)) {
       if (.lgrep("\\.(shp(\\.zip)*|(geojson|sqlite|gpkg)(\\.(gz|bz2))*)$",obj)) {
          if (FALSE) { ## 20171216 deprecated
             op <- options(warn=0)
@@ -47,10 +43,14 @@
       else
          return(invisible(NULL))
    }
-   else if (is.ursa(obj)) {
-      ct <- panel_raster(obj,...)
+   else if (inherits(obj,c("raster"))) {
+      ret <- with(session_grid()
+                 ,rasterImage(as.raster(obj),minx,miny,maxx,maxy,...))
    }
-   else if (is_spatial(obj)) {
+   else if (is.ursa(obj)) {
+      ret <- panel_raster(obj,...)
+   }
+   else if (spatial_object(obj)) {
       oprj <- spatial_proj4(obj)
       sprj <- session_proj4()
       if (nchar(sprj)>2) {
@@ -73,7 +73,7 @@
         # opE <- options(show.error.messages=TRUE)
         # ret <- .tryE(.panel_plot(sf::st_geometry(obj),add=TRUE,...))
         # ret <- .tryE(.panel_plot(obj,add=TRUE,...))
-         if ((TRUE)&&(.lgrep("^col",names(arglist2)))) {
+         if ((TRUE)&&(.lgrep("col",names(arglist2)))) {
             col <- arglist2$col
             if (is.numeric(col)) {
                ct <- colorize(col)
@@ -87,13 +87,8 @@
             }
             arglist2$col <- unclass(col)
          }
-         else if (length(spatial_fields(obj))==1) {
-           # ct <- colorize(spatial_data(obj)[[1]])
-            ct <- do.call("colorize",c(list(spatial_data(obj)[[1]]),arglist2))
-            arglist2$col <- ct$colortable[ct$index]
-         }
          else
-            arglist2$col <- ifelse(is_spatial_lines(obj),"black","transparent")
+            arglist2$col <- "black"
          if (.lgrep("point",geoType)) {
             if (!.lgrep("pch",names(arglist2))) {
                arglist2$pch <- 21
@@ -112,19 +107,9 @@
                arglist2$lwd <- 0.5
             }
          }
-         else if (.lgrep("lines",geoType)) {
-            if (!.lgrep("lwd",names(arglist2))) {
-               arglist2$lwd <- 3
-            }
-            if (length(ind <- .grep("^border",names(arglist2)))) {
-               arglist2$col <- arglist2[[ind]]
-            }
-         }
-         if (.lgrep("polygon",geoType)) {
-           # str(arglist2)
-           # q()
-         }
+         str(arglist2)
         # str(c(obj=list(spatial_geometry(obj)),add=TRUE,arglist2))
+        # q()
          ret <- .tryE(do.call(".panel_plot"
                      ,c(obj=list(spatial_geometry(obj)),add=TRUE,arglist2)))
          arglist2$type <- spatial_geotype(obj)
@@ -146,7 +131,7 @@
    }
    aname <- names(arglist2)
   # str(arglist2)
-   if (is_spatial_points(obj)) {
+   if (spatial_points(obj)) {
       ret <- list(name=oname
                  ,pt.col=arglist2$col
                  ,pch=arglist2$pch
@@ -189,7 +174,7 @@
       options(ursaPngLegend=if (is.null(opR)) list(ret) else c(opR,list(ret)))
    }
    if (!is.null(ct))
-      return(invisible(ct))
+      return(ct)
    invisible(ret)
 }
 'panel_box' <- function(...){
@@ -245,6 +230,7 @@
    if (is.null(obj))
       return(obj)
    arglist <- list(...)
+  # str(arglist)
    arglist <- lapply(arglist,function(x1) {
       if (identical(c("index","colortable"),names(x1)))
          return(unclass(unname(x1$colortable))[x1$index])
@@ -258,16 +244,7 @@
          opW <- options(warn=-1) ## release 'warn=-1': no warnings
    }
   # str(arglist)
-   if ((.isSF(obj))&&(.lgrep("(dens|angl)",names(arglist)))) {
-     # arglist$add <- NULL
-      message("'sf' cannot deal with fill patterns")
-      arglist$add <- NULL
-      ret <- lapply(obj,function(x1) {
-         do.call("polygon",c(unclass(x1),arglist))
-      })
-   }
-   else
-      ret <- do.call("plot",c(list(obj),arglist))
+   ret <- do.call("plot",c(list(obj),arglist))
    if (!is.null(opW))
       options(opW)
    ret

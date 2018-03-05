@@ -1,20 +1,24 @@
 # wrappers to spatial (not raster) objects
+
 'spatial_crs' <- 'spatial_proj4' <- function(obj,verbose=FALSE) {
-   isSF <- inherits(obj,c("sf","sfc"))
-   isSP <- inherits(obj,"Spatial")
+   isUrsa <- is.ursa(obj) | is.ursa(obj,"grid")
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
    if (verbose)
-      print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
+      print(data.frame(ursa=isUrsa,sf=isSF,sp=isSP,row.names="engine"))
    if (isSF) {
       return(sf::st_crs(obj)$proj4string)
    }
    if (isSP) {
       return(sp::proj4string(obj))
    }
+   if (isUrsa)
+      return(ursa_proj4(obj))
    return(NULL)
 }
 'spatial_crs<-' <- 'spatial_proj4<-' <- function(obj,verbose=FALSE,value) {
-   isSF <- inherits(obj,c("sf","sfc"))
-   isSP <- inherits(obj,"Spatial")
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    if (isSF) {
@@ -30,8 +34,8 @@
    obj
 }
 'spatial_geometry' <- function(obj,verbose=FALSE) {
-   isSF <- inherits(obj,c("sf","sfc"))
-   isSP <- inherits(obj,"Spatial")
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    if (isSF) {
@@ -43,8 +47,8 @@
    return(NULL)
 }
 'spatial_geometry<-' <- function(obj,verbose=FALSE,value) {
-   isSF <- inherits(value,c("sf","sfc"))
-   isSP <- inherits(value,"Spatial")
+   isSF <- .isSF(value)
+   isSP <- .isSP(value)
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    if (isSF) {
@@ -61,8 +65,8 @@
    obj
 }
 'spatial_bbox' <- function(obj,verbose=FALSE) {
-   isSF <- inherits(obj,c("sf","sfc"))
-   isSP <- inherits(obj,"Spatial")
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    if (isSF) {
@@ -74,14 +78,32 @@
    }
    if (isSP) {
       res <- c(sp::bbox(obj))
+      if (length(res)==6)
+         res <- res[c(1,2,4,5)]
       names(res) <- c("xmin","ymin","xmax","ymax")
       return(res)
    }
-   return(NULL)
+   NULL
+}
+'spatial_bbox<-' <- function(obj,verbose=FALSE,value) {
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
+   if (verbose)
+      print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
+   if (isSF) {
+      NULL ## 'sf' has no replacement function for bbox
+   }
+   if (isSP) {
+      val <- matrix(value,ncol=2)
+      colnames(val) <- c("min","max")
+      rownames(val) <- paste0("coords.x",seq(nrow(val)))
+      methods::slot(obj,"bbox") <- val
+   }
+   obj
 }
 'spatial_engine' <- function(obj,verbose=FALSE) {
-   isSF <- inherits(obj,c("sf","sfc"))
-   isSP <- inherits(obj,"Spatial")
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    if (isSF) {
@@ -93,8 +115,8 @@
    return(NULL)
 }
 'spatial_fields' <- function(obj,verbose=FALSE) {
-   isSF <- inherits(obj,c("sf","sfc"))
-   isSP <- inherits(obj,"Spatial")
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    if (isSF) {
@@ -104,7 +126,7 @@
       return(dname)
    }
    if (isSP) {
-      dname <- try(colnames(obj@data),silent=TRUE)
+      dname <- try(colnames(methods::slot(obj,"data")),silent=TRUE)
       if (inherits(dname,"try-error"))
          dname <- character()
       return(dname)
@@ -112,17 +134,21 @@
    return(NULL)
 }
 'spatial_data' <- function(obj,subset=".+",drop=NA,verbose=FALSE) {
-   isSF <- inherits(obj,c("sf","sfc"))
-   isSP <- inherits(obj,"Spatial")
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    if (isSF) {
+      if (inherits(obj,"sfc"))
+         return(NULL)
       res <- obj
       sf::st_geometry(res) <- NULL
       attributes(res) <- attributes(res)[c("names","row.names","class")]
    }
    else if (isSP) {
-      res <- obj@data
+      if (!methods::.hasSlot(obj,"data"))
+         return(NULL)
+      res <- methods::slot(obj,"data")
    }
    else 
       return(NULL)
@@ -130,12 +156,36 @@
    if (!length(ind))
       return(res)
    if (is.na(drop))
-      drop <- length(ind)==1
+      drop <- if (TRUE) FALSE else length(ind)==1
    return(res[,ind,drop=drop])
 }
+'spatial_data<-' <- function(obj,verbose=FALSE,value) {
+   operation <- "unknown"
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
+   if (isSF | isSP)
+      operation <- "geometry"
+   else {
+      isSF <- .isSF(value)
+      isSP <- .isSP(value)
+      if (isSF | isSP)
+         operation <- "data"
+   }
+   if (verbose)
+      print(data.frame(sf=isSF,sp=isSP,operation=operation,row.names="engine"))
+   if (operation=="geometry") {
+      spatial_geometry(value) <- obj
+      return(value)
+   }
+   if (operation=="data")
+      stop(paste("Not imlemented for operation",sQuote(operation)))
+   NULL
+}
 'spatial_transform' <- function(obj,crs,verbose=FALSE,...) {
-   isSF <- inherits(obj,c("sf","sfc"))
-   isSP <- inherits(obj,"Spatial")
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
+   if (missing(crs))
+      crs <- session_proj4()
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    if (isSF) {
@@ -149,8 +199,8 @@
    return(NULL)
 }
 'spatial_geotype' <- function(obj,verbose=FALSE) {
-   isSF <- inherits(obj,c("sf","sfc"))
-   isSP <- inherits(obj,"Spatial")
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    if (isSF) {
@@ -173,8 +223,8 @@
    return(NULL)
 }
 'spatial_coordinates' <- function(obj,verbose=FALSE) {
-   isSF <- inherits(obj,c("sf","sfc"))
-   isSP <- inherits(obj,"Spatial")
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    geoType <- spatial_geotype(obj)
@@ -231,10 +281,11 @@
          return(ret)
       }
       if (geoType=="LINESTRING") {
-         ulen <- sort(unique(sapply(obj@lines,function(x) length(x@Lines))))
+         ulen <- sort(unique(sapply(methods::slot(obj,"lines")
+                                ,function(x) length(methods::slot(x,"Lines")))))
          if ((length(ulen)==1)&&(ulen==1)) {
-            ret <- lapply(obj@lines,function(x) {
-               x2 <- lapply(x@Lines,sp::coordinates)[[1]]
+            ret <- lapply(methods::slot(obj,"lines"),function(x) {
+               x2 <- lapply(methods::slot(x,"Lines"),sp::coordinates)[[1]]
             })
             names(ret) <- seq_along(ret)
             return(ret)
@@ -243,11 +294,11 @@
             stop(paste("Unimplemented MULTILINESTRING (sp)"))
       }
       if (geoType=="POLYGON") {
-         ulen <- sort(unique(sapply(obj@polygons,function(x) length(x@Polygons))))
+         ulen <- sort(unique(sapply(methods::slot(obj,"polygons"),function(x) length(methods::slot(x,"Polygons")))))
         # ret <- vector("list",length(ulen))
-         ret <- lapply(obj@polygons,function(x1) {
-            x2 <- x1@Polygons
-            hole <- sapply(x2,function(x3) x3@hole)
+         ret <- lapply(methods::slot(obj,"polygons"),function(x1) {
+            x2 <- methods::slot(x1,"Polygons")
+            hole <- sapply(x2,function(x3) methods::slot(x3,"hole"))
             if (TRUE) {# if (any(hole)) {
                indF <- which(!hole)
                ret2 <- vector("list",length(indF))
@@ -291,7 +342,6 @@
                   }
                }
               # ret2 <- unlist(ret2,recursive=FALSE) ## TRUE ignores holes
-               message("-----")
                ret2
             }
             else 
@@ -306,18 +356,124 @@
    return(NULL)
 }
 'spatial_area' <- function(obj,verbose=FALSE) {
-   isSF <- inherits(obj,c("sf","sfc"))
-   isSP <- inherits(obj,"Spatial")
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    if (isSF) {
-      return(sf::st_area(obj))
+      res <- sf::st_area(obj)
+      if (TRUE) {
+         u <- attr(res,"units")$numerator
+         m <- rep(1,length(u))
+         for (i in seq_along(u))
+            m[i] <- switch(u[i],"m"=1,"km"=1e3,"mm"=1e-3,stop(u[i]))
+         res <- as.numeric(res)*prod(m)
+      }
+      return(res)
    }
    if (isSP) {
-     if (!("POLYGON" %in% spatial_geotype(obj)))
-        return(NULL)
-     return(sapply(obj@polygons,function(x) sapply(x@Polygons,methods::slot,"area")))
-
+      if (!("POLYGON" %in% spatial_geotype(obj)))
+         return(NULL)
+     # res <- sapply(obj@polygons,function(x) sapply(x@Polygons,methods::slot,"area"))
+      res <- sapply(methods::slot(obj,"polygons"),function(x1)
+         sum(sapply(methods::slot(x1,"Polygons"),function(x2)
+            y2 <- ifelse(methods::slot(x2,"hole"),-1,1)*methods::slot(x2,"area"))))
+      return(res)
    }
    NULL
+}
+'spatial_length' <- function(obj,verbose=FALSE) {
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
+   if (verbose)
+      print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
+   if (isSF) {
+      res <- sf::st_length(obj)
+      if (TRUE) {
+         u <- attr(res,"units")$numerator
+         m <- rep(1,length(u))
+         for (i in seq_along(u))
+            m[i] <- switch(u[i],"m"=1,"km"=1e3,"mm"=1e-3,stop(u[i]))
+         res <- as.numeric(res)*prod(m)
+      }
+      return(res)
+   }
+   if (isSP) {
+      if (!("LINESTRING" %in% spatial_geotype(obj)))
+         return(NA)
+      if (FALSE) { ## thesame
+         res <- sapply(methods::slot(obj,"lines"),function(x1)
+            sum(sapply(methods::slot(x1,"Lines"),function(x2) {
+               xy <- diff(methods::slot(x2,"coords"))
+               sum(sqrt(xy[,1]*xy[,1]+xy[,2]*xy[,2]))
+            }))
+         )
+      }
+      else {
+         res <- sp::SpatialLinesLengths(obj
+                         ,longlat=.lgrep("\\+proj=longlat",spatial_proj4(obj))>0)
+      }
+      return(res)
+   }
+   NULL
+}
+'spatial_dim' <- function(obj,verbose=FALSE) {
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
+   if (verbose)
+      print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
+   if (isSP)
+      return(2L)
+   if (isSF) {
+      return(max(sapply(obj[[attr(obj,"sf_column")]],function(x) {
+         if (is.list(x)) max(sapply(x,function(y) {
+            if (is.list(y)) {
+               max(sapply(y,function(z) {
+                  if (!is.null(dim(z))) ncol(z) else length(z)
+               }))
+            }
+            else if (!is.null(dim(y))) ncol(y) else length(y)
+         }))
+         else if (!is.null(dim(x))) ncol(x)
+         else length(x)
+      })))
+   }
+   NULL
+}
+'is_spatial_points' <- function(obj,verbose=FALSE) {
+   res <- .lgrep("POINT",spatial_geotype(obj,verbose=verbose))>0
+}
+'is_spatial_lines' <- function(obj,verbose=FALSE) {
+   .lgrep("LINES",spatial_geotype(obj,verbose=verbose))>0 ## LINEString
+}
+'is_spatial_polygons' <- function(obj,verbose=FALSE) {
+   .lgrep("POLYGON",spatial_geotype(obj,verbose=verbose))>0
+}
+'spatial_count' <- function(obj,verbose=FALSE) {
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
+   if (verbose)
+      print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
+   length(spatial_geometry(obj))
+}
+'is_spatial' <- function(obj,verbose=FALSE) {
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
+   if (verbose)
+      print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
+   isSF | isSP
+}
+'spatial_filelist' <- function(path=".",pattern=NA,full.names=TRUE
+                              ,recursive=FALSE) {
+   if (!is.character(pattern))
+      pattern <- "\\.(gpkg|tab|kml|json|geojson|mif|sqlite|shp|osm)(\\.(zip|gz|bz2))*$"
+   dir(path=path,pattern=pattern,full.names=full.names,recursive=recursive)
+}
+'.spatial_shape' <- function(data,geometry,verbose=FALSE) { ## not useful
+   isSF <- .isSF(geometry)
+   isSP <- .isSP(geometry)
+   if (verbose)
+      print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
+   spatial_geometry(data) <- geometry
+   data
 }

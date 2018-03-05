@@ -1,3 +1,4 @@
+'ursa_open' <- function(fname,verbose=FALSE) open_gdal(fname=fname,verbose=verbose)
 'open_gdal' <- function(fname,verbose=FALSE) {
   ## 20170116 removed '...' argument
    if (!is.character(fname))

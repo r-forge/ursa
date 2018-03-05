@@ -33,7 +33,7 @@
    op <- list(st)
    names(op) <- pb$optionName
    options(op)
-   setUrsaProgressBar(pb,value=initial)
+   setUrsaProgressBar(pb)
    pb
 }
 'setUrsaProgressBar' <- function(pb,value,title=NULL,label=NULL) {
@@ -42,7 +42,10 @@
    t2 <- unname(proc.time()[3])
    cl <- class(pb)
    st <- getOption(pb$optionName)
-   st["current"] <- st["current"]+1
+   if (missing(value))
+      st["current"] <- st["current"]+1
+   else 
+      st["current"] <- value
   # if (names(st[1])=="first")
   #    print(st)
    if (!is.null(title))

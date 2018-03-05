@@ -25,7 +25,11 @@
 }
 'ursa_proj<-' <- function(obj,keepGrid=FALSE,value) 
 {
-   if (!is.character(value))
+   if ((is.numeric(value))&&(.is.integer(value)))
+      value <- paste0("+init=epsg:",round(value))
+   else if (inherits(value,"CRS"))
+      value <- methods::slot(value,"projargs")
+   else if (!is.character(value))
    {
       warning("unable to detect projection")
       return(obj)

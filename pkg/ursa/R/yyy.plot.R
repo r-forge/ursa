@@ -26,11 +26,23 @@
       x <- seq(g1,"x")
       y <- seq(g1,"y")
       img <- list(x=x,y=y)
-      if (!is.null(g1$seqx))
+      if (!is.null(g1$labx)) {
+         if (length(g1$seqx)!=g1$columns)
+            g1$seqx <- seq(g1,"x")
+      }
+      if (!is.null(g1$laby)) {
+         if (length(g1$seqy)!=g1$rows)
+            g1$seqy <- seq(g1,"y")
+      }
+      if ((!is.null(g1$seqx))&&(length(g1$seqx)))
       {
          if (length(g1$labx))
          {
-            xo <- data.frame(at=NA,lab=g1$labx,stringsAsFactors=FALSE)
+            if (length(names(g1$labx))==length(g1$labx))
+               xlab <- names(g1$labx)
+            else
+               xlab <- g1$labx
+            xo <- data.frame(at=NA,lab=xlab,stringsAsFactors=FALSE)
             for (i in seq(nrow(xo)))
             {
                v <- g1$labx[i]
@@ -60,13 +72,17 @@
       {
          xt <- axTicks(1)
          xo <- data.frame(at=xt,lab=as.character(xt),stringsAsFactors=FALSE)
-         cexx <- 0.5
+        # cexx <- 0.5
       }
-      if (!is.null(g1$seqy))
+      if ((!is.null(g1$seqy))&&(length(g1$seqy)))
       {
          if (length(g1$laby))
          {
-            yo <- data.frame(at=NA,lab=g1$laby,stringsAsFactors=FALSE)
+            if (length(names(g1$laby))==length(g1$laby))
+               ylab <- names(g1$laby)
+            else
+               ylab <- g1$laby
+            yo <- data.frame(at=NA,lab=ylab,stringsAsFactors=FALSE)
             for (i in seq(nrow(yo)))
             {
                v <- g1$laby[i]
@@ -96,7 +112,7 @@
       {
          yt <- axTicks(2)
          yo <- data.frame(at=yt,lab=as.character(yt),stringsAsFactors=FALSE)
-         cexy <- 0.5
+        # cexy <- 0.5
       }
       abline(v=xo$at,h=yo$at,lty=2,col="#0000002F")
       panel <- options()[.grep("^ursaPng.+",names(options()))]
@@ -126,13 +142,13 @@
          mtext(side=1,text=xo$lab,at=xo$at,padj=0.5,adj=0.5,cex=cexx,las=1)
       if (isLeft)
          mtext(side=2,text=yo$lab,at=yo$at,padj=0.4,adj=1.0,line=0.4,cex=cexy,las=1)
-      xu <- attr(g1$seqx,"units")
+      xu <- attr(g1$columns,"units")
       if ((isBottom)&&(is.character(xu)))
       {
          xu <- as.expression(substitute(bold(u),list(u=xu)))
          mtext(xu,side=1,padj=1,adj=0.5,las=1,col="black",cex=cexx,line=0.85)
       }
-      yu <- attr(g1$seqy,"units")
+      yu <- attr(g1$rows,"units")
       if ((isLeft)&&(is.character(yu)))
       {
          width <- max(strwidth(yo$lab,units="inches",cex=cexy))

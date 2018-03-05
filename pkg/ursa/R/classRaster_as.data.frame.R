@@ -19,6 +19,7 @@
    y <- rev(with(g1,seq(miny,maxy,by=resy)[-1]-resy/2))
   # xy <- expand.grid(x=x,y=y,KEEP.OUT.ATTRS=FALSE,stringsAsFactors=FALSE)
    xy <- data.frame(x=rep(x,times=length(y)),y=rep(y,each=length(x)))
+   isList <- .is.ursa_stack(obj)
    isCT <- .is.colortable(obj)
    bname <- bandname(obj)
    if (!is.na(obj$con$posZ[1]))

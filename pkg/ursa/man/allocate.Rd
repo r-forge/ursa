@@ -8,13 +8,16 @@ Rasterization of point data into grid cells
 \code{allocate} takes \code{x} and \code{y} coordinates and values from data frame, which is describing point spatial data, and puts them into cells of raster. The certain function (either mean value, sum of values, number of points) is applied for >0 points inside of the exact cell borders.
 }
 \usage{
-allocate(vec, nodata = NA, attr = ".+", fun = c("mean", "sum", "n"), cellsize = NA,
-         verbose = FALSE)
+allocate(vec, coords = c("x", "y"), nodata = NA, attr = ".+", fun = c("mean", "sum", "n"),
+         cellsize = NA, verbose = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{vec}{
 \code{data.frame}. At least \code{x} and \code{y} should be in \code{colnames(vec)}. Is is allowed to use \code{\link[sp:SpatialPoints]{"SpatialPointsDataFrame"}} from package \bold{sp}. The "on the fly" reprojection is not supported.
+}
+  \item{coords}{
+Character of length 2. Colums names, which contain coordinates of data points. Raster bands are not produced for specified columns. For misreference of coordinate columns, the attempt to find more appropriate coordinate columns is taken.
 }
   \item{fun}{
 Character keyword of function, which is applied to value of points, which are dropped into the same cell. Valid values are \code{"mean"} (mean value), \code{"sum"} (sum of values), \code{"n"} (number of points)

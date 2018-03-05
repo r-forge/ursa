@@ -1,5 +1,6 @@
 \name{open_gdal}
 \alias{open_gdal}
+\alias{ursa_open}
 \title{
 Open GDAL file
 }
@@ -8,6 +9,9 @@ Open GDAL file
 }
 \usage{
 open_gdal(fname, verbose = FALSE)
+
+ursa_open(fname, verbose = FALSE)
+
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -19,6 +23,8 @@ Logical. \code{verbose=TRUE} provides some additional information on console. De
 }
 }
 \details{
+\code{ursa_open} is a synonym to \code{open_gdal}. \emph{Generally, both function names are abridged version of \verb{ursa_open_dgal}}.
+
 \code{open_gdal} doesn't read data. Data can be read later using \emph{\link[ursa:classRaster.Extract]{Extract}} operator \code{\link[ursa:classRaster.Extract]{[}}.
 
 If argument \code{fname} is \href{http://www.gdal.org/frmt_various.html#ENVI}{ENVI .hdr Labelled Raster} then either \code{open_gdal} or \code{\link[ursa:conn.open_envi]{open_envi}} can be used. The former provides external implementation for data reading via GDAL in \pkg{rgdal} package.

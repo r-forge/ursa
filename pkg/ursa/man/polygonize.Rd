@@ -38,7 +38,7 @@ Some GIS software (e.g., QGIS) has broad tools for display vector data. Exceptin
 }
 \value{
 If missing \code{fname} and tools from \pkg{sp} then object of class "SpatialPolygonsDataFrame" (package \pkg{sp}).
-If missing \code{fname} and tools from \pkg{sf} then object of class "sf" with geometry of class "sfc_POLYGON" (package \pkg{sp}).
+If missing \code{fname} and tools from \pkg{sf} then object of class "sf" with geometry of class "sfc_POLYGON" (package \pkg{sf}).
 \cr
 If \code{fname} is specified, then \code{NULL}.
 
@@ -64,11 +64,10 @@ a <- ursa_dummy(mul=1/16)
 a <- a[a>100]
 print(a)
 print(band_mean(a))
-b <- polygonize(a,engine="sp")
-print(apply(b@data,2,mean,na.rm=TRUE))
-print(with(ursa_grid(a),array(c(minx,miny,maxx,maxy),dim=c(2,2)
-                             ,dimnames=list(c("x","y"),c("min","max")))))
-print(b@bbox)
+b2 <- polygonize(a,engine="sp") ## try 'engine="sf"'
+print(colMeans(spatial_data(b2),na.rm=TRUE))
+print(ursa_bbox(a))
+print(spatial_bbox(b2))
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

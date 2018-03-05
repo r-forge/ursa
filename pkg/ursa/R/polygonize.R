@@ -10,7 +10,7 @@
       isSP <- !isSF
    }
    else {
-      loaded <- .loaded()
+      loaded <- loadedNamespaces() # .loaded()
       if ("sf" %in% loaded)
          isSF <- TRUE
       else if (("sp" %in% loaded)||("rgdal" %in% loaded))
@@ -19,18 +19,26 @@
          isSF <- requireNamespace("sf",quietly=.isPackageInUse())
       isSP <- !isSF
    }
+   if ((!is.na(verbose))&&(verbose))
+      print(c(isSP=isSP,isSF=isSF))
    if (is.na(verbose))
       verbose <- isSP
-   if (verbose)
-      print(c(isSP=isSP,isSF=isSF))
-   isList <- .is.ursa_stack(obj)
-   if ((!isList)&&(!is.ursa(obj)))
+   onlyGeometry <- missing(obj)
+   isList <- !onlyGeometry && .is.ursa_stack(obj)
+   if ((!isList)&&(!((onlyGeometry)||(is.ursa(obj))||(is.data.frame(obj))))) ## propose?
+  # if ((!isList)&&(!(is.ursa(obj))))
       return(NULL)
   # requireNamespace("sp",quietly=.isPackageInUse())
   # requireNamespace("methods",quietly=.isPackageInUse())
-   g1 <- if (isList) ursa_grid(obj[[1]]) else ursa_grid(obj)
+   g1 <- if (onlyGeometry) session_grid() 
+         else if (isList) ursa_grid(obj[[1]])
+         else ursa_grid(obj)
+   if (is.null(g1))
+      g1 <- session_grid()
    prj <- ursa_proj(g1)
-   if (isList) {
+   if (onlyGeometry)
+      b <- as.data.frame(g1)
+   else if (isList) {
       for (i in seq_along(obj)) {
          b0 <- as.data.frame(obj[[i]],na.rm=FALSE)
          b <- if (i==1) b0 else cbind(b,b0[,3:ncol(b0),drop=FALSE])
@@ -39,8 +47,10 @@
       if (length(ind))
          b <- b[-ind,]
    }
-   else
+   else if (is.ursa(obj))
       b <- as.data.frame(obj)
+   else
+      b <- obj
   # b <- b[sample(seq(nrow(b)),1e3),]
    n <- nrow(b)
    sa <- vector("list",n)
@@ -51,7 +61,13 @@
          cat("create polygons from points...")
       xy <- cbind(b$x-dx,b$y-dy,b$x-dx,b$y+dy,b$x+dx,b$y+dy,b$x+dx,b$y-dy
                  ,b$x-dx,b$y-dy)
-      b <- b[,3:ncol(b),drop=FALSE]
+      if (!onlyGeometry) {
+         b <- b[,3:ncol(b),drop=FALSE]
+         for (i in seq(ncol(b))) {
+            if (.is.integer(na.omit(b[,i])))
+               b[,i] <- as.integer(b[,i])
+         }
+      }
       sa <- apply(xy,1,function(x) {
          res <- list(matrix(x,ncol=2,byrow=TRUE))
          class(res) <- c("XY","POLYGON","sfg")
@@ -63,11 +79,17 @@
          cat(" done!\ncreate geometry...")
       sa <- sf::st_sfc(sa)
       if (verbose)
-         cat(" done!\nassing data to geometry...")
-      sa <- sf::st_sf(b,coords=sa,crs=g1$proj4)
-      if (verbose)
          cat(" done!\n")
-      if (TRUE) { ## ++ 20171128
+      if (!onlyGeometry) {
+         if (verbose)
+            cat("assign data to geometry...")
+         sa <- sf::st_sf(b,coords=sa,crs=g1$proj4)
+         if (verbose)
+            cat(" done!\n")
+      }
+      else
+         sf::st_crs(sa) <- g1$proj4
+      if ((TRUE)&&(!onlyGeometry)) { ## ++ 20171128
          colnames(sa)[head(seq(ncol(sa)),-1)] <- colnames(b)
       }
    }
@@ -94,14 +116,19 @@
       if (verbose)
          close(pb)
       sa <- sp::SpatialPolygons(sa,proj4string=sp::CRS(prj))
-      sa <- sp::SpatialPolygonsDataFrame(sa,data=b[,3:ncol(b),drop=FALSE]
-                                        ,match.ID=FALSE)
+      if (!onlyGeometry) {
+         b <- b[,3:ncol(b),drop=FALSE]
+         for (i in seq(ncol(b)))
+            if (.is.integer(na.omit(b[,i])))
+               b[,i] <- as.integer(b[,i])
+         sa <- sp::SpatialPolygonsDataFrame(sa,data=b,match.ID=FALSE)
+      }
       if (verbose)
          close(pb)
    }
    if (!missing(fname)) {
      # return(.shp.write(sa,fname,...))
-      return(.write_ogr(sa,fname,verbose=verbose,...))
+      return(spatial_write(sa,fname,verbose=verbose,...))
    }
    sa
 }

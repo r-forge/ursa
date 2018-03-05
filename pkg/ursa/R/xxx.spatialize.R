@@ -1,6 +1,6 @@
-'.read_spatial' <- 
-'.spatialize' <- function(dsn,engine=c("native","sp","sf")
-                         ,layer=".*",field=".+"
+'spatial_read' <-
+'spatialize' <- function(dsn,engine=c("native","sp","sf")
+                         ,layer=".*",field=".+",coords=c("x","y")
                          ,geocode="",place="",area=c("bounding","point")
                          ,grid=NULL,size=NA,cell=NA,expand=1,border=NA
                          ,lat0=NA,lon0=NA,resetProj=FALSE,style="auto"#,zoom=NA
@@ -51,7 +51,8 @@
       }
       else
          spcl <- "Spatial"
-      if ((nextCheck)&&(inherits(dsn,spcl))) {
+     # if ((nextCheck)&&(inherits(dsn,spcl))) {
+      if ((nextCheck)&&(.isSP(dsn))) {
          if ((!toUnloadMethods)&&(!("methods" %in% .loaded()))) {
             if (FALSE) {
               # .require("methods")
@@ -85,11 +86,26 @@
          return(display(dsn,...))
       }
       if ((nextCheck)&&(is.ursa(dsn))) {
-         return(display(dsn,...))
+         if ((isSF)||(isSP)) {
+            obj <- as.data.frame(dsn)
+            coords <- .maketmp(2)
+            colnames(obj)[1:2] <- coords
+            if (isSF) {
+               obj <- sf::st_as_sf(obj,coords=coords,crs=ursa_proj(dsn))
+            }
+            else if (isSP) {
+               sp::coordinates(obj) <- coords
+               sp::proj4string(obj) <- ursa_proj(dsn)
+            }
+            rm(dsn) ## requierd?
+            nextCheck <- FALSE
+         }
+         else
+            return(display(dsn,...))
       }
-      if ((nextCheck)&&((isSF)||(isNative))) {
+      if ((FALSE)&&(nextCheck)&&((isSF)||(isNative))) { ## has checked early
          if (isNative) {
-            loaded <- .loaded()
+            loaded <- loadedNamespaces() #.loaded() ## changed 20180226
             if ("sf" %in% loaded)
                isSF <- TRUE
             else if (("sp" %in% loaded)||("rgdal" %in% loaded))
@@ -148,12 +164,13 @@
             dsn <- class(obj)
          }
          else {
-            obj <- try(sf::st_as_sfc(dsn))
+            obj <- try(sf::st_as_sf(dsn,coords=coords))
             if (inherits(obj,"try-error")) {
                message(paste("(#32) unable to process object of class"
                             ,.sQuote(paste(class(dsn),collapse=" | "))))
                return(NULL) ## 32L
             }
+            dsn <- class(dsn)
          }
       }
       else if ((nextCheck)&&(isSP)) { # if (isSP)
@@ -191,6 +208,11 @@
             else
                sp::proj4string(obj) <- sp::CRS(session_proj4())
          }
+         else if (inherits(dsn,"data.frame")) {
+            obj <- dsn
+            sp::coordinates(obj) <- coords
+            dsn <- class(dsn)
+         }
          else
             obj <- try(methods::as(dsn,"Spatial"))
          if (inherits(obj,"try-error")) {
@@ -205,7 +227,7 @@
       }
    }
    else {
-      if (isNative) {
+      if ((FALSE)&&(isNative)) { ## this check has been done early
          loaded <- .loaded()
          if ("sf" %in% loaded)
             isSF <- TRUE
@@ -215,6 +237,12 @@
             isSF <- requireNamespace("sf",quietly=.isPackageInUse())
          isSP <- !isSF
       }
+      if (file.exists(zname <- paste0(dsn,".gz"))) {
+         dsn <- zname
+      }
+      else if (file.exists(zname <- paste0(dsn,".bz2"))) {
+         dsn <- zname
+      }
       if (!file.exists(dsn)) {
          aname <- paste0(dsn,".zip")
          if (isZip <- file.exists(aname)) {
@@ -223,6 +251,11 @@
          }
          else if (.lgrep("^(http|https|ftp)://",dsn)) {
             dsn <- .ursaCacheDownload(dsn)
+         }
+         else if (.lgrep("\\.(gpkg|tab|kml|json|geojson|mif|sqlite|shp|osm)(\\.(zip|gz|bz2))*$"
+                 ,basename(dsn))) {
+            message("#40. It seems that specified non-existent file name rather than geocode request.")
+            return(NULL)
          }
          else {
             geocodeArgs <- as.list(args(.geocode))
@@ -237,9 +270,9 @@
                else
                   area <- eval(geocodeArgs$area)
             }
-            da <- .geocode(dsn,service=geocode[1],place=place
-                          ,area=area,select="top",verbose=verbose)
-            if ((is.null(da))&&(length(geocode)==2)) {
+            da <- try(.geocode(dsn,service=geocode[1],place=place
+                          ,area=area,select="top",verbose=verbose))
+            if ((inherits(da,"try-error"))||((is.null(da))&&(length(geocode)==2))) {
                geocode <- geocode[2]
                da <- .geocode(dsn,service=geocode,area=area,select="top"
                              ,verbose=verbose)
@@ -354,7 +387,12 @@
             obj <- sf::st_read(dsn,layer=layer,quiet=TRUE)
          }
          else {
-            obj <- rgdal::readOGR(dsn,layer,verbose=FALSE)
+            obj <- rgdal::readOGR(dsn,layer,pointDropZ=TRUE,verbose=FALSE)
+            if ((length(names(obj))==1)&&(names(obj)=="FID")) {
+               info <- rgdal::ogrInfo(dsn,layer)
+               if (info$nitems==0)
+                  methods::slot(obj,"data")$FID <- NULL
+            }
          }
          options(opW)
       }
@@ -388,11 +426,13 @@
          dname <- character()
    }
    else if (isSP) {
-      dname <- try(colnames(obj@data),silent=TRUE)
+      dname <- try(colnames(methods::slot(obj,"data")),silent=TRUE)
       if (inherits(dname,"try-error"))
          dname <- character()
    }
    hasTable <- length(dname)>0
+   if (is.na(field))
+      field <- ".+"
    dname <- .grep(field,dname,value=TRUE)
   # str(dname);q()
    if ((hasTable)&&(!length(dname))) {
@@ -417,7 +457,7 @@
            # str(da)
          }
          if (isSP) {
-            da <- obj@data[,dname[i]]
+            da <- methods::slot(obj,"data")[,dname[i]]
          }
          if (is.character(da)) {
             isDateTime <- FALSE
@@ -439,8 +479,27 @@
            ## if inherits(da,"POSIXlt") then 'da' is a list with 9 items
             if (isSF)
                obj[,dname[i]] <- da
+            if (isSP) {
+               opW <- options(warn=-1)
+               da2 <- as.numeric(da)
+               options(opW)
+               if (!anyNA(da2)) {
+                  da <- if (.is.integer(da2)) as.integer(round(da2)) else da2
+               }
+               methods::slot(obj,"data")[,dname[i]] <- da
+            }
+         }
+         else if ((TRUE)&&(.is.integer(na.omit(da)))) { # &&(!is.integer(da))
+            da <- as.integer(round(da))
+            if (isSF)
+               obj[,dname[i]] <- da
             if (isSP)
-               obj@data[,dname[i]] <- da
+               methods::slot(obj,"data")[,dname[i]] <- da
+         }
+         else if ((FALSE)&&(isSP)) {
+            if (.is.integer(na.omit(da))) {
+               methods::slot(obj,"data")[,dname[i]] <- as.integer(da)
+            }
          }
       }
      # Sys.setlocale("LC_CTYPE",lc)
@@ -510,8 +569,9 @@
       g0 <- g2
    else if (is.null(grid))
       g0 <- NULL
-   else
-      g0 <- grid
+   else {
+      g0 <- ursa_grid(grid)
+   }
   # style <- "merc"
    if (!.lgrep(projPatt,style))
       proj <- "auto"
@@ -608,12 +668,14 @@
                xy <- sp::coordinates(asp2)
             }
             else {
-               asp2_geom <- switch(geoType,POLYGON=sp::geometry(asp2)@polygons
-                                            ,LINE=sp::geometry(asp2)@lines
+               asp2_geom <- switch(geoType,POLYGON=methods::slot(sp::geometry(asp2),"polygons")
+                                            ,LINE=methods::slot(sp::geometry(asp2),"lines")
                                            ,POINT=sp::geometry(asp2))
                xy <- lapply(asp2_geom,function(z) {
                   gz <- switch(geoType
-                              ,POLYGON=z@Polygons,LINE=z@Lines,POINT=z@Points)
+                              ,POLYGON=methods::slot(z,"Polygons")
+                              ,LINE=methods::slot(z,"Lines")
+                              ,POINT=methods::slot(z,"Points"))
                   lapply(gz,function(z3) t(sp::coordinates(z3)))
                })
                rm(asp2,asp2_geom)
@@ -808,10 +870,14 @@
       proj4 <- sf::st_crs(obj)$proj4string
    }
    if (isSP) {
-      obj_geom <- switch(geoType,POLYGON=sp::geometry(obj)@polygons
-                                   ,LINE=sp::geometry(obj)@lines
+      obj_geom <- switch(geoType,POLYGON=methods::slot(sp::geometry(obj),"polygons")
+                                   ,LINE=methods::slot(sp::geometry(obj),"lines")
                                   ,POINT=sp::geometry(obj))
       bbox <- c(sp::bbox(obj))
+      if (length(bbox)==6) {
+         bbox <- bbox[c(1,2,4,5)]
+        # names(bbox) <- c("xmin","ymin","zmin","xmax","ymax","zmax")
+      }
       names(bbox) <- c("xmin","ymin","xmax","ymax")
       proj4 <- sp::proj4string(obj)
    }
@@ -819,7 +885,8 @@
       bbox <- bbox+100*c(-1,-1,1,1)
    if (FALSE) {
       .sc <- ifelse(.lgrep("\\+proj=(zzzlonglat|zzzmerc)",proj4)>0,0,expand-1)
-      bbox[c(1,3)] <- mean(bbox[c(1,3)])+c(-1,1)*expand*diff(bbox[c(1,3)])/2
+      indx <- c("minx","maxx")
+      bbox[indx] <- mean(bbox[c(1,3)])+c(-1,1)*expand*diff(bbox[c(1,3)])/2
       bbox[c(2,4)] <- mean(bbox[c(2,4)])+c(-1,1)*expand*diff(bbox[c(2,4)])/2
    }
    else {

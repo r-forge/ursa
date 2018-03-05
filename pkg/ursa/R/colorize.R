@@ -1,3 +1,5 @@
+# TODO Stretch: https://en.wikipedia.org/wiki/Jenks_natural_breaks_optimization
+
 ##~ 'categorize' <- 'colored' <- function(...) .syn('colorize',0,...)
 'colorize' <- function(obj,value=NULL,breakvalue=NULL,name=NULL
                         #,col=NULL ## deprecated
@@ -471,6 +473,8 @@
                   next
                if (all(v3 %in% c(0,1))) ## added 20150815 (fail for 0.0500001 rounding)
                   next
+              # if ((i2<(9))&&(any(abs(v3-v2*(10^i2))>0.499)))
+              #    next
                ok <- TRUE
                break
             }
@@ -483,22 +487,67 @@
             v2 <- .v2[which.min(abs(.v2-v2))[1]]
          }
       }
+      label2 <- as.character(v2)
       if (!ok)
-         label <- as.character(v2)
+         label <- label2
       else
       {
-         if (i2<0)
-            i2 <- 0
-         label <- sprintf(sprintf("%%.%df",i2),as.double(v2))
-         while(length(label)!=length(unique(label)))
+         if (i2<(0)) {
+           # label <- sprintf("%%f",as.double(round(v2,i2+1)))
+           # label <- sprintf(sprintf("%%.0f",i2),as.double(round(v2,i2+1)))
+            label <- sprintf(sprintf("%%.0f",i2),as.double(v2))
+           # label <- format(v2,trim=TRUE,scientific=FALSE)
+           # label <- label2
+           # i2 <- 0
+         }
+         else {
+           # print(i2)
+            label1 <- sprintf(sprintf("%%.%df",i2),as.double(v2))
+            label <- if (max(nchar(label2))+0==max(nchar(label1))) label2 else label1
+         }
+         hasZero <- any(v2==0)
+         while((length(label)!=length(unique(label)))||
+               ((!hasZero)&&(any(as.numeric(label)==0))))
          {
             i2 <- i2+1
-            label <- sprintf(sprintf("%%.%df",i2),as.double(v2))
+           # message(paste("i2 chanded from",i2-1,"to",i2))
+            if (i2<0)
+               next
+            else
+               label <- sprintf(sprintf("%%.%df",i2),as.double(v2))
          }
          sl <- unique(substr(label,nchar(label)-1,nchar(label)))
          if ((length(sl)==1)&&(sl==".0")) {
             label <- sprintf(sprintf("%%.0f",i2),as.double(label))
          }
+         dv <- diff(sort(v2))
+         if (length(dv))
+            dv <- dv/min(dv)
+         v3 <- abs(v2)
+         v3 <- v3[v3!=0]
+         if ((length(dv)==1)&&(.is.integer(v2[2]/v2[1]))) {
+            label <- label3 <- as.character(as.numeric(format(v2,trim=TRUE,scientific=FALSE)))
+         }
+         else if ((length(dv)>1)&&((.is.integer(dv))||(.is.integer(v3/min(v3)))))
+            label <- label3 <- format(v2,trim=TRUE,scientific=FALSE)
+         else {
+            for (i2 in 1:12) {
+               label3 <- format(v2,trim=TRUE,scientific=FALSE,digits=1,nsmall=i2)
+               if (length(label3)==length(v2))
+                  break
+            }
+         }
+      }
+      if (FALSE) {
+         message("---------")
+         print(i2)
+         print(.is.integer(dv))
+         print(label2,quote=FALSE)
+         message("|")
+         print(label3,quote=FALSE)
+         message("|")
+         print(label,quote=FALSE)
+         message("=========")
       }
       if (is.null(name))
          name <- if (toSort) c(paste0("/",length(v1)-ncolor,"/"),label)
@@ -632,9 +681,13 @@
       else
       {
         # i2 <- i2+1 ## 
-         if (i2<0)
+         if (i2<0) {
+            label <- sprintf(sprintf("%%f",i2),as.double(round(value,i2+1)))
             i2 <- 0
-         label <- sprintf(sprintf("%%.%df",i2),as.double(value))
+           # label <- sprintf(sprintf("%%f",i2),as.double(value))
+         }
+         else
+            label <- sprintf(sprintf("%%.%df",i2),as.double(value))
          while(length(label)!=length(unique(label)))
          {
             i2 <- i2+1
@@ -741,7 +794,25 @@
                      break
                }
             }
-            mc <- data.frame(at=mc,lab=format(mc,trim=TRUE),stringsAsFactors=FALSE)
+            lab <- format(mc,trim=TRUE)
+            if (length(unique(lab))==-1) {
+               for (dig in seq(16)) {
+                  lab <- format(mc,trim=TRUE,digits=dig)
+                  if (length(unique(lab))>1)
+                     break
+               }
+               mc <- as.numeric(lab)
+            }
+            else if (length(unique(lab))<length(mc)) {
+               for (dig in seq(16)) {
+                  lab <- unique(format(mc,trim=TRUE,digits=dig))
+                  if (length(lab)>1)
+                     break
+               }
+               mc <- as.numeric(lab)
+               ncolor <- length(mc)
+            }
+            mc <- data.frame(at=mc,lab=lab,stringsAsFactors=FALSE)
             if (FALSE)
                cat(sprintf("colors(ramp)=%d\n",nrow(mc)))
          }

@@ -1,10 +1,12 @@
 \name{session}
 \alias{session_grid}
 \alias{session_proj4}
+\alias{session_crs}
 \alias{session_cellsize}
 \alias{session_bbox}
 \alias{session_pngviewer}
 \alias{session_tempdir}
+\alias{session_use_experimental_functions}
 \title{
 Get and set sessional parameters for grid, CRS, external software for open PNG files.
 }
@@ -16,16 +18,22 @@ Get and set sessional parameters for grid, CRS, external software for open PNG f
 
 \code{session_tempdir} spefies directory for temporal files in some cases.
 
+\code{session_use_experimental_functions} allows to use undocumented (experimental) functions.
+
+Group of functions \code{session_proj4}, \code{session_crs}, \code{session_cellsize}, \code{session_bbox} extracts certain properties of sessional grid.
+
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
 session_grid(obj)
 session_proj4()
+session_crs()
 session_cellsize()
 session_bbox()
 
 session_pngviewer(allow = NA)
 session_tempdir(dst = character())
+session_use_experimental_functions()
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -46,7 +54,11 @@ The sequential calling \preformatted{
 session_grid(NULL)
 session_grid()
 } returns default CRS. For checking that the option has been resetted successfully, use \code{getOption("ursaSessionGrid")} after \code{session_grid(NULL)}
+
+\code{session_proj4} and \code{session_crs} are synonyms.
+
 }
+
 \value{
 Object of class \code{\link[ursa:classGrid]{ursaGrid}}. It is a list. Default values are grid parameters of NSIDC polar stereo gridded data of Northern hemispere with nominal gridded resolution 25 km (\url{http://nsidc.org/data/polar_stereo/ps_grids.html}).\preformatted{
 List of 9
@@ -73,13 +85,15 @@ NULL
 %~ \item{maxy}{Top margin of boundary box. Default is \code{5850000}}
 %~ \item{proj4}{PROJ.4 string. Default is \code{"+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +a=6378273 +b=6356889.449 +units=m +no_defs"} (NSIDC Sea Ice Polar Stereographic North, "+init=epsg:3411")}
 
-\code{session_proj4} returns item \code{proj4}.
+\code{session_proj4} and \code{session_crs} return item \code{proj4}.
 
 \code{session_cellsize} returns squared root from multiplication of cell dimension: \code{sqrt(resx*resy)}.
 
 \code{sessiong_pngviewer} returns value of \code{getOption("ursaAllowPngViewer")}.
 
 \code{sessiong_bbox} returns named numeric of lenght 4: minimal x-coodrinate (\code{xmin}), minimal y-coordinate (\code{ymin}), maximal x-coordinate  (\code{xmax}), maximal y-coordinate  (\code{ymax}).
+
+\code{session_use_experimental_functions} added some non-public functions to current namespaces and returns invisile list of function names.
 
 }
 %%~ \references{

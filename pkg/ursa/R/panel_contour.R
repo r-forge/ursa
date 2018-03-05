@@ -20,8 +20,9 @@
   # print(c(line=isLine,filled=isFilled,colored=isColored,label=isLabel))
    if ((!TRUE)&&(isLabel)&&(!isFilled)&&(!isColored)&&(!isLine))
       res <- .panel_contour(obj,expand=0,...)
-   else
+   else {
       res <- .panel_contour(obj,category=isColored,...)
+   }
    if (isFilled) {
       with(res,.filled.contour(x,y,z,levels=lev,col=col))
    }
@@ -97,9 +98,8 @@
    }
    if (verbose)
       print(data.frame(sc=sc,before=before))
-   
-   '.smooth' <- function(obj,sc) {
-      proposed <- FALSE ## added 20170608 (TRUE)
+   '.smooth' <- function(obj,sc) {  
+      proposed <- FALSE ## added 20170608 (TRUE) removed 20180218 (FALSE)
       if (sc<=1)
          return(obj)
      # verbose <- TRUE
@@ -154,8 +154,12 @@
    }
    ct <- ursa_colortable(obj)
    if (!before) {
-      obj <- reclass(obj)
+      ct3 <- ursa_colortable(obj)
+      obj <- .extract(obj)
+     # obj <- reclass(obj)
+      ursa_colortable(obj) <- character(0)
       obj <- .smooth(obj,sc)
+      ursa_colortable(obj) <- ct3
    }
    session_grid(g0)
    if ((!FALSE)&&(category)) {

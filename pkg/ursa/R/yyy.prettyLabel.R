@@ -73,14 +73,32 @@
    res <- as.numeric(value)
    if (!anyNA(res))
       return(res)
-   patt <- "(<=|<|=|>|\\(|\\[|;|,|\\]|\\))" ## <= < = > >= [ ] ( ) ; ,
+   dev <- !FALSE
+   if (!dev)
+      patt <- "(<=|<|=|>|\\(|\\[|;|,|\\]|\\))" ## <= < = > >= [ ] ( ) ; ,
+   else
+      patt <- "(^(<=|<|>|>=).+$|^(\\(|\\[).+(\\]|\\))$)"
+     # patt <- "^(\\(|\\[).+]$"
    found <- sum(grepl(patt,value,perl=TRUE))
    if (found>0) {
-      ivalue <- .gsub(patt," ",value)
-      l1 <- length(ivalue)
-      ivalue <- paste(ivalue,collapse=" ")
-      ivalue <- unlist(strsplit(ivalue,split="\\s+"))
-      ivalue <- ivalue[nchar(ivalue)>0]
+      if (dev) {
+         ivalue <- value
+        # ivalue <- gsub("^(<=|<|>|>=)","",ivalue) ## OK
+        # ivalue <- gsub("^(\\(|\\[)","",ivalue)
+        # ivalue <- gsub("(\\]|\\))$","",ivalue)
+         ivalue <- gsub("^(<=|<|>|>=)(.+)$","\\2",ivalue)
+         ivalue <- gsub("^(\\(|\\[)(.+)(\\]|\\))$","\\2",ivalue)
+         l1 <- length(ivalue)
+         ivalue <- unlist(strsplit(ivalue,split="[,;]"))
+         ivalue <- gsub("^\\s+|\\s+$","",ivalue)
+      }
+      else {
+         ivalue <- .gsub(patt," ",value)
+         l1 <- length(ivalue)
+         ivalue <- paste(ivalue,collapse=" ")
+         ivalue <- unlist(strsplit(ivalue,split="\\s+"))
+         ivalue <- ivalue[nchar(ivalue)>0]
+      }
       invalid <- ((found<l1)||(length(unique(c(table(ivalue))))>1)) ## 20170609 intro
      # print(c(invalid=invalid))
       ivalue <- unique(ivalue) ## added 20161101
@@ -116,7 +134,10 @@
       return(ivalue)
    if ((l1-1)*2!=l2)
    {
-      ivalue <- ivalue[match(sort(unique(ivalue)),ivalue)]
+      if (is.numeric(ivalue))
+         ivalue <- ivalue[match(sort(unique(ivalue)),ivalue)]
+      else
+         ivalue <- ivalue[match(unique(ivalue),ivalue)]
      # message("dev message: is parsing of intervals correct?")
       return(ivalue)
    }

@@ -6,8 +6,10 @@
    kwd <- "raster"
    obj <- .getPrm(arglist,name="",default=NULL
                  ,class=list(c("list","ursaRaster"),"ursaRaster","ggmap","character"))
-   if (is.character(obj))
-      obj <- .geomap(style=obj)
+   verbose <- .getPrm(arglist,name="verb(ose)*",kwd=kwd,default=FALSE)
+   if (is.character(obj)) {
+      obj <- .geomap(style=obj,verbose=verbose)
+   }
    if (inherits(obj,"ggmap"))
       obj <- as.ursa(obj)
    if (is.null(obj))
@@ -17,7 +19,6 @@
    alpha <- .getPrm(arglist,name="(alpha|transp(aren(cy)*)*)"
                    ,kwd=kwd,class=list("numeric","character"),default=NA)
    attribution <- .getPrm(arglist,name="(ann(otat)*|attr)",kwd=kwd,default="bottomright")
-   verbose <- .getPrm(arglist,name="verb(ose)*",kwd=kwd,default=FALSE)
    if (verbose)
       str(list(obj=class(obj),useRaster=useRaster,interpolate=interpolate
               ,alpha=alpha))
