@@ -113,7 +113,10 @@
                 ,list2,value=TRUE,invert=TRUE)
    list2 <- grep("^(as\\.Raster|djqwotrhfndh)\\.",list2,value=TRUE,invert=TRUE)
    list2 <- list2[which(is.na(match(list2,list1)))]
-   for (v in list2)
-      assign(v,get(v,envir=ns),envir=.GlobalEnv)
+   for (v in list2) {
+     # global env set hack (function(key, val, pos) assign(key,val, envir=as.environment(pos)))(myKey, myVal, 1L) `
+     # assign(v,get(v,envir=ns),envir=as.environment(1)) ## 'as.environment(1)' '.GlobalEnv'
+      do.call("assign",list(v,get(v,envir=ns),envir=as.environment(1)))
+   }
    invisible(list2)
 }
