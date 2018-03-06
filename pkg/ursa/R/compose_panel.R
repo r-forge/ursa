@@ -78,7 +78,7 @@
    if (isRGB)
       nl <- nb/np ## ??? not used after
   # print(img)
-   print(c(nb=nb,np=np,ng=ng,isRGB=as.integer(isRGB)))
+  # print(c(nb=nb,np=np,ng=ng,isRGB=as.integer(isRGB)))
    annotation <- nb>1 & !isRGB #& !isList
    if (is.na(verbose))
       verbose <- nb>2
