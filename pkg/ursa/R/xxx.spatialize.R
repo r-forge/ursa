@@ -1,6 +1,6 @@
 'spatial_read' <-
 'spatialize' <- function(dsn,engine=c("native","sp","sf")
-                         ,layer=".*",field=".+",coords=c("x","y")
+                         ,layer=".*",field=".+",coords=c("x","y"),crs=character()
                          ,geocode="",place="",area=c("bounding","point")
                          ,grid=NULL,size=NA,cell=NA,expand=1,border=NA
                          ,lat0=NA,lon0=NA,resetProj=FALSE,style="auto"#,zoom=NA
@@ -32,8 +32,11 @@
          isSF <- requireNamespace("sf",quietly=.isPackageInUse())
       isSP <- !isSF
    }
+   if ((length(crs))&&(style=="auto"))
+      style <- .epsg2proj4(crs)
    isEPSG <- FALSE
-   isPROJ4 <- nchar(style)>36 ## need more accurate detecton of proj4
+  # isPROJ4 <- nchar(style)>36 ## need more accurate detecton of proj4
+   isPROJ4 <- .lgrep("(\\+init=epsg\\:|\\+proj=\\w+|\\+(ellps|datum=))",style)>0
    if (length(style)) {
       if (is.numeric(style))
          isEPSG <- TRUE
@@ -42,6 +45,8 @@
    }
    if ((isEPSG)&&(is.numeric(style)))
       style <- as.character(style)
+   if (isPROJ4 | isEPSG)
+      session_grid(NULL)
    isNative <- engine=="native"
    if (!((is.character(dsn))&&(length(dsn)==1))) {
       nextCheck <- TRUE
@@ -88,14 +93,27 @@
       if ((nextCheck)&&(is.ursa(dsn))) {
          if ((isSF)||(isSP)) {
             obj <- as.data.frame(dsn)
-            coords <- .maketmp(2)
-            colnames(obj)[1:2] <- coords
+            if (style!="auto") {
+               crsNow <- style
+               session_grid(NULL)
+            }
+            else
+               crsNow <- ursa_proj(dsn)
+            isCRS <- ((!is.na(crsNow))&&(nchar(crsNow)))
+            if (!((is.character(coords))&&(length(coords)==2))) {
+               coords <- .maketmp(2)
+               colnames(obj)[1:2] <- coords
+            }
             if (isSF) {
-               obj <- sf::st_as_sf(obj,coords=coords,crs=ursa_proj(dsn))
+               if (isCRS)
+                  obj <- sf::st_as_sf(obj,coords=coords,crs=crsNow)
+               else
+                  obj <- sf::st_as_sf(obj,coords=coords)
             }
             else if (isSP) {
                sp::coordinates(obj) <- coords
-               sp::proj4string(obj) <- ursa_proj(dsn)
+               if (isCRS)
+                  sp::proj4string(obj) <- crsNow
             }
             rm(dsn) ## requierd?
             nextCheck <- FALSE
@@ -250,7 +268,8 @@
             dsn <- .grep("\\.shp$",ziplist,value=TRUE)
          }
          else if (.lgrep("^(http|https|ftp)://",dsn)) {
-            dsn <- .ursaCacheDownload(dsn)
+            mode <- ifelse(.lgrep("(txt|json)$",dsn),"wt","wb")
+            dsn <- .ursaCacheDownload(dsn,mode=mode)
          }
          else if (.lgrep("\\.(gpkg|tab|kml|json|geojson|mif|sqlite|shp|osm)(\\.(zip|gz|bz2))*$"
                  ,basename(dsn))) {
@@ -820,10 +839,14 @@
       else if (isEPSG | isPROJ4) {
          a <- .try({
             t_srs <- ifelse(isPROJ4,style,.epsg2proj4(style))
+           # str(style)
+           # str(t_srs)
             if (isSF) {
+              # str(sf::st_crs(obj))
                obj <- sf::st_transform(obj,t_srs)
             }
             if (isSP) {
+              # str(sp::proj4string(obj))
                obj <- sp::spTransform(obj,t_srs)
             }
          })

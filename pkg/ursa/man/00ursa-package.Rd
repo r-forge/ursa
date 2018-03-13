@@ -1,6 +1,8 @@
 \name{ursa-package}
 
 \alias{ursa-package}
+\alias{ursula}
+\alias{about}
 
 \docType{package}
 

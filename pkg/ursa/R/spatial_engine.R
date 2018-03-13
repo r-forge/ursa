@@ -449,7 +449,7 @@
 'is_spatial_polygons' <- function(obj,verbose=FALSE) {
    .lgrep("POLYGON",spatial_geotype(obj,verbose=verbose))>0
 }
-'spatial_count' <- function(obj,verbose=FALSE) {
+'spatial_nrow' <- 'spatial_count' <- function(obj,verbose=FALSE) {
    isSF <- .isSF(obj)
    isSP <- .isSP(obj)
    if (verbose)
@@ -477,3 +477,4 @@
    spatial_geometry(data) <- geometry
    data
 }
+'spatial_ncol' <- function(obj,verbose=FALSE) length(spatial_fields(obj,verbose=verbose))

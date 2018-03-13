@@ -18,6 +18,8 @@
 \alias{spatial_length}
 \alias{spatial_dim}
 \alias{spatial_count}
+\alias{spatial_nrow}
+\alias{spatial_ncol}
 \alias{spatial_filelist}
 \alias{is_spatial}
 \alias{is_spatial_points}
@@ -61,6 +63,9 @@ spatial_area(obj, verbose = FALSE)
 spatial_dim(obj, verbose = FALSE)
 
 spatial_count(obj, verbose = FALSE)
+
+spatial_nrow(obj, verbose = FALSE)
+spatial_ncol(obj, verbose = FALSE)
 
 spatial_filelist(path = ".", pattern = NA, full.names = TRUE, recursive = FALSE)
 
@@ -130,7 +135,7 @@ Further arguments passed to \code{sf::st_transform} or to \code{sp::spTransform}
 
 \code{spatial_coordinates} returns simpliefied matrix or list of coordinates of original object.
 
-\code{spatial_filds} returns column names of spatial attributive table.
+\code{spatial_fields} returns column names of spatial attributive table.
 
 \code{spatial_area} is valid for polygonal geometry. It returns area of polygons.
 
@@ -139,6 +144,8 @@ Further arguments passed to \code{sf::st_transform} or to \code{sp::spTransform}
 \code{spatial_dim} gets dimension of spatial coordinates; it returns either \code{2L} (XY) or \code{3L} (XYZ).
 
 \code{spatial_count} returns number of items of object geometry.
+
+\code{spatial_nrow} and \code{spatial_ncol} return number of rows and number of columns of attributive table.
 
 \code{spatial_filelist} returns list of files with file extensions, which are associated with certain GIS vector formats. The function's basis is \code{\link[base:list.files]{dir}}.
 

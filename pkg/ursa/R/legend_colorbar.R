@@ -98,7 +98,7 @@
    if (is.na(useRaster))
       useRaster <- getOption("ursaPngDevice")!="windows"
   # isChar <- length(grep("([A-Za-d]|[f-z]|/|\\*)",names(ct)))>0
-   label <- .deintervale(ct,verbose=!TRUE)
+   label <- .deintervale(ct,verbose=FALSE)
    fmtLabel <- attr(ct,"label")
    if (length(label)==length(fmtLabel)) {
       label <- fmtLabel
@@ -244,14 +244,22 @@
             else {
                mwidth <- max(par()$fin)
                repeat({
-                  label <- pretty(y,n=labels)
-                  width <- max(strwidth(paste0("Wi",label)
+                  if (!isChar)
+                     label <- pretty(y,n=labels)
+                  else {
+                     label <- .prettyLabel(y,ncol=labels)$at
+                     if (!.is.integer(label)) {
+                        labels <- labels-1
+                        next
+                     }
+                  }
+                  labelW <- if (isChar) keepLabel[label] else label
+                  width <- max(strwidth(paste0(ifelse(isChar,"Wii","ii"),labelW)
                                    ,units="inches",cex=cex,family=family))
                   if (width*length(label)<mwidth)
                      break
                   labels <- labels-1
                })
-              # print(label)
             }
             if (!isRegular)
                label <- keepIrreg

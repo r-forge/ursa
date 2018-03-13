@@ -67,8 +67,10 @@
          if ((isPoly)||(.lgrep("\\.shp",obj))) {
             if (isPoly)
                a <- obj
-            else
-               a <- .shp.read(obj)
+            else {
+              # a <- .shp.read(obj)
+               a <- spatialize(obj,engine="sp")
+            }
             a <- lapply(methods::slot(a,grep("(polygons|lines)"
                               ,methods::slotNames(a),value=TRUE)),function(x) {
                y <- lapply(methods::slot(x,grep("(Polygons|Lines)"
@@ -529,6 +531,8 @@
 }
 
 'update_coastline' <- function(merge=TRUE) {
+   if (!requireNamespace("sf",quietly=TRUE))
+      stop("Suggested package 'sf' is required for this operation")
    dpath <- getOption("ursaRequisite")
    ftemp <- tempfile(tmpdir=dpath)
    opW <- options(warn=-1)
@@ -541,8 +545,12 @@
    verbose <- !.isPackageInUse()
    if (!verbose)
       merge <- TRUE
-   toUnloadMethods <- !("methods" %in% .loaded())
-   .require("methods",quietly=!verbose)
+   if (FALSE) {
+      toUnloadMethods <- !("methods" %in% .loaded())
+      .require("methods",quietly=!verbose)
+   }
+   else
+      toUnloadMethods <- FALSE
    src <- "http://data.openstreetmapdata.com/simplified-land-polygons-complete-3857.zip"
    dst <- .ursaCacheDownload(src,mode="wb",quiet=FALSE)
    list1 <- unzip(dst,exdir=tempdir())

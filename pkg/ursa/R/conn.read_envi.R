@@ -50,38 +50,45 @@
    if ((resetGrid)||(!theSame)) { ## added 20161002
       session_grid(NULL)
    }
-   obj <- open_envi(fname,cache=cache,decompress=FALSE) ## ,nodata=nodata
+   obj <- open_envi(fname,cache=cache,decompress=!is.null(subset)) ## ,nodata=nodata
    bname <- bandname(obj)
    if (.is.grid(obj))
       return(NULL)
-   if (!is.nan(nodata))
-   {
+   if (!is.nan(nodata)) {
       storage.mode(nodata) <- obj$con$mode
       obj$con$nodata <- nodata
    }
-   if ((!is.null(subset))&&(obj$con$connection=="file")) ## if (obj$con$seek)
-      obj <- obj[subset]
+   if ((!is.null(subset))&&(obj$con$connection=="file")) { ## if (obj$con$seek)
+      ret <- obj[subset]
+   }
    else
    {
      # if ((is.character(obj$con$fname))&&(nchar(obj$con$fname)>0)&&
      #     (!file.exists(obj$con$fname)))
-      if (is.na(obj$con$handle))
-         ursa_value(obj) <- NA
-      else
-         obj <- obj[]
+      if (is.na(obj$con$handle)) {
+        # ursa_value(obj) <- NA
+         ret <- ursa_new(bandname=bandname(obj))
+      }
+      else {
+         ret <- obj[]
+      }
       if (!is.null(subset))
-         obj <- obj[subset]
+         ret <- obj[subset]
    }
-  # print(summary(as.numeric(obj$value)));q()
-   if (!is.na(obj$con$handle))
-      close(obj$con$handle)
-   obj$con$handle <- NA
-   .gc()
+   if (FALSE) { ## --20180312
+     # print(summary(as.numeric(obj$value)));q()
+      if (!is.na(obj$con$handle))
+         close(obj$con$handle)
+      obj$con$handle <- NA
+   }
+   else
+      close(obj)
+  # .gc() ## 20180312 does it required?
   # if (!theSame & !resetGrid) {
    if (!theSame & !resetGrid) {
-      obj <- regrid(obj,grid=ref,...)
+      ret <- regrid(ret,grid=ref,...)
    }
    if ((!resetGrid)&&(!is.null(g0)))
          session_grid(g0)
-   obj
+   ret
 }

@@ -87,6 +87,8 @@
       }
       dopt <- character()
       lopt <- character()
+      if (driver=="ESRI Shapefile")
+         lopt <- c(lopt,"ENCODING=UTF-8")
       if (driver=="MapInfo File")
          dopt <- c(dopt,"FORMAT=MIF")
       if (driver=="SQLite") {
@@ -175,6 +177,8 @@
       interim <- FALSE
    dopt <- character()
    lopt <- character()
+   if (driver=="ESRI Shapefile")
+      lopt <- c(lopt,"ENCODING=UTF-8")
    if (driver=="MapInfo File")
       dopt <- c(dopt,"FORMAT=MIF")
    if (driver=="SQLite") {
@@ -246,7 +250,7 @@
       }
       rgdal::writeOGR(obj,dsn=fname,layer=lname,driver=driver
                      ,dataset_options=dopt,layer_options=lopt
-                   # ,encoding=encoding
+                    # ,encoding="UTF-8"
                      ,overwrite_layer=TRUE
                      ,verbose=verbose)
       options(opW)
@@ -322,8 +326,15 @@
             file.remove(fname)
       }
    }
-   else if (driver=="ESRI Shapefile")
-      writeLines("1251",file.path(dname,paste0(lname,".cpg")))
+   else if (driver=="ESRI Shapefile") {
+      cpgname <- file.path(dname,paste0(lname,".cpg"))
+      if (FALSE)
+         writeLines("1251",cpgname)
+      else {
+         if (file.exists(cpgname))
+            file.remove(cpgname)
+      }
+   }
    if (!nchar(compress))
       return(invisible(NULL))
    if ((.lgrep("gz",compress))&&(nchar(Sys.which("gzip"))))

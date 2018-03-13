@@ -74,7 +74,6 @@
         # ret <- .tryE(.panel_plot(sf::st_geometry(obj),add=TRUE,...))
         # ret <- .tryE(.panel_plot(obj,add=TRUE,...))
          if ((TRUE)&&(.lgrep("^col",names(arglist2)))) {
-            col <- arglist2$col
             if (is.numeric(col)) {
                ct <- colorize(col)
                col <- ct$colortable[ct$index]
@@ -84,8 +83,15 @@
                   ct <- colorize(spatial_data(obj,subset=col,drop=TRUE))
                   col <- ct$colortable[ct$index]
                }
+               else if (length(spatial_fields(obj))==1) {
+                  ct <- colorize(spatial_data(obj,drop=TRUE),colortable=arglist2$col)
+                  col <- ct$colortable[ct$index]
+               }
+               else
+                  col <- NULL
             }
-            arglist2$col <- unclass(col)
+            if (!is.null(col))
+               arglist2$col <- unclass(col)
          }
          else if (length(spatial_fields(obj))==1) {
            # ct <- colorize(spatial_data(obj)[[1]])
@@ -114,7 +120,7 @@
          }
          else if (.lgrep("lines",geoType)) {
             if (!.lgrep("lwd",names(arglist2))) {
-               arglist2$lwd <- 3
+               arglist2$lwd <- 1 ## 20180309 was 'lwd <- 3'
             }
             if (length(ind <- .grep("^border",names(arglist2)))) {
                arglist2$col <- arglist2[[ind]]

@@ -152,8 +152,11 @@
    seq1 <- rep(seq(n1),len=n3)
    seq2 <- rep(seq(n2),len=n3)
   # st1 <- st2 <- st3 <- 0
-   for (i in seq(n3))
-   {
+   if ((n1==1)||(n2==1))
+      seqi <- list(seq(n3))
+   else
+      seqi <- lapply(seq(n3),function(x) x)
+   for (i in seqi) {
      # st1 <- system.time({
          left <- if (isImage1) e1$value[,seq1[i]]
                  else if (isArray1) e1[,seq1[i]]

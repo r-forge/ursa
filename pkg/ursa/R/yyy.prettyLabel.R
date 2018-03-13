@@ -71,8 +71,11 @@
    if (length(ind)==length(value)) ## date can be interpeted as numeric
       return(value)
    res <- as.numeric(value)
-   if (!anyNA(res))
+   if (!anyNA(res)) {
+      if (.lgrep("^0\\d.*",value))
+         return(value)
       return(res)
+   }
    dev <- !FALSE
    if (!dev)
       patt <- "(<=|<|=|>|\\(|\\[|;|,|\\]|\\))" ## <= < = > >= [ ] ( ) ; ,

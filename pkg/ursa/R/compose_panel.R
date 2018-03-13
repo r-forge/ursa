@@ -114,7 +114,7 @@
       }
       else if (!isRGB) {
         # obj <- img
-         if (is.ursa(img,"colortable"))
+         if ((is.ursa(img,"colortable"))&&(!anyNA(ursa(img,"colortable"))))
             p <- img
          else
             p <- do.call("colorize",c(list(img),arglist))

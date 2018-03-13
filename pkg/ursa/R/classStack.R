@@ -34,6 +34,8 @@
    oname <- names(obj)
    k <- 0L
    for (i in seq_along(obj)) {
+      if (!n[i])
+         next
       img <- .extract(obj[[i]])
       ##~ if (.is.colortable(img)) {
          ##~ print(img)

@@ -18,9 +18,21 @@
       session_grid(g1)
       res <- vector("list",ncol(methods::slot(obj,"data")))
       names(res) <- colnames(methods::slot(obj,"data"))
-      for (i in seq_along(ncol(methods::slot(obj,"data")))) {
-         res[[i]] <- ursa_new(methods::slot(obj,"data")[,i],flip=FALSE
-                             ,permute=FALSE)#,bandname=names(res)[i])
+      for (i in seq_len(ncol(methods::slot(obj,"data")))) {
+         value <- methods::slot(obj,"data")[,i]
+         if (!is.numeric(value)) {
+            val <- factor(value)
+            value <- as.integer(val)-1L
+            ct <- ursa_colortable(colorize(value,name=levels(val)))
+            if (TRUE)
+               ct[] <- NA
+            res[[i]] <- ursa_new(value,colortable=ct,flip=FALSE
+                                ,permute=FALSE)#,bandname=names(res)[i])
+            class(res[[i]]$value) <- "ursaCategory"
+         }
+         else
+            res[[i]] <- ursa_new(value,flip=FALSE
+                                ,permute=FALSE)#,bandname=names(res)[i])
       }
       if (length(ind <- which(sapply(res,is.null)))) {
          res[ind] <- as.list(ursa_new(NA,nband=length(ind)))
@@ -62,8 +74,17 @@
          class(ct) <- "ursaColorTable"
       }
       else {
-         if (!inherits(obj,"RasterStack"))
-            ct <- ursa_colortable(as.character(raster::colortable(obj)))
+         if (!inherits(obj,"RasterStack")) {
+           # at <- obj@data@attributes[[1]]#[,2,drop=FALSE]
+            pal <- raster::colortable(obj)
+            if (length(pal)) {
+               ct <- colorize(pal=pal,name=obj@data@attributes[[1]]$code)
+               ct[pal=="NA"] <- NA_character_
+            }
+            else
+               ct <- colorize(name=obj@data@attributes[[1]]$code)
+           # ct <- ursa_colortable(as.character(raster::colortable(obj)))
+         }
          else {
             ct <- lapply(methods::slot(obj,"layers"),function(x) {
                ursa_colortable(as.character(raster::colortable(x)))

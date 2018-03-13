@@ -30,6 +30,8 @@
    if (!.is.grid(value))
       return(obj)
    obj$grid <- value
+   if ((inherits(obj$con$handle,"connection"))&&(is.null(dim(obj$value))))
+      .write.hdr(obj,clear=FALSE)
    obj
 }
 'ursa_nrow' <- 'ursa_lines' <- 'ursa_rows' <- function(obj) ursa_grid(obj)$rows

@@ -7,7 +7,8 @@
    fun <- match.arg(fun)
    kind <- switch(fun,mean=1L,sum=2L,n=4L,0L)
    if (is.character(vec)) {
-      vec <- .shp.read(vec)
+     # vec <- .shp.read(vec)
+      vec <- spatialize(vec,engine="sp")
    }
    if (inherits(vec,c("SpatialPointsDataFrame","SpatialPixelsDataFrame"))) {
       requireNamespace("sp",quietly=.isPackageInUse())

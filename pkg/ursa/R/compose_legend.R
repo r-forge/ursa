@@ -105,9 +105,10 @@
       }
    }
   # str(obj,grid=FALSE)
-   if (is.null(units))
-      units <- .getPrm(arglist,name="units",class=list("expression","character")
+   if ((is.null(units))||(all(!nchar(units)))) {
+      units <- .getPrm(arglist,name="units",class=c("expression","character")
                       ,default=NA_character_)
+   }
    skip <- getOption("ursaPngSkipLegend")
    if (isList) {
       if ((!is.expression(units))&&(is.na(units[1]))) {
@@ -133,12 +134,13 @@
          if (i>nlegend)
             break
         # legend_colorbar(obj=obj[[i]],units=units[i],...)
-         arglist <- c(quote(obj[[i]]),arglist)
+         arglist2 <- c(quote(obj[[i]]),arglist) ## 20180308 change 'arglist[-1]'?
         # arglist[[1]] <- quote(obj[[i]])
          if (.is.colortable(obj[[i]])) {
-            arglist[["units"]] <- units[i]
-            do.call("legend_colorbar",arglist)
-            arglist[["units"]] <- NULL
+            arglist2[["units"]] <- units[i]
+           # str(arglist2)
+            do.call("legend_colorbar",arglist2)
+           # arglist[["units"]] <- NULL
          }
          else {
             do.call("legend_mtext",arglist)

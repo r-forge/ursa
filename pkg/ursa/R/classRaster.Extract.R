@@ -41,8 +41,12 @@
                return(res[res==ind-1L])
             }
             else {
-               res$value[!(x$value %in% (ind-1L))] <- NA
-               return(res)
+               if (length(ind)) {
+                  res$value[!(x$value %in% (ind-1L))] <- NA
+                  return(res)
+               }
+               else
+                  return(res[integer()])
             }
          }
          else

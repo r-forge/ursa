@@ -2,6 +2,8 @@
 #'band_length' <- function(...) .syn('nband',0,...)
 'nband' <- function(x)
 {
+   if (is.null(x))
+      return(0L)
    if (!is.ursa(x))
       return(NULL)
    z <- x$con$posZ

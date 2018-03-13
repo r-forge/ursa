@@ -12,7 +12,7 @@
       onlyCT <- TRUE
    }
    else {
-      print("unable recignize object for reclass")
+      print("unable recognize object for reclass")
       return(NULL)
    }
    if ((is.null(names(ct)))&&(length(ct))) {

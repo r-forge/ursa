@@ -633,7 +633,7 @@
       con$byteorder <- 0L
    if (is.na(con$datatype))
       con$datatype <- 1L
-   fname <- .gsub("\\.(bin|envi|img|dat|gz|bz2|xz|unpacked(.*)~)$","",con$fname)
+   fname <- .gsub("\\.(bin|bingz|envi|envigz|img|dat|gz|bz2|xz|unpacked(.*)~)$","",con$fname)
    if (is.na(fname))
    {
       fname <- x$name[1]

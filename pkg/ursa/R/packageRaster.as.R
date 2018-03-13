@@ -19,7 +19,8 @@
       x <- raster::levels(r)[[1]]
       x$code <- names(value)
       r@data@attributes[[1]] <- x # levels(r) <- x ## 'levels<-' is not public
-      raster::colortable(r) <- as.character(value)
+      if (!anyNA(value))
+         raster::colortable(r) <- as.character(value)
       r@legend@values <- seq_along(value)-1
      # res@legend@color <- as.character(value)
      # res@legend@type <- "a"
@@ -58,6 +59,7 @@
            # res@legend@type <- "a"
             r@legend@names <- names(ct)
          }
+         .addColorTable(r) <- ursa_colortable(obj[[i]])
          res[[i]] <- r
       }
       res <- raster::stack(res)

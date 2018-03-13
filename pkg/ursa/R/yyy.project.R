@@ -99,7 +99,7 @@
    if (!force) {
       if (verbose)
          message("force to use 'rgdal'")
-      requireNamespace(c("sp","rgdal")[2],quietly=.isPackageInUse())
+     # requireNamespace(c("sp","rgdal")[2],quietly=.isPackageInUse())
       p4s <- p4epsg
    }
    else {

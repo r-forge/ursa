@@ -1,4 +1,4 @@
-2018-03-06
+2018-03-13
 
 <style>
    code,
@@ -12,7 +12,14 @@
    }
 </style>
 
-### version 3.8-4
+### version 3.8.5
+
+  - Performance improvement for Group Summary (comparisson) of
+    `ursaRaster` class.
+
+  - Coastline is updated 2018-03-07
+
+### version 3.8.4
 
   - Added argument `coords` for function `allocate`.
 

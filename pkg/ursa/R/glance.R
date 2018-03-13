@@ -56,6 +56,7 @@
   #    arglist[[1]] <- readRDS(arglist[[1]])
   #   # return(do.call(".glance",arglist))
   # }
+  # str(arglist)
    if (is.character(arglist[[1]])) {
       if (envi_exists(arglist[[1]],exact=TRUE)) {
          return(do.call("display",arglist))
@@ -151,6 +152,7 @@
                         ,geocode="",place="",area=c("bounding","point")
                         ,zoom=NA,gdal_rasterize=FALSE
                         ,verbose=FALSE,...) {
+   arglist <- list(...)
    a <- as.list(match.call())
   # feature <- "geometry"
    if (TRUE) {
@@ -371,7 +373,7 @@
       alpha <- ifelse(isWeb,ifelse(before,0.75,1),1)
    if (feature=="field") {
       ct <- vector("list",length(dname))
-      cpg <- "1251"
+      cpg <- NULL#"1251"
       for (i in seq_along(dname)) {
         # print(i)
         # print(dname[i])
@@ -418,10 +420,10 @@
         # if ((!length(ct))||(all(is.na(ct[[i]]$index)))) {
          if ((!length(ct))||(!hasField)) {
             if (isSF) {
-               panel_plot(obj_geom)
+               panel_plot(obj_geom,col=rgb(0,0,0,alpha))
             }
             if (isSP) {
-               panel_plot(obj)#,add=TRUE)
+               panel_plot(obj,col=rgb(0,0,0,alpha))#,add=TRUE)
             }
          }
          else if (gdal_rasterize){
@@ -441,15 +443,33 @@
                bg.polygon[ind] <- "#0000002F"
             }
             if (.lgrep("polygon",geoType)) {
-               panel_plot(obj,col=col,border=bg.polygon,lwd=0.1,lty="blank")
-               panel_plot(obj,col="transparent",border=bg.polygon,lwd=0.1)
+               lwd <- 0.1
+               if (length(ind <- .grep("plot\\.lwd",names(arglist))))
+                  lwd <- arglist[[ind]]
+               if (lwd==0)
+                  lwd <- 1e-6
+               panel_plot(obj,col=col,border=bg.polygon,lwd=lwd,lty="blank")
+               panel_plot(obj,col="transparent",border=bg.polygon,lwd=lwd)
             }
             if (.lgrep("point",geoType)) {
-               panel_plot(obj,col=bg.point,bg=col,pch=21,lwd=0.25,cex=1.2)
+               lwd <- 0.25
+               if (length(ind <- .grep("plot\\.lwd",names(arglist))))
+                  lwd <- arglist[[ind]]
+               cex <- 1.2
+               if (length(ind <- .grep("plot\\.cex",names(arglist))))
+                  cex <- arglist[[ind]]
+               pch <- 21
+               if (length(ind <- .grep("plot\\.pch",names(arglist))))
+                  cex <- arglist[[ind]]
+               panel_plot(obj,col=bg.point,bg=col,pch=pch,lwd=lwd,cex=cex)
             }
             if (.lgrep("line",geoType)) {
-               panel_plot(obj,lwd=3,col=bg.line)
-               panel_plot(obj,lwd=2,col=col)
+               lwd <- c(3,2)
+               if (length(ind <- .grep("plot\\.lwd",names(arglist)))) {
+                  lwd <- rep(arglist[[ind]],length=2)
+               }
+               panel_plot(obj,lwd=lwd[1],col=bg.line)
+               panel_plot(obj,lwd=lwd[2],col=col)
             }
          }
          if (after) {
@@ -503,7 +523,16 @@
             })
          }
          names(ct) <- dname
-         compose_legend(ct,las=2,trim=2L)
+         if (TRUE) {
+            if (!.lgrep("las",names(arglist)))
+               arglist$las <- 2
+            if (!.lgrep("trim",names(arglist)))
+               arglist$trim <- 2L
+            arglist <- c(ct,arglist)
+            do.call("compose_legend",arglist)
+         }
+         else
+            compose_legend(ct,las=2,trim=2L)
       }
       ret <- compose_close(...) #res)
    }
