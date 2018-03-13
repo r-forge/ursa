@@ -81,8 +81,9 @@
                ct <- colorize(pal=pal,name=obj@data@attributes[[1]]$code)
                ct[pal=="NA"] <- NA_character_
             }
-            else
-               ct <- colorize(name=obj@data@attributes[[1]]$code)
+            else {
+               ct <- character() #colorize(name=obj@data@attributes[[1]]$code)
+            }
            # ct <- ursa_colortable(as.character(raster::colortable(obj)))
          }
          else {

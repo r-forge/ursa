@@ -103,7 +103,7 @@ if (requireNamespace("raster")) {
       raster::plot(r4)
       b4 <- as.ursa(r4)
       print(c(theSameValue=identical(ursa_value(a4),ursa_value(b4))
-             ,rheSameGrid=identical(ursa_grid(a4),ursa_grid(b4))))
+             ,theSameGrid=identical(ursa_grid(a4),ursa_grid(b4))))
    }
 }
 }
