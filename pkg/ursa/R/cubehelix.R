@@ -53,13 +53,15 @@
       if ((!isCategory)&&(!isInterval))
          divergent <- FALSE
       else {
-         eps <- min(abs(value))
+        # verbose <- TRUE
+        # eps <- min(abs(value))
          eps <- 1e-14 #ifelse(eps<1e-11,1e-11,0)
          npos <- length(which(value>(-eps)))
          nneg <- length(which(value<(+eps)))
          nzer1 <- length(which(abs(value)<eps))
-         if ((!npos)||(!nneg))
+         if ((!npos)||(!nneg)||((npos==1)&&(nneg==1))) {
             divergent <- FALSE
+         }
          else {
             if (isInterval) {
                dval <- diff(value)

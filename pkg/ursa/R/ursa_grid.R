@@ -36,4 +36,8 @@
 }
 'ursa_nrow' <- 'ursa_lines' <- 'ursa_rows' <- function(obj) ursa_grid(obj)$rows
 'ursa_ncol' <- 'ursa_samples' <- 'ursa_columns' <- function(obj) ursa_grid(obj)$columns
-'ursa_extent' <- 'ursa_bbox' <- function(obj) with(ursa_grid(obj),c(xmin=minx,ymin=miny,xmax=maxx,ymax=maxy))
+'ursa_extent' <- 'ursa_bbox' <- function(obj) {
+   res <- with(ursa_grid(obj),c(xmin=minx,ymin=miny,xmax=maxx,ymax=maxy))
+   attr(res,"proj4") <- ursa_proj(obj)
+   res
+}

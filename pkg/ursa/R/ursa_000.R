@@ -40,8 +40,11 @@
          return(ursa_brick(obj))
       if (.lgrep("^cell",attr))
          return(with(ursa_grid(obj),sqrt(resx*resy)))
-      if (.lgrep("^(extent|bbox)",attr))
-         return(with(ursa_grid(obj),c(xmin=minx,ymin=miny,xmax=maxx,ymax=maxy)))
+      if (.lgrep("^(extent|bbox)",attr)) {
+         res <- with(ursa_grid(obj),c(xmin=minx,ymin=miny,xmax=maxx,ymax=maxy))
+         attr(res,"proj4") <- ursa_proj(obj)
+         return(res)
+      }
       if (.lgrep("(ncol|columns|samples)",attr))
          return(ursa_grid(obj)$columns)
       if (.lgrep("(nrow|rows|lines)",attr))

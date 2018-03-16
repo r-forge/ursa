@@ -869,7 +869,7 @@
          .elapsedTime("proj4 -> wkt start")
      # (!("package:rgdal" %in% search()))) {
       if ((nchar(Sys.which("gdalsrsinfo")))&&
-          (!("rgdal" %in% loadedNamespaces()))) {
+          (!(any(c("rgdal","sf") %in% loadedNamespaces())))) {
          wktout <- paste0(.maketmp(),".wkt~")
         # shell(paste("gdalsrsinfo -o wkt",paste0("\"",proj4,"\""),"1>",wktout))
         # 20170319 dQuote() returns non-symmetrical quotes in interactive() 
@@ -878,8 +878,12 @@
          wkt <- readLines(wktout,warn=FALSE)
          file.remove(wktout)
       }
-      else {
+      else if (!("sf" %in% loadedNamespaces())) {
          if (!.try(wkt <- rgdal::showWKT(proj4)))
+            wkt <- NULL
+      }
+      else {
+         if (!.try(wkt <- sf::st_as_text(sf::st_crs(proj4))))
             wkt <- NULL
       }
       if (lverbose)

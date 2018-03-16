@@ -109,13 +109,14 @@
    if ((isChar)&&(!isInterval))
       label <- names(ct)
    if ((isChar)&&(abbrev>0)) {
+      label <- iconv(label,to="UTF-8")
       if (.isRscript())
          a <- .try(label <- abbreviate(label,minlength=abbrev,strict=TRUE))
       else {
-         encdng <- Encoding(label)
-         Encoding(label) <- "UTF-8"
+        # encdng <- Encoding(label)
+        # Encoding(label) <- "UTF-8"
          a <- .try(label <- abbreviate(label,minlength=abbrev,strict=TRUE))
-         Encoding(label) <- encdng
+        # Encoding(label) <- encdng
       }
       if (!a) {
          ind <- which(nchar(label)>abbrev)

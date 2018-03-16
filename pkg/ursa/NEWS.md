@@ -1,4 +1,4 @@
-2018-03-13
+2018-03-16
 
 <style>
    code,
@@ -13,6 +13,10 @@
 </style>
 
 ### version 3.8.5
+
+  - fixed cubehelix for colorizing with `breakvalue=0`
+
+  - Corrected band names for opening rasters using GDAL
 
   - Performance improvement for Group Summary (comparisson) of
     `ursaRaster` class.

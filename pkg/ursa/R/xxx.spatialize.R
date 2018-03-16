@@ -139,6 +139,7 @@
             message("process 'array' by 'sf' -- TODO (dilemma: raster is array)")
          }
          else if (is.numeric(dsn)) {
+            proj4 <- attr(dsn,"proj4")
             limLonLat <- all(dsn>=-360 & dsn<=+360)
             if (length(dsn)==2) { ## point
               # obj <- sf::st_sfc(sf::st_point(dsn))
@@ -170,9 +171,13 @@
             if (!is.null(obj)) {
                if (limLonLat)
                   sf::st_crs(obj) <- 4326
-               else {
-                  sf::st_crs(obj) <- session_proj4()
+               else if (!is.null(proj4)) {
+                  sf::st_crs(obj) <- proj4
+                  style <- proj4
+                  session_grid(NULL)
                }
+               else
+                  sf::st_crs(obj) <- session_proj4()
             }
             else
                rm(obj)
@@ -184,6 +189,7 @@
          else {
             obj <- try(sf::st_as_sf(dsn,coords=coords))
             if (inherits(obj,"try-error")) {
+               cat(geterrmessage())
                message(paste("(#32) unable to process object of class"
                             ,.sQuote(paste(class(dsn),collapse=" | "))))
                return(NULL) ## 32L
@@ -192,6 +198,7 @@
          }
       }
       else if ((nextCheck)&&(isSP)) { # if (isSP)
+         proj4 <- attr(dsn,"proj4")
          if (is.array(dsn))
             message("process 'array' by 'sp' -- TODO (dilemma: raster is array)")
          else if (is.numeric(dsn)) {
@@ -223,6 +230,11 @@
            #    obj <- NULL
             if (limLonLat)
                sp::proj4string(obj) <- sp::CRS("+init=epsg:4326")
+            else if (!is.null(proj4)) {
+               sp::proj4string(obj) <-  sp::CRS(proj4)
+               style <- proj4
+               session_grid(NULL)
+            }
             else
                sp::proj4string(obj) <- sp::CRS(session_proj4())
          }

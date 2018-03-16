@@ -87,9 +87,13 @@
                   ct <- colorize(spatial_data(obj,drop=TRUE),colortable=arglist2$col)
                   col <- ct$colortable[ct$index]
                }
+               else if (is.character(col))
+                  col <- arglist2$col
                else
                   col <- NULL
             }
+            else
+               col <- arglist2$col
             if (!is.null(col))
                arglist2$col <- unclass(col)
          }

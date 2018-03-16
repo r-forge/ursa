@@ -567,7 +567,7 @@
          .elapsedTime("wkt -> proj4 start")
      # (!("package:rgdal" %in% search()))) { 
       if ((nchar(Sys.which("gdalsrsinfo")))&&
-          (!("rgdal" %in% loadedNamespaces()))) {
+          (!any(c("rgdal","sf") %in% loadedNamespaces()))) {
          tmp <- .maketmp()
          wktin <- paste0(tmp,".prj~")
          writeLines(wkt,wktin)
@@ -577,9 +577,13 @@
          file.remove(wktout)
          file.remove(wktin)
       }
-      else {
-         .try(grid$proj4 <- attr(rgdal::GDALinfo(con$fname,returnStats=FALSE)
-                           ,"projection"))
+      else if (!("sf" %in% loadedNamespaces())) {
+         .try(grid$proj4 <- rgdal::showP4(wkt))
+        # .try(grid$proj4 <- attr(rgdal::GDALinfo(con$fname,returnStats=FALSE)
+        #                   ,"projection"))
+      }
+      else  {
+         .try(grid$proj4 <- sf::st_crs(wkt=wkt)$proj4string)
       }
       if (lverbose)
          .elapsedTime("wkt -> proj4 finish")

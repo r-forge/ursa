@@ -72,7 +72,7 @@
          return(invisible(ret))
       }
       else {
-         if ((!.isPackageInUse())&&
+         if ((TRUE)&&  #(!.isPackageInUse())&&
               (.lgrep("\\.(nc|hdf)$",basename(arglist[[1]])))) { ## dev
            # obj <- .open_ncdf(arglist[[1]])
             obj <- .read_ncdf(arglist[[1]],".+")

@@ -41,7 +41,7 @@
          dr <- rgdal::getDriverName(rgdal::getDriver(con$handle))
          op <- NULL
          if (dr=="GTiff")
-            op=c("COMPRESS=LZW","TILED=NO"
+            op=c("COMPRESS=DEFLATE","PREDICTOR=2","TILED=NO"
                 ,paste0("INTERLEAVE=",switch(con$interleave,bil="PIXEL","BAND")))
          else if (dr=="HFA") {
             op=c("COMPRESSED=YES")

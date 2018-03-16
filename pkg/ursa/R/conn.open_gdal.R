@@ -59,9 +59,10 @@
    g1$proj4 <- attr(a,"projection")
    if (is.na(g1$proj4))
       g1$proj4 <- ""
-   b1 <- attr(a,"mdata")
-  # if (!is.null(b1))
-   bname <- .gsub("^Band_\\d+=\\t*(.+)$","\\1",.grep("band",b1,value=TRUE))
+   b1 <- .grep("band",attr(a,"mdata"),value=TRUE)
+   patt <- "^Band_(\\d+)=\\t*(.+)$"
+   bname <- .gsub(patt,"\\2",b1)
+   bname[as.integer(.gsub(patt,"\\1",b1))] <- bname
    c1 <- attr(a,"df")
    hasndv <- unique(c1$hasNoDataValue)
    nodata <- unique(c1$NoDataValue)

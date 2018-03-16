@@ -16,7 +16,7 @@
    if (is.null(time))
       time <- seq(myname)
    if (cover>1)
-      cover <- cover/length(myname)
+      cover <- cover/length(myname)-1e-11
    if (verbose)
       .elapsedTime(paste(fun,"start",sep=":"))
    ret <- .Cursa("variability4"
