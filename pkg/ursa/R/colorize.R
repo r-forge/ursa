@@ -94,18 +94,23 @@
       if (inherits(obj,c("Date","POSIXct","POSIXlt")))
          obj <- if (nchar(format)) format(obj,format) else as.character(obj)
       if ((is.numeric(obj))||(is.character(obj))||(is.factor(obj))) {
+         isOrdered <- is.ordered(obj)
          isChar <- is.character(obj) | is.factor(obj)
          g1 <- getOption("ursaSessionGrid")
          if (.is.grid(g1))
             session_grid(NULL)
          if ((isDate)||(isTime))
             obj <- sort(obj)
-         if (isChar) {
+         if (isOrdered) {
+            levname <- levels(obj)
+            obj <- as.integer(obj)-1L
+         }
+         else if (isChar) {
             oname <- as.character(obj)
             obj <- seq_along(obj)
          }
          res <- ursa_new(matrix(rev(obj),nrow=1),flip=FALSE,permute=FALSE) ## rev()?
-         if (isChar) {
+         if ((isChar)&&(!isOrdered)) {
             res <- reclass(res,src=seq_along(oname),dst=oname)
          }
          rel[["obj"]] <- quote(res)
@@ -117,11 +122,33 @@
             s <- "time"
          else if (isDate)
             s <- "date"
+        # else if (isOrdered)
+        #    s <- "category"
          else
             s <- "default"
          if (!length(ind <- .grep("stretch",names(rel))))
             rel[["stretch"]] <- s
+         if (isOrdered) {
+            if (FALSE) { ## TODO
+               levvalue <- .deintervale(levname)
+               if ((is.numeric(levvalue))&&(length(levvalue)+1==length(levname)))
+                  rel[["breakvalue"]] <- seq_along(levname)-1L
+               else
+                  rel[["value"]] <- seq_along(levname)-1L
+            }
+            rel[["name"]] <- levname
+         }
          img <- do.call(fun,rel[-1]) ## RECURSIVE!
+         if (isOrdered) { ## TODO avoid this double coloring
+            levvalue <- .deintervale(levname)
+            if ((is.numeric(levvalue))&&(length(levvalue)+1==length(levname))) {
+               rel$name <- NULL
+               rel[["breakvalue"]] <- levvalue
+               rel[["obj"]] <- quote(discolor(.extract(img)))
+              # img <- colorize(discolor(.extract(img)),breakvalue=levvalue)
+               img <- do.call(fun,rel[-1]) ## RECURSIVE!
+            }
+         }
          if (.is.grid(g1))
             session_grid(g1)
          else
@@ -619,8 +646,10 @@
                else
                   col <- pal(n)
             }
-            else if (is.character(pal))
-               col <- colorRampPalette(unlist(strsplit(pal,split="\\s+")))(n)
+            else if (is.character(pal)) {
+              ## 20180316 added alpha=TRUE
+               col <- colorRampPalette(unlist(strsplit(pal,split="\\s+")),alpha=TRUE)(n)
+            }
             else
                stop("Unable interpret 'pal' argument")
          }

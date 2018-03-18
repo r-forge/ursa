@@ -255,7 +255,7 @@
                      }
                   }
                   labelW <- if (isChar) keepLabel[label] else label
-                  width <- max(strwidth(paste0(ifelse(isChar,"Wii","ii"),labelW)
+                  width <- max(strwidth(paste0(ifelse(isChar,"Wii","Wii"),labelW)
                                    ,units="inches",cex=cex,family=family))
                   if (width*length(label)<mwidth)
                      break

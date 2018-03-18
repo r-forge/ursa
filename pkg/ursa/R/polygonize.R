@@ -43,7 +43,7 @@
          b0 <- as.data.frame(obj[[i]],na.rm=FALSE)
          b <- if (i==1) b0 else cbind(b,b0[,3:ncol(b0),drop=FALSE])
       }
-      ind <- which(apply(b[,3:ncol(b)],1,function(x) all(is.na(x))))
+      ind <- which(apply(b[,3:ncol(b),drop=FALSE],1,function(x) all(is.na(x))))
       if (length(ind))
          b <- b[-ind,]
    }

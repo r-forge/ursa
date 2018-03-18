@@ -6,7 +6,9 @@
   # if (.isKnitr())
   #    return(NULL)
    kind <- match.arg(kind)
-   if ((kind=="tk")&&(!requireNamespace("tcltk",quietly=.isPackageInUse())))
+   if ((kind=="tk")&&
+       ((!requireNamespace("tcltk",quietly=.isPackageInUse()))||
+        (!capabilities("tcltk"))))
       kind <- "txt"
    if ((!is.na(title))&&(!nchar(title)))
       title <- "'ursa' package"

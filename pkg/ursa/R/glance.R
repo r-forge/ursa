@@ -47,6 +47,8 @@
    }
    if (!is.character(arglist[[1]])) {
       a <- do.call(".glance",arglist)
+      if (.isKnitr())
+         return(a)
       return(invisible(a))
    }
    if (!nchar(arglist[[1]])) {
@@ -448,8 +450,13 @@
                   lwd <- arglist[[ind]]
                if (lwd==0)
                   lwd <- 1e-6
+              # .elapsedTime("Z")
+              # panel_plot(obj,col=col,border=bg.polygon,lwd=lwd)
+              # .elapsedTime("A")
                panel_plot(obj,col=col,border=bg.polygon,lwd=lwd,lty="blank")
+              # .elapsedTime("B")
                panel_plot(obj,col="transparent",border=bg.polygon,lwd=lwd)
+              # .elapsedTime("C")
             }
             if (.lgrep("point",geoType)) {
                lwd <- 0.25
@@ -637,6 +644,8 @@
      # but namespace "methods" is not unloaded, because namespace "sp" is loaded
      # 'as' is not found now
    }
+   if (.isKnitr())
+      return(ret)
    invisible(ret)
 }
 '.cmd.glance' <- function() {

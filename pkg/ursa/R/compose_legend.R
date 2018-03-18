@@ -143,7 +143,7 @@
            # arglist[["units"]] <- NULL
          }
          else {
-            do.call("legend_mtext",arglist)
+            do.call("legend_mtext",arglist2)
            # legend_mtext(obj[[i]])
          }
       }

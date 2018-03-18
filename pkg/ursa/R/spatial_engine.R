@@ -186,6 +186,8 @@
    isSP <- .isSP(obj)
    if (missing(crs))
       crs <- session_proj4()
+   else if ((is.ursa(crs))||(is.ursa(crs,"grid")))
+      crs <- ursa(crs,"crs")
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    if (isSF) {

@@ -54,7 +54,8 @@
                ct <- ursa_colortable(obj)
                aname <- names(ct)
               # acol <- unname(ct) ## TODO new column $amount_col for $amount
-               res$z <- factor(names(ct)[res$z+1L])
+              # res$z <- factor(names(ct)[res$z+1L]) ## -- 20180317
+               res$z <- ordered(factor(names(ct)[res$z+1L]),levels=names(ct)) ## ++ 20180317
             }
             if (length(indZ)>0) ## 20160812 changed '>1' -> '>0'
                colnames(res)[i+2] <- bname[i]

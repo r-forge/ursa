@@ -5,6 +5,10 @@
          grid <- dst
          dst <- NULL
       }
+      else if (is.ursa(dst)) {
+         grid <- ursa(dst,"grid")
+         dst <- NULL
+      }
       else
          grid <- getOption("ursaSessionGrid")
    }
