@@ -160,8 +160,8 @@
       ##~ }
       g2 <- expand.grid(x=seq(minx,maxx,length=16),y=seq(miny,maxy,length=16)
                        ,KEEP.OUT.ATTRS=FALSE,stringsAsFactors=FALSE)
-      xy <- with(g2,cbind(x,y))
       if (FALSE) {
+         xy <- with(g2,cbind(x,y))
          session_grid(NULL)
          xy <- as.data.frame(cbind(xy,z=runif(nrow(xy),min=1,max=2)))
          a <- allocate(xy)
@@ -175,12 +175,25 @@
          ##~ print(apply(xy2,2,range))
       ##~ }
       if (!isLonLat) {
-         xy <- .project(xy,g1$proj4,inv=TRUE)
+         xy <- .project(with(g2,cbind(x,y)),g1$proj4,inv=TRUE)
          if (is.null(xy)) {
-            cat("Likely, reprojection is failed.\n")
-            res <- list(gridline=NULL,margin=NULL)
-            class(res) <- "ursaGridLine"
-            return(res)
+            xy <- with(g2,cbind(x,y))
+            minx <- min(xy[,1])
+            maxx <- max(xy[,1])
+            miny <- min(xy[,2])
+            maxy <- max(xy[,2])
+            xy <- xy[xy[,1]>minx & xy[,1]<maxx & xy[,2]>miny & xy[,2]<maxy,]
+            minx <- min(xy[,1])
+            maxx <- max(xy[,1])
+            miny <- min(xy[,2])
+            maxy <- max(xy[,2])
+            xy <- .project(xy,g1$proj4,inv=TRUE)
+            if (is.null(xy)) {
+               cat("Likely, reprojection is failed.\n")
+               res <- list(gridline=NULL,margin=NULL)
+               class(res) <- "ursaGridLine"
+               return(invisible(res))
+            }
          }
       }
       xy <- xy[which(xy[,2]>=-90 & xy[,2]<=90),]
@@ -235,7 +248,8 @@
       isSouth <- all(lat<0)
       isNorth <- all(lat>=0)
       isEquator <- any(lat>0) & any(lat<0)
-      isLatDistortion <- isEquator & isProj & !isLonLat & projClass %in% c("laea","merc")
+      isLatDistortion <- isEquator & isProj & !isLonLat &
+                         projClass %in% c("laea","merc","cea")
      # alat <- sort(abs(lat))
       alat <- sort(lat)
      # print(c(lat=lat,lon=lon))
@@ -259,8 +273,8 @@
         # print(c(scX=sc,nr=nr,nc=nr0*sc))
          nc <- round(nr0*sc) ## only if floor()<3
       }
-      if ((!isLonLat)&&(!pole)) {
-         xy0 <- c((maxx+minx)/2,(miny+maxy)/2)
+      if ((FALSE)&&(!isLonLat)&&(!pole)) {
+         xy0 <- c((minx+maxx)/2,(miny+maxy)/2)
          if (any(xy0!=0)) {
             aside <- abs(atan(xy0[1]/xy0[2])*180/pi)
             if (aside>=60) {
@@ -412,8 +426,10 @@
       dlon <- abs(diff(lon))[1]*c(1)
       dlat <- abs(diff(lat))[1]*c(1)
       if (!pole) {
-         lon <- c(lon[1]-rev(dlon),lon,lon[length(lon)]+dlon)
-         lat <- c(lat[1]-rev(dlat),lat,lat[length(lat)]+dlat)
+         if (!(projClass %in% c("cea"))) {
+            lon <- c(lon[1]-rev(dlon),lon,lon[length(lon)]+dlon)
+            lat <- c(lat[1]-rev(dlat),lat,lat[length(lat)]+dlat)
+         }
       }
       else if (!isSouth){
          lat <- sort(lat)
@@ -543,6 +559,10 @@
                   ll[1,1] <- ll[1,1]-1e8
                   ll[nrow(ll),1] <- ll[nrow(ll),1]+1e8
                }
+               ind <- which(diff(ll[,1])<0)
+               if (length(ind)==2) {
+                  ll <- ll[(ind[1]+1):ind[2],]
+               }
             }
             gridline[[i]] <- ll
          }
@@ -646,7 +666,7 @@
   # outframe$kind <- NULL
    outframe$adj <- 0.5
    outframe$cex <- cex
-   da <- outframe
+   da <- unique(outframe)
    daZ <- data.frame(side=0,at=NA,kind=NA,v=NA,an=90,lab="|",adj=0.5,cex=cex
                     ,stringsAsFactors=FALSE)
    outframe <- NULL

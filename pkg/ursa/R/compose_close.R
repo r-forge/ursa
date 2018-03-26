@@ -80,7 +80,7 @@
                par(op)
             }
             else {
-               system2("R",list("CMD","open",fileout),wait=!.isRscript())
+               system2("R",list("CMD","open",.dQuote(fileout)),wait=!.isRscript())
               # system2("open",list(fileout),wait=!.isRscript()) ## wait=syswait
               # stop("How to implement file association in Unix-like systems?")
             }
@@ -183,7 +183,7 @@
          par(op)
       }
       else {
-         system2("R",list("CMD","open",fileout),wait=TRUE)
+         system2("R",list("CMD","open",.dQuote(fileout)),wait=TRUE)
         # system2("R cmd open",list(,fileout),wait=TRUE) #!.isRscript()) ## wait=syswait
         # stop("How to implement file association in Unix-like systems?")
       }

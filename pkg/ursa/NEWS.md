@@ -1,4 +1,4 @@
-2018-03-18
+2018-03-26
 
 <style>
    code,
@@ -14,7 +14,11 @@
 
 ### version 3.8.5
 
-  - fixed cubehelix for colorizing with `breakvalue=0`
+  - Imporing results of `sf::gdal_read`
+
+  - Increased contrasting in cubehelix for low-colored palettes.
+
+  - Fixed cubehelix for colorizing with `breakvalue=0`
 
   - Corrected band names for opening rasters using GDAL
 

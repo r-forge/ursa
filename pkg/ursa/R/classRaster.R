@@ -31,17 +31,17 @@
 }
 'str.ursaRaster' <- function(object,...) {
    arglist <- list(...)
-   grid <- .getPrm(arglist,name="grid",default=NA)
+   Rgrid <- .getPrm(arglist,name="grid",default=NA)
    con <- .getPrm(arglist,name="con",default=NA)
    os <- object.size(object)
    .con <- con
    if (is.na(con))
       con <- FALSE
-   if (is.na(grid)) {
+   if (is.na(Rgrid)) {
       if (is.na(.con))
-         grid <- TRUE
+         Rgrid <- TRUE
       else
-         grid <- FALSE
+         Rgrid <- FALSE
    }
    if (!con) {
       if (!is.na(nodata <- ursa_nodata(object)))
@@ -56,7 +56,7 @@
          object$name <- object$name[object$con$posZ]
       object$con <- NULL
    }
-   if (!grid)
+   if (!Rgrid)
       object$grid <- NULL
    object$object.size <- format(os,units="MB")
    class(object) <- paste0(".",class(object))

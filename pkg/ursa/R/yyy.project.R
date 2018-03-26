@@ -1,4 +1,4 @@
-'.project' <- function(xy,proj,inv=FALSE,verbose=FALSE) {
+'.project' <- function(xy,proj,inv=FALSE,verbose=!FALSE) {
    ## because of quicker load of 'proj4' package
   # show.error.messages=verbose
    if (isSF <- .isSF(xy)) {
@@ -66,6 +66,19 @@
                   return(res)
             }
          }
+      }
+      if ((FALSE)&&(!a)) {
+         str(xy)
+         str(proj)
+         if (inv) {
+            xy <- as.data.frame(xy)
+            sp::coordinates(xy) <- ~x+y
+            sp::proj4string(xy) <- sp::CRS(proj)
+            a <- .try(res <- sp::spTransform(xy,sp::CRS("+init=epsg:4326")))
+            str(a)
+            q()
+         }
+         q()
       }
    }
    if ((FALSE)&&(!inv)&&(.lgrep("\\+proj=merc",g1$proj))) {

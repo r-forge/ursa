@@ -204,7 +204,7 @@
             rel$value <- seq(length(ct))-1L
             rel$stretch <- ".onetoone"
          }
-         res <- do.call(fun,rel[-1])
+         res <- do.call(fun,rel[-1]) ## RECURSIVE
          names(res$colortable) <- names(ct)
       }
       else { ## dev

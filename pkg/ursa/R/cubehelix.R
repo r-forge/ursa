@@ -42,8 +42,11 @@
       n <- if (length(value)) length(value) else 256L
    if (is.na(verbose))
       verbose <- FALSE #is.na(rich) || is.na(rotate) || is.na(hue)
-   if (autobright)
-      k <- round(1/(exp(n^0.5)),6)
+   if (autobright) {
+     # k <- round(1/(exp(n^0.5)),6) ## --20180324
+     # k <- round(0.5/(exp(n^0.44)),6) ## ++20180324
+      k <- round(0.7/(exp(n^0.475)),6) ## ++20180324
+   }
    else
       k <- 0
    divergent <- length(value)>0 ## 20170705 -- length(value)>0

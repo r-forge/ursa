@@ -23,18 +23,30 @@
       print(c(isSP=isSP,isSF=isSF))
    if (is.na(verbose))
       verbose <- isSP
-   onlyGeometry <- missing(obj)
+   g0 <- session_grid()
+   if ((is.numeric(obj))&&(length(obj)==4)&&
+       (!anyNA(match(names(obj),c("minx","maxx","miny","maxy"))))) {
+      obj <- regrid(bbox=unname(obj),dim=c(1,1),proj4=session_crs())
+   }
+   onlyGeometry <- missing(obj) || .is.grid(obj)
    isList <- !onlyGeometry && .is.ursa_stack(obj)
    if ((!isList)&&(!((onlyGeometry)||(is.ursa(obj))||(is.data.frame(obj))))) ## propose?
   # if ((!isList)&&(!(is.ursa(obj))))
       return(NULL)
   # requireNamespace("sp",quietly=.isPackageInUse())
   # requireNamespace("methods",quietly=.isPackageInUse())
-   g1 <- if (onlyGeometry) session_grid() 
-         else if (isList) ursa_grid(obj[[1]])
-         else ursa_grid(obj)
+   g1 <- if (onlyGeometry) {
+      if (missing(obj))
+         session_grid()
+      else 
+         ursa(obj,"grid")
+   }
+   else if (isList)
+      ursa_grid(obj[[1]])
+   else
+      ursa_grid(obj)
    if (is.null(g1))
-      g1 <- session_grid()
+      g1 <- g0
    prj <- ursa_proj(g1)
    if (onlyGeometry)
       b <- as.data.frame(g1)
@@ -130,6 +142,7 @@
      # return(.shp.write(sa,fname,...))
       return(spatial_write(sa,fname,verbose=verbose,...))
    }
+   session_grid(g0)
    sa
 }
 '.vectorize' <- function(obj,fname,opt="") {

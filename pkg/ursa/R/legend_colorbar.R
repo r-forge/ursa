@@ -50,7 +50,7 @@
    useRaster <- .getPrm(arglist,name="useRaster",kwd=kwd,default=NA)
    trim <- .getPrm(arglist,name="trim",kwd=kwd,default=0L)
    abbrev <- .getPrm(arglist,name="abbrev",class=list("integer","logical")
-                    ,kwd=kwd,default=24L)
+                    ,kwd=kwd,default=18L)
    opacity <- .getPrm(arglist,name="opacity",kwd=kwd,default=NA_real_)
    if (is.logical(abbrev))
       abbrev <- 24L*as.integer(abbrev)
@@ -109,23 +109,29 @@
    if ((isChar)&&(!isInterval))
       label <- names(ct)
    if ((isChar)&&(abbrev>0)) {
-      label <- iconv(label,to="UTF-8")
-      if (.isRscript())
-         a <- .try(label <- abbreviate(label,minlength=abbrev,strict=TRUE))
-      else {
-        # encdng <- Encoding(label)
-        # Encoding(label) <- "UTF-8"
-         a <- .try(label <- abbreviate(label,minlength=abbrev,strict=TRUE))
-        # Encoding(label) <- encdng
+      if (all(Encoding(label)!="UTF-8")) {
+         label2 <- label #iconv(label,to="UTF-8")
+         if (.isRscript()) {
+            a <- .try(label <- abbreviate(label2,minlength=abbrev,strict=TRUE))
+         }
+         else {
+           # encdng <- Encoding(label)
+           # Encoding(label) <- "UTF-8"
+            a <- .try(label <- abbreviate(label2,minlength=abbrev,strict=TRUE))
+           # Encoding(label) <- encdng
+         }
+         rm(label2)
       }
+      else
+         a <- FALSE
       if (!a) {
-         ind <- which(nchar(label)>abbrev)
+         ind <- which(nchar(iconv(label,to="UTF-8"))>abbrev)
          label <- substr(label,1,abbrev)
          substr(label[ind],abbrev,abbrev) <- ">"
       }
    }
    if ((length(ct)==1)&&(isChar))
-      las <- 1
+      las <- 0
   # maxlabel <- ifelse(isChar || forceLabel,999,21) ## removed 2015-12-13
    maxlabel <- ifelse(forceLabel,999,21) ## added 2015-12-13
    family <- getOption("ursaPngFamily")

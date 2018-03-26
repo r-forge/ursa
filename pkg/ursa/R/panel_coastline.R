@@ -110,6 +110,7 @@
    g1 <- session_grid()
    isLongLat <- .lgrep("(\\+proj=longlat|epsg:4326)",g1$proj4)>0
    isMerc <- .lgrep("\\+proj=merc",g1$proj4)>0
+   isCea <- .lgrep("\\+proj=cea",g1$proj4)>0
    isUTM <- .lgrep("\\+proj=utm",g1$proj4)>0
    proj <- g1$proj4
    proj <- proj[nchar(proj)==max(nchar(proj))]
@@ -181,13 +182,23 @@
    if ((!isLongLat)&&(!isMerc)) {
       lat0 <- .gsub("^.*\\+lat_[012]=(\\S+)\\s.*$","\\1",proj4)
       if (lat0==proj4) {
-         epsg <- as.integer(.gsub("^.+init=epsg:(\\d+).*$","\\1",proj4))
-         if (epsg %in% c(3411,3413,3408,3571:3576,6931,6973))
-            lat0 <- 90
-         else if (epsg %in% c(3409,6932,6974,3412,3976))
-            lat0 <- -90
+        # lat0 <- .gsub("^.*\\+lat_ts=(\\S+)\\s.*$","\\1",proj4)
+         if (lat0==proj4) {
+            epsg <- .gsub("^.+init=epsg:(\\d+).*$","\\1",proj4)
+            if ((epsg==proj4))
+               lat0 <- NA
+            else {
+               epsg <- as.integer(epsg)
+               if (epsg %in% c(3411,3413,3408,3571:3576,6931,6973))
+                  lat0 <- 90
+               else if (epsg %in% c(3409,6932,6974,3412,3976))
+                  lat0 <- -90
+               else
+                  lat0 <- NA
+            }
+         }
          else
-            lat0 <- NA
+            lat0 <- as.numeric(lat0)
       }
       else
          lat0 <- as.numeric(lat0)
@@ -199,13 +210,56 @@
    if (!is.null(ind))
       indS <- which(abs(coast_xy[ind,2])<(85.0-1e-3))
    if (!isLongLat) {
+     # indNA <- which(is.na(coast_xy[,1]) | is.na(coast_xy[,2]))
       coast_xy <- .project(coast_xy,proj4)
       isInf <- any(is.infinite(coast_xy))
       if (isInf) {
-         res <- list()
-         class(res) <- "ursaCoastLine"
-         options(ursaPngCoastLine=res)
-         return(res)
+         shadow <- unname(col2rgb(fill,alpha=TRUE)[4,1]) # if (shadow!=0)
+        # coast_xy[indNA,] <- NA
+         indI <- which(is.infinite(coast_xy[,1]) | is.infinite(coast_xy[,2]))
+         coast_xy[indI,] <- NA
+         if (dev <- TRUE) {
+            ind <- NULL ## drop Antarctic
+           # coast_xy <- coast_xy[500:600,]
+            ind1 <- as.integer(!is.na(coast_xy[,1]) & !is.na(coast_xy[,2]))
+           # print(c(ind=ind))
+            ind2 <- cumsum(ind1)
+           # print(ind2)
+            ind3 <- which(duplicated(ind2))
+           # print(ind3)
+            ind4 <- diff(ind3)
+           # print(ind4)
+            ind5 <- which(ind4==1)
+           # print(ind5)
+            ind6 <- ind3[ind5]
+            coast_xy <- coast_xy[-ind6,]
+            if (dev2 <- TRUE) {
+               if (anyNA(coast_xy[nrow(coast_xy),]))
+                  coast_xy <- head(coast_xy[,1:2],-1)
+               ind7 <- which(is.na(coast_xy[,1]) | is.na(coast_xy[,2]))
+               ind7a <- c(1,ind7+1L)
+               ind7b <- c(ind7-1L,nrow(coast_xy))
+               ind8 <- NULL
+               for (i in sample(seq_along(ind7a))) {
+                  ind9 <- ind7a[i]:ind7b[i]
+                  xy <- coast_xy[ind9,,drop=FALSE]
+                  if (nrow(xy)==1)
+                     ind8 <- c(ind8,c(ind9,tail(ind9,1)+1L))
+                 # print(all(abs(head(xy,1)-tail(xy,1))<1e-11))
+               }
+               if (length(ind8))
+                 coast_xy <- coast_xy[-ind8,]
+            }
+           # print(coast_xy)
+           ## for detail=="l": [7720,] [8897,]
+           # q()
+         }
+         else {
+            res <- list()
+            class(res) <- "ursaCoastLine"
+            options(ursaPngCoastLine=res)
+            return(res)
+         }
       }
    }
    if (!is.null(ind)) {
@@ -217,17 +271,22 @@
       ind <- c(head(ind,1)-1,ind)
       coast_xy <- coast_xy[-ind,]
    }
+   isMerc <- isMerc | isCea
    if (is.na(fail180))
       fail180 <- (isMerc || isLongLat)
-   if ((fail180)&&(isLongLat || isMerc)) {
-      if (isLongLat)
+   if ((fail180)||(isLongLat || isMerc)) {
+      if (!isLongLat) {
+         B <- mean(abs(.project(rbind(cbind(-180+1e-9,-45),cbind(+180-1e-9,+45))
+                               ,proj4)[,1]))
+      }
+      else
          B <- 180
-      else if (isMerc) {
-         B <- .getMajorSemiAxis(proj4)*pi
+      if (isMerc) {
+        # B <- .getMajorSemiAxis(proj4)*pi
         # B <- 7720000
          '.shift' <- function(seg) {
-            if (all(seg[,2]<0))
-               return(NULL)
+           # if (all(seg[,2]>0)) ## debug Chukotka vs 
+           #    return(NULL)
             j <- which(abs(diff(seg[,1]))>B)
             if (!length(j))
                return(NULL)
@@ -372,7 +431,7 @@
             stop("")
          }
       }
-      coast_xy <- rbind(coast_xy,c(NA,NA),ant_xy)
+      coast_xy <- rbind(coast_xy[,1:2],c(NA,NA),ant_xy[,1:2])
    }
    if (!isDetail) {
       inside <- with(g1,coast_xy[,1]>=minx & coast_xy[,1]<=maxx &

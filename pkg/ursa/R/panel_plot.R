@@ -73,24 +73,58 @@
         # opE <- options(show.error.messages=TRUE)
         # ret <- .tryE(.panel_plot(sf::st_geometry(obj),add=TRUE,...))
         # ret <- .tryE(.panel_plot(obj,add=TRUE,...))
+        # message("===========")
+        # str(arglist2)
+        # message("===========")
          if ((TRUE)&&(.lgrep("^col",names(arglist2)))) {
+           # stop("I")
             if (is.numeric(col)) {
                ct <- colorize(col)
                col <- ct$colortable[ct$index]
             }
             else if ((is.character(arglist2$col))&&(length(spatial_fields(obj)))) {
                if (!anyNA(match(arglist2$col,spatial_fields(obj)))) {
+                 # stop("A")
                   ct <- colorize(spatial_data(obj,subset=col,drop=TRUE))
                   col <- ct$colortable[ct$index]
                }
-               else if (length(spatial_fields(obj))==1) {
-                  ct <- colorize(spatial_data(obj,drop=TRUE),colortable=arglist2$col)
-                  col <- ct$colortable[ct$index]
+               else if (length(spatial_fields(obj))==-1) {
+                 # stop("B")
+                  if (.is.colortable(arglist2$col)) {
+                    # stop("B1")
+                     val <- spatial_data(obj,drop=TRUE)
+                     ind <- match(names(arglist2$col),val)
+                     if ((!anyNA(ind))&&(all(diff(ind)==1))) {
+                       # stop("B1a")
+                        col <- unname(unclass(arglist2$col))
+                        ct <- arglist2$col
+                       # ct <- colorize(val,pal=arglist2$col)
+                     }
+                     else {
+                       # stop("B1b")
+                        if (length(val)==length(arglist2$col)) {
+                           ct <- arglist2$col
+                           col <- unname(unclass(arglist2$col))
+                        }
+                        else {
+                           ct <- colorize(val,colortable=arglist2$col)
+                           col <- ct$colortable[ct$index]
+                        }
+                     }
+                  }
+                  else {
+                    # stop("B2")
+                     col <- arglist2$col
+                  }
                }
-               else if (is.character(col))
+               else if (is.character(col)) {
+                 # stop("C")
                   col <- arglist2$col
-               else
+               }
+               else {
+                 # stop("D")
                   col <- NULL
+               }
             }
             else
                col <- arglist2$col
@@ -98,6 +132,7 @@
                arglist2$col <- unclass(col)
          }
          else if (length(spatial_fields(obj))==1) {
+           # stop("II")
            # ct <- colorize(spatial_data(obj)[[1]])
             ct <- do.call("colorize",c(list(spatial_data(obj)[[1]]),arglist2))
             arglist2$col <- ct$colortable[ct$index]
@@ -131,7 +166,11 @@
             }
          }
          if (.lgrep("polygon",geoType)) {
+            if (!.lgrep("lwd",names(arglist2))) {
+               arglist2$lwd <- 0.1
+            }
            # str(arglist2)
+           # str(ct)
            # q()
          }
         # str(c(obj=list(spatial_geometry(obj)),add=TRUE,arglist2))
@@ -255,6 +294,7 @@
    if (is.null(obj))
       return(obj)
    arglist <- list(...)
+  # str(arglist)
    arglist <- lapply(arglist,function(x1) {
       if (identical(c("index","colortable"),names(x1)))
          return(unclass(unname(x1$colortable))[x1$index])
@@ -267,7 +307,9 @@
          plot <- sp::plot ## unerror "cannot coerce type 'S4' to vector of type 'double'"
          opW <- options(warn=-1) ## release 'warn=-1': no warnings
    }
+  # message("-----------------")
   # str(arglist)
+  # message("-----------------")
    if ((.isSF(obj))&&(.lgrep("(dens|angl)",names(arglist)))) {
      # arglist$add <- NULL
       message("'sf' cannot deal with fill patterns")

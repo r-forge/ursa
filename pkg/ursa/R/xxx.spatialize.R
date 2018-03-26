@@ -194,6 +194,11 @@
                             ,.sQuote(paste(class(dsn),collapse=" | "))))
                return(NULL) ## 32L
             }
+            else {
+               limLonLat <- all(dsn[,coords]>=-360 & dsn[,coords]<=+360)
+               if (limLonLat)
+                  sf::st_crs(obj) <- 4326
+            }
             dsn <- class(dsn)
          }
       }
@@ -241,18 +246,22 @@
          else if (inherits(dsn,"data.frame")) {
             obj <- dsn
             sp::coordinates(obj) <- coords
+            limLonLat <- all(dsn[,coords]>=-360 & dsn[,coords]<=+360)
+            if (limLonLat)
+               sp::proj4string(obj) <- sp::CRS("+init=epsg:4326")
             dsn <- class(dsn)
          }
-         else
+         else {
             obj <- try(methods::as(dsn,"Spatial"))
+         }
          if (inherits(obj,"try-error")) {
             message(paste("(#33) unable to process object of class"
                    ,.sQuote(class(dsn))))
             return(NULL) ## 33L
          }
          else {
-            isSP <- TRUE
-            isSF <- !isSP
+           # isSP <- TRUE
+           # isSF <- !isSP
          }
       }
    }
@@ -451,19 +460,25 @@
      # but namespace "methods" is not unloaded, because namespace "sp" is loaded
      # 'as' is not found now
    }
-   if (isSF) {
-      dname <- try(names(sf::st_agr(obj)),silent=TRUE)
-      if (inherits(dname,"try-error"))
-         dname <- character()
+   if (FALSE) { ## deprecated
+      if (isSF) {
+         dname <- try(names(sf::st_agr(obj)),silent=TRUE)
+         if (inherits(dname,"try-error"))
+            dname <- character()
+      }
+      else if (isSP) {
+         dname <- try(colnames(methods::slot(obj,"data")),silent=TRUE)
+         if (inherits(dname,"try-error"))
+            dname <- character()
+      }
    }
-   else if (isSP) {
-      dname <- try(colnames(methods::slot(obj,"data")),silent=TRUE)
-      if (inherits(dname,"try-error"))
-         dname <- character()
-   }
+   else
+      dname <- spatial_fields(obj)
    hasTable <- length(dname)>0
-   if (is.na(field))
+   if (is.na(field)[1])
       field <- ".+"
+   else if (length(field)>1)
+      field <- paste0("^(",paste(field,collapse="|"),")$")
    dname <- .grep(field,dname,value=TRUE)
   # str(dname);q()
    if ((hasTable)&&(!length(dname))) {

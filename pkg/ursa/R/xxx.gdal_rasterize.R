@@ -45,7 +45,7 @@
    g0 <- attr(obj,"grid")
    dname <- attr(obj,"colnames")
    dmask <- .getPrm(arglist,name="(attr|field)",default=".+")
-   feature <- .getPrm(arglist,name="feature",valid=c("attribute","geometry","FID"))
+   feature <- .getPrm(arglist,name="feature",valid=c("field","geometry","FID"))
    where <- .getPrm(arglist,name="subset",default="")
    ogropt <- .getPrm(arglist,name="ogropt",default="")
    optF <- .getPrm(arglist,name="^opt$",class="character",default="")
@@ -221,7 +221,7 @@
    fromZero <- .lgrep("^(sqlite|gpkg)$",fext)==0 & .lgrep("^fid$",dname)==0
    if (verbose)
       print(c(FID_starts_from_zero=fromZero))
-   if (feature=="attribute") {
+   if (feature=="field") {
       if (inMemory)
          dname <- mname ## restore dbf coersion
      # opt <- paste()

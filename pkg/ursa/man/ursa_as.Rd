@@ -34,6 +34,7 @@ This is a high-level function to create \code{ursaRaster} objects. The follwed c
    \code{\link[sp:SpatialGridDataFrame]{SpatialPixelsDataFrame}} (\pkg{sp})\tab \code{\link[ursa]{allocate}}\cr
    \code{\link[sp:SpatialGridDataFrame]{SpatialGridDataFrame}} (\pkg{sp})\tab \code{\link[ursa]{ursa_new}}\cr
    \code{\link[ursa:classStack]{list}} of \code{ursaRaster} objects \tab \code{\link[ursa:classStack]{unlist}}\cr
+   \code{\link[sf:gdal]{list}} returned by \code{\link[sf:gdal]{sf::gdal_read}} \tab \code{\link[ursa]{ursa_new}}\cr
    \code{\link[base]{list}} \emph{(general)} \tab Items \code{$x} and \code{$y} are required, If lengths of \code{$x} and \code{$y} are equal to dim of data, then \code{\link[ursa]{allocate}}, else: 1) \link[ursa:classGrid]{raster grid} is defined from \code{$x} and \code{$y}, 2) \code{\link[ursa]{ursa_new}} is called.\cr
    \code{\link[ggmap:ggmap]{ggmap}} (\pkg{ggmap}) \tab \code{\link[ursa]{ursa_new}}.\cr
    \code{\link[raster]{raster}} (\pkg{raster})\tab \code{\link[ursa]{ursa_new}}.\cr

@@ -132,6 +132,41 @@
       }
       return(res)
    }
+   if ((is.list(obj))&&(!anyNA(match(c("filename","cols","rows","bands","proj4string"
+                                      ,"geotransform","datatype","meta")
+                                    ,names(obj))))) { ## from 'sf::gdal_read'
+      columns <- obj$cols[2]
+      rows <- obj$rows[2]
+      bands <- obj$bands[2]
+      patt <- "^Band_(\\d+)=\\t*(.+)$"
+      bname <- grep(patt,obj$meta,value=TRUE)
+      b1 <- .grep(patt,obj$meta,value=TRUE)
+      bname <- .gsub(patt,"\\2",b1)
+      bname[as.integer(.gsub(patt,"\\1",b1))] <- bname
+      resx <- obj$geotransform[2]
+      resy <- -obj$geotransform[6]
+      minx <- obj$geotransform[1]
+      maxy <- obj$geotransform[4]
+      maxx <- minx+columns*resx
+      miny <- maxy-rows*resy
+      g1 <- regrid(minx=minx,maxx=maxx,miny=miny,maxy=maxy,columns=columns,rows=rows
+                  ,proj4=obj$proj4string)
+      session_grid(g1)
+     # hasData <- inherits("NULL",class(attr(obj,"data")))
+      hasData <- !inherits(attr(obj,"data"),"NULL")
+      .elapsedTime("sf::gdal_read -- start")
+      if (!hasData) {
+         if (!requireNamespace("sf",quietly=.isPackageInUse()))
+            stop("Package 'sf' is required for this operation")
+         res <- as.ursa(attr(sf::gdal_read(obj$filename,read_data=TRUE),"data")
+                       ,flip=TRUE)
+      }
+      else {
+         res <- as.ursa(attr(obj,"data"),flip=TRUE)
+      }
+      .elapsedTime("sf::gdal_read -- finish")
+      return(res)
+   }
    if (is.list(obj)) {
       if ((length(obj$x)==length(obj$z))&&(length(obj$y)==length(obj$z))) 
          return(allocate(obj,...))

@@ -120,9 +120,18 @@
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    if (isSF) {
-      dname <- try(names(sf::st_agr(obj)),silent=TRUE)
-      if (inherits(dname,"try-error"))
-         dname <- character()
+      if (FALSE) { ## 'st_agr' FAILURE for 'obj$newfield' <- assignment
+         dname <- try(names(sf::st_agr(obj)),silent=TRUE)
+         if (inherits(dname,"try-error"))
+            dname <- character()
+      }
+      else {
+         dname <- colnames(obj)
+         if (is.null(dname))
+            dname <- character()
+         else if (length(ind <- match(attr(obj,"sf_column"),dname)))
+            dname <- dname[-ind]
+      }
       return(dname)
    }
    if (isSP) {
@@ -132,6 +141,18 @@
       return(dname)
    }
    return(NULL)
+}
+'spatial_fields<-' <- function(obj,verbose=FALSE,value) {
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
+   if (verbose)
+      print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
+   colnames(spatial_data(obj)) <- value
+   if (isSF) {
+     # colnames(obj)[-match(attr(obj,"sf_column"),colnames(obj))] <- value
+      names(attr(obj,"agr")) <- value
+   }
+   obj
 }
 'spatial_data' <- function(obj,subset=".+",drop=NA,verbose=FALSE) {
    isSF <- .isSF(obj)
@@ -480,3 +501,83 @@
    data
 }
 'spatial_ncol' <- function(obj,verbose=FALSE) length(spatial_fields(obj,verbose=verbose))
+'spatial_centroid' <- function(obj,verbose=FALSE) {
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
+   if (verbose)
+      print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
+   if (isSF) {
+      return(sf::st_centroid(obj))
+   }
+   if (isSP) {
+      geoType <- spatial_geotype(obj)
+      if (geoType=="POLYGON") {
+         res <- lapply(methods::slot(spatial_geometry(obj),"polygons"),function(x) {
+            a1 <- methods::slot(x,"labpt")
+            if (FALSE) {
+               a2 <- lapply(methods::slot(x,"Polygons"),function(y) {
+                  methods::slot(y,"labpt")
+               })
+               str(a2)
+               q()
+            }
+            a1
+         })
+         res <- do.call("rbind",res)
+         res <- data.frame(x=res[,1],y=res[,2])
+         sp::coordinates(res) <- c("x","y")
+        # sp::proj4string(res) <- spatial_crs(obj)
+         spatial_crs(res) <- spatial_crs(obj)
+         da <- spatial_fields(obj)
+         if (length(da))
+            spatial_data(res) <- spatial_data(obj)
+      }
+      else
+         stop(paste("Unimplemented for geometry:",geoType))
+      return(res)
+   }
+   NULL
+}
+'spatial_inside' <- function(obj,verbose=FALSE) {
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
+   if (verbose)
+      print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
+   if (isSF) {
+      ind <- sf::st_intersects(polygonize(session_bbox(),engine="sf"),obj)[[1]]
+      return(obj[ind,])
+   }
+   if (isSP) {
+      ind <- unname(sp::over(polygonize(session_bbox(),engine="sp")
+                            ,spatial_geometry(obj),returnList=TRUE)[[1]])
+      return(obj[ind,])
+   }
+   obj
+}
+'.spatial_intersection' <- function(x,y,verbose=FALSE) {
+   isSF <- .isSF(x) & .isSF(y)
+   isSP <- .isSP(x) & .isSP(y)
+   if (verbose)
+      print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
+   if (isSF) {
+      sf::st_agr(x) <- "constant"
+      sf::st_agr(y) <- "constant"
+      res <- sf::st_intersection(x,y)
+      return(res)
+   }
+   if (isSP) {
+      stop("unimplemented for 'sp' objects")
+     # requireNamespace("rgeos",quietly=.isPackageInUse())
+     # res <- rgeos::gIntersection(x,y,byid=TRUE,drop_lower_td=TRUE
+     #                            ,unaryUnion_if_byid_false=FALSE)
+     # res2 <- names(sp::over(spatial_geometry(x),spatial_geometry(y),returnList=TRUE))
+     # res2 <- grep("NA",res2,invert=TRUE,value=TRUE)
+     # str(res2)
+     # q()
+     # spatial_data(res) <- data.frame(I=rep(1L,spatial_nrow(res)))
+     # spatial_write(res,"res1.shp")
+     # q()
+     # return(res)
+   }
+   NULL
+}

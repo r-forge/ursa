@@ -194,6 +194,7 @@
                    ,expand=expand,border=0
                    ,lat0=lat0,lon0=lon0,resetProj=resetProj,style=style#,zoom=NA
                    ,verbose=verbose)
+   
    if (inherits(obj,"NULL"))
       return(invisible(NULL))
    isSF <- inherits(obj,c("sfc","sf"))
@@ -210,7 +211,8 @@
       print(g0)
    }
    toUnloadMethods <- if (S4) toUnloadMethods else attr(obj,"toUnloadMethods")
-   dname <- attr(obj,"colnames")
+  # dname <- attr(obj,"colnames")
+   dname <- spatial_fields(obj)
    style <- attr(obj,"style")
    geocodeStatus <- attr(obj,"geocodeStatus")
   # obj <- sp::SpatialLinesDataFrame(obj,data=data.frame(uid="test it")) ## for debug
@@ -433,7 +435,8 @@
            # ct[[i]] <- panel_raster(res[[i]],alpha=alpha,verbose=TRUE)
          }
          else {
-            col <- unname(ct[[i]]$colortable[ct[[i]]$ind])
+           # col <- unname(ct[[i]]$colortable[ct[[i]]$ind])
+            col <- ct[[i]]$colortable[ct[[i]]$ind]
             ind <- which(is.na(col))
             bg.line <- rep("#0000007F",length(col))
             bg.point <- rep("#000000FF",length(col))
@@ -452,11 +455,12 @@
                   lwd <- 1e-6
               # .elapsedTime("Z")
               # panel_plot(obj,col=col,border=bg.polygon,lwd=lwd)
-              # .elapsedTime("A")
+              # str(col)
+              # .elapsedTime("P1")
                panel_plot(obj,col=col,border=bg.polygon,lwd=lwd,lty="blank")
-              # .elapsedTime("B")
+              # .elapsedTime("P2")
                panel_plot(obj,col="transparent",border=bg.polygon,lwd=lwd)
-              # .elapsedTime("C")
+              # .elapsedTime("P3")
             }
             if (.lgrep("point",geoType)) {
                lwd <- 0.25
