@@ -39,7 +39,7 @@
    lty <- .getPrm(arglist,name="lty",kwd=kwd,default=1L)
    fail180 <- .getPrm(arglist,name="fail180",kwd=kwd,default=NA)
    obj <- .getPrm(arglist,name=paste0("(^$|",kwd,")") ## name="^$"
-                 ,class=list("character","matrix","SpatialPolygonsDataFrame")#[-3]
+                 ,class=list("character","matrix","SpatialPolygonsDataFrame","sf")#[-3]
                  ,default=NULL)
    verbose <- .getPrm(arglist,name="verbose",kwd=kwd,default=FALSE)
    if (is.integer(coastline)) {
@@ -60,7 +60,7 @@
               ,density=density,angle=angle
               ,land=land,lwd=lwd,lty=lty,fail180=fail180))
    if (!is.null(obj)) {
-      isPoly <- inherits(obj,"SpatialPolygonsDataFrame")
+      isPoly <- inherits(obj,c("sf","SpatialPolygonsDataFrame"))
       if ((is.matrix(obj))&&(ncol(obj)==2))
          coast_xy <- obj
       else if ((is.character(obj))||(isPoly)) {
@@ -69,19 +69,28 @@
                a <- obj
             else {
               # a <- .shp.read(obj)
-               a <- spatialize(obj,engine="sp")
+               a <- spatialize(obj)#,engine="sp")
             }
-            a <- lapply(methods::slot(a,grep("(polygons|lines)"
-                              ,methods::slotNames(a),value=TRUE)),function(x) {
-               y <- lapply(methods::slot(x,grep("(Polygons|Lines)"
-                              ,methods::slotNames(x),value=TRUE)),function(y) {
-                  do.call("rbind",lapply(list(sp::coordinates(y),cbind(NA,NA))
-                                        ,matrix,ncol=2))
+            if (.isSP(a)) {
+               a <- lapply(methods::slot(a,grep("(polygons|lines)"
+                                 ,methods::slotNames(a),value=TRUE)),function(x) {
+                  y <- lapply(methods::slot(x,grep("(Polygons|Lines)"
+                                 ,methods::slotNames(x),value=TRUE)),function(y) {
+                     do.call("rbind",lapply(list(sp::coordinates(y),cbind(NA,NA))
+                                           ,matrix,ncol=2))
+                  })
+                  do.call("rbind",lapply(y,matrix,ncol=2))
                })
-               do.call("rbind",lapply(y,matrix,ncol=2))
-            })
-            coast_xy <- head(do.call("rbind",lapply(a,matrix,ncol=2)),-1)
-            rm(a)
+               coast_xy <- head(do.call("rbind",lapply(a,matrix,ncol=2)),-1)
+               rm(a)
+            }
+            else if (.isSF(a)) {
+               a <- do.call("rbind",lapply(spatial_coordinates(a),function(x) {
+                  do.call("rbind",lapply(x,rbind,cbind(NA,NA)))
+               }))
+               coast_xy <- head(a,-1)
+               rm(a)
+            }
          }
          else if (.lgrep("\\.rds$",obj)) {
             g1 <- session_grid()

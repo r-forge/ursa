@@ -437,7 +437,7 @@
       g$proj4 <- ""
    if (any(border!=0))
    {
-      border <- rep(border,length=4)
+      border <- round(rep(border,length=4))
       g$minx <- with(g,minx-border[2]*resx)
       g$miny <- with(g,miny-border[1]*resy)
       g$maxx <- with(g,maxx+border[4]*resx)

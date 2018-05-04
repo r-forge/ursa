@@ -578,11 +578,15 @@
          file.remove(wktin)
       }
       else if (!("sf" %in% loadedNamespaces())) {
+         if (lverbose)
+            message("rgdal::showP4")
          .try(grid$proj4 <- rgdal::showP4(wkt))
         # .try(grid$proj4 <- attr(rgdal::GDALinfo(con$fname,returnStats=FALSE)
         #                   ,"projection"))
       }
       else  {
+         if (lverbose)
+            message("sf::st_crs")
          .try(grid$proj4 <- sf::st_crs(wkt=wkt)$proj4string)
       }
       if (lverbose)

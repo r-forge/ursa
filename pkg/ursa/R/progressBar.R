@@ -1,8 +1,8 @@
 'ursaProgressBar' <- function(kind=c("tk","txt")
-                          # ,title=basename(strsplit(commandArgs(FALSE)[4],"=")[[1]][2])
-                           ,title=.argv0()
-                           ,label=""
-                           ,min=0,max=1,initial=min,width=NA,style=1) {
+                           # ,title=basename(strsplit(commandArgs(FALSE)[4],"=")[[1]][2])
+                             ,title=.argv0()
+                             ,label=""
+                             ,min=0,max=1,initial=min,width=NA,style=1) {
   # if (.isKnitr())
   #    return(NULL)
    kind <- match.arg(kind)
@@ -19,8 +19,11 @@
       if (is.na(width))
          width <- 360
       title <- sprintf("%s: %.0f of %.0f",title,initial,max)
-      pb <- tcltk::tkProgressBar(title=title,label=label,min=min,max=max
-                         ,initial=initial,width=width)
+      pb <- try(tcltk::tkProgressBar(title=title,label=label,min=min,max=max
+                         ,initial=initial,width=width))
+      if (inherits(pb,"try-error"))
+         pb <- utils::txtProgressBar(title=title,label=label,min=min,max=max
+                             ,initial=initial,width=width,style=style)
    }
    ##~ else if ((.Platform$OS.type=="windows")&&(kind=="win")) {
       ##~ if (is.na(width))

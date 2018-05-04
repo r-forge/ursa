@@ -15,6 +15,7 @@
    .normalizePath(tempfile(tmpdir=.ursaCacheDir(),pattern=pattern))
 }
 '.ursaCacheInventory' <- function() file.path(.ursaCacheDir(),"_inventory.txt")
+'.ursaCacheVisits' <- function() file.path(.ursaCacheDir(),"_visits.txt")
 '.ursaCacheDirClear' <- function(size=16,count=10000,age=7,completely=FALSE) {
    fpath <- .ursaCacheDir()
    if (!file.exists(fpath))
@@ -30,7 +31,7 @@
    if (!file.exists(inventory))
       return(.ursaCacheDirClear(completely=TRUE)) ## RECURSIVE
    was <- utils::read.table(inventory,sep=",")
-   colnames(was) <- c("time","stamp","size","src","dst")
+   colnames(was) <- c("time","stamp","visits","size","src","dst")
    was <- was[rev(seq(nrow(was))),]
    was0 <- was
    was$src <- NULL
@@ -65,7 +66,7 @@
       dst <- NULL
    if (file.exists(inventory)) {
       was <- utils::read.table(inventory,sep=",",encoding=enc)
-      colnames(was) <- c("time","stamp","size","src","dst")
+      colnames(was) <- c("time","stamp","visits","size","src","dst")
       if (is.character(dst)) {
          stop("dst")
       }
@@ -80,10 +81,17 @@
       download.file(url=URLencode(iconv(src,to="UTF-8")) 
                    ,destfile=dst,method=method,quiet=quiet,mode=mode)
       utils::write.table(data.frame(time=format(Sys.time(),"%Y-%m-%dT%H:%M:%SZ",tz="UTC")
-                                   ,stamp=as.integer(Sys.time()),size=file.size(dst)
+                                   ,stamp=as.integer(Sys.time())
+                                   ,visits=0L
+                                   ,size=file.size(dst)
                                    ,src=src0,dst=basename(dst))
                  ,quote=TRUE,col.names=FALSE,row.name=FALSE,sep=","
                  ,file=inventory,append=TRUE,fileEncoding=enc)
+   }
+   else {
+      Fout <- file(.ursaCacheVisits(),"at")
+      writeLines(basename(dst),Fout)
+      close(Fout)
    }
    dst
 }
@@ -98,7 +106,7 @@
    ind <- NA
    if (file.exists(inventory)) {
       was <- utils::read.table(inventory,sep=",",encoding=enc)
-      colnames(was) <- c("time","stamp","size","src","dst")
+      colnames(was) <- c("time","stamp","visits","size","src","dst")
       if (is.character(dst)) {
          stop("dst")
       }
@@ -136,20 +144,33 @@
       else
          reset <- FALSE
    }
-   if ((unpack!="none")&&(is.null(dst))) {
-      dst <- .ursaCacheFile()
-      if (unpack=="gzip") {
-         system2("gzip",c("-f -d -c",.dQuote(src)),stdout=dst)
-         file.copy(paste0(envi_list(src,exact=TRUE),".hdr")
-                  ,paste0(dst,".hdr"),copy.date=TRUE)
+   if (unpack!="none") {
+      if (is.null(dst)) {
+         dst <- .ursaCacheFile()
+         if (unpack=="gzip") {
+            system2("gzip",c("-f -d -c",.dQuote(src)),stdout=dst)
+            file.copy(paste0(envi_list(src,exact=TRUE),".hdr")
+                     ,paste0(dst,".hdr"),copy.date=TRUE)
+         }
+         da <- data.frame(time=format(Sys.time(),"%Y-%m-%dT%H:%M:%SZ",tz="UTC")
+                         ,stamp=ftime,visits=0L,size=file.size(dst)
+                         ,src=.normalizePath(src),dst=basename(dst))
+         if (reset)
+            da <- rbind(was,da)
+         utils::write.table(da,quote=TRUE,col.names=FALSE,row.name=FALSE,sep=","
+                           ,file=inventory,append=!reset,fileEncoding=enc)
       }
-      da <- data.frame(time=format(Sys.time(),"%Y-%m-%dT%H:%M:%SZ",tz="UTC")
-                      ,stamp=ftime,size=file.size(dst)
-                      ,src=.normalizePath(src),dst=basename(dst))
-      if (reset)
-         da <- rbind(was,da)
-      utils::write.table(da,quote=TRUE,col.names=FALSE,row.name=FALSE,sep=","
-                        ,file=inventory,append=!reset,fileEncoding=enc)
+      else {
+         Fout <- file(.ursaCacheVisits(),"at")
+         writeLines(basename(dst),Fout)
+         close(Fout)
+      }
    }
    dst
+}
+'.atOnceCacheRebuild' <- function() {
+   a <- read.table("_inventory.txt",sep=",",dec=".")
+   a <- data.frame(a[,1:2],B=0,a[,3:5])
+   str(a)
+   write.table(a,"_inverntory.new",sep=",",dec=".",col.names=FALSE,row.names=FALSE)
 }

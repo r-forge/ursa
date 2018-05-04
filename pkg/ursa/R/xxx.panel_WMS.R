@@ -10,6 +10,7 @@
                           ,size=800L,fail180=FALSE
                           ,transpose=FALSE ## 'rotate' 'reorder' ?
                           ,extend=TRUE
+                          ,cache=TRUE
                           ,verbose=FALSE,...) {
    src <- unlist(src)
   # dst <- if (.isPackageInUse()) tempfile(fileext=".xml") 
@@ -66,7 +67,12 @@
         #    download.file(src1,dst,mode="wt",quiet=!verbose)
         # else if ((verbose)&&(!isMetadata))
         #    message(src1)
-         dst <- .ursaCacheDownload(src1,mode="wt",quiet=!verbose)
+         if (cache)
+            dst <- .ursaCacheDownload(src1,mode="wt",quiet=!verbose)
+         else {
+            dst <- tempfile(fileext=".xml") 
+            download.file(src1,dst,mode="wt",quiet=!verbose)
+         }
          if (!isMetadata)
             isMetadata <- TRUE
          md <- .parse_wms(dst,verbose=verbose)
@@ -129,7 +135,12 @@
         #    download.file(src1,dst,mode="wt",quiet=!verbose)
         # else if ((verbose)&&(!isMetadata))
         #    message(src1)
-         dst <- .ursaCacheDownload(src1,mode="wt",quiet=!verbose)
+         if (cache)
+            dst <- .ursaCacheDownload(src1,mode="wt",quiet=!verbose)
+         else {
+            dst <- tempfile(fileext=".xml") 
+            download.file(src1,dst,mode="wt",quiet=!verbose)
+         }
          if (!isMetadata)
             isMetadata <- TRUE
          md <- .parse_wms(dst,verbose=verbose)
@@ -189,7 +200,12 @@
         #    download.file(src1,dst,mode="wt",quiet=!verbose)
         # else if ((verbose)&&(!isMetadata))
         #    message(src1)
-         dst <- .ursaCacheDownload(src1,mode="wt",quiet=!verbose)
+         if (cache)
+            dst <- .ursaCacheDownload(src1,mode="wt",quiet=!verbose)
+         else {
+            dst <- tempfile(fileext=".xml") 
+            download.file(src1,dst,mode="wt",quiet=!verbose)
+         }
          if (!isMetadata)
             isMetadata <- TRUE
          md <- .parse_wms(dst,verbose=verbose)
@@ -255,7 +271,12 @@
      #    download.file(src1,dst,mode="wt",quiet=!verbose)
      # else if ((verbose)&&(!isMetadata))
      #    message(src1)
-      dst <- .ursaCacheDownload(src1,mode="wt",quiet=!verbose)
+      if (cache)
+         dst <- .ursaCacheDownload(src1,mode="wt",quiet=!verbose)
+      else {
+         dst <- tempfile(fileext=".xml") 
+         download.file(src1,dst,mode="wt",quiet=!verbose)
+      }
       if (!isMetadata)
          isMetadata <- TRUE
       md <- .parse_wms(dst,verbose=verbose)
@@ -338,7 +359,12 @@
      #    download.file(src1,dst,mode="wt",quiet=!verbose)
      # else if ((verbose)&&(!isMetadata))
      #    message(src1)
-      dst <- .ursaCacheDownload(src1,mode="wt",quiet=!verbose)
+      if (cache)
+         dst <- .ursaCacheDownload(src1,mode="wt",quiet=!verbose)
+      else {
+         dst <- tempfile(fileext=".xml") 
+         download.file(src1,dst,mode="wt",quiet=!verbose)
+      }
       if (!isMetadata)
          isMetadata <- TRUE
       md <- .parse_wms(dst,verbose=verbose)
@@ -569,6 +595,7 @@
                           ,legend="topright",gdalwarp=FALSE,tile=1024L
                           ,size=800L,fail180=FALSE,transpose=FALSE
                           ,extend=FALSE
+                          ,cache=TRUE
                           ,verbose=FALSE,...) {
    arglist <- as.list(match.call())
    if (TRUE) {
@@ -755,7 +782,12 @@
          src2 <- paste0(src2,"&service=WMS&request=GetMap")
         # dst <- tempfile()
         # download.file(src2,dst,mode="wb",quiet=!verbose)
-         dst <- .ursaCacheDownload(src2,mode="wb",quiet=!verbose)
+         if (cache)
+            dst <- .ursaCacheDownload(src2,mode="wb",quiet=!verbose)
+         else {
+            dst <- tempfile() 
+            download.file(src2,dst,mode="wb",quiet=!verbose)
+         }
          if (isPNG)
             a <- try(png::readPNG(dst))
          else if (isJPEG)
@@ -813,7 +845,14 @@
          reqL <- paste(c(a,"service=WMS","request=GetLegendGraphic"),collapse="&")
         # dst <- tempfile()
         # if (.try(download.file(reqL,dst,mode="wb",quiet=!verbose))) {
-         dst <- try(.ursaCacheDownload(reqL,mode="wb",quiet=!verbose))
+         if (cache)
+            dst <- try(.ursaCacheDownload(reqL,mode="wb",quiet=!verbose))
+         else {
+            dst <- tempfile()
+            a <- try(download.file(reqL,dst,mode="wb",quiet=!verbose))
+            if (inherits(a,"try-error"))
+               dst <- a
+         }
          if (!inherits(dst,"try-error")) {
             if (isPNG)
                logo2 <- try(png::readPNG(dst))
@@ -854,7 +893,14 @@
          isOK <- TRUE
          for (i in seq_along(logo)) {
            # if (.try(download.file(reqL[i],dst,mode="wb",quiet=!verbose))) {
-            dst <- try(.ursaCacheDownload(reqL,mode="wb",quiet=!verbose))
+            if (cache)
+               dst <- try(.ursaCacheDownload(reqL,mode="wb",quiet=!verbose))
+            else {
+               dst <- tempfile()
+               a <- try(download.file(reqL[i],dst,mode="wb",quiet=!verbose))
+               if (inherits(a,"try-error"))
+                  dst <- a
+            }
             if (!inherits(dst,"try-error")) {
                if (isPNG)
                   logo[[i]] <- try(png::readPNG(dst))
@@ -937,7 +983,7 @@
                           ,transparent=TRUE
                           ,legend="topright",gdalwarp=FALSE,tile=1024L
                           ,size=800L,fail180=FALSE,transpose=FALSE
-                          ,extend=FALSE
+                          ,extend=FALSE,cache=TRUE
                           ,alpha=1,verbose=FALSE,...) {
    if (.skipPlot(TRUE))
       return(NULL)

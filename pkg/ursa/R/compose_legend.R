@@ -1,5 +1,7 @@
 'compose_legend' <- function(...)
 {
+   if (.skipPlot(FALSE))
+      return(NULL)
    nlegend <- getOption("ursaPngLayout")$legend
    arglist <- list(...)
    colorbar <- .getPrm(arglist,name="^colorbar$",default=TRUE)

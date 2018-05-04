@@ -197,7 +197,7 @@
    res$colortable[] <- rep(NA_character_,length(res$colortable))
    if ((is.character(dst))&&(length(dst)==length(res$colortable))) {
       names(res$colortable) <- dst
-      str(res$colortable)
+     # str(res$colortable)
    }
    return(res)
   # NULL

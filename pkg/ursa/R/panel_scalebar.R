@@ -18,8 +18,8 @@
    g0 <- session_grid()
    canScale <- .lgrep("\\+proj=(merc|zzzzz)\\s",g0$proj4)>0
    if ((position=="---")&&(canScale)) {
-      lon <- with(g0,.project(rbind(c(minx,miny),c(maxx,maxy)),proj4,inv=TRUE))[,2]
-      sc <- sort(1/cos(lon*pi/180))
+      lat <- with(g0,.project(rbind(c(minx,miny),c(maxx,maxy)),proj4,inv=TRUE))[,2]
+      sc <- sort(1/cos(lat*pi/180))
       if (sc[2]/sc[1]>1.25)
          position <- c("bottomleft","topleft")
    }
@@ -107,7 +107,9 @@
          y3 <- 0.95
       lat <- with(g1,.project(cbind(minx+x3*(maxx-minx),miny+y3*(maxy-miny))
                              ,g1$proj4,inv=TRUE))#[1,2]
-      sc <- if (is.null(lat)) 1 else 1/cos(lat[1,2]*pi/180)
+      lat_ts <- .gsub2("\\+lat_ts=(\\S+)\\s","\\1",g1$proj4)
+      lat_ts <- ifelse(lat_ts==g1$proj4,0,as.numeric(lat_ts))
+      sc <- if (is.null(lat)) 1 else 1/cos((lat[1,2]-lat_ts)*pi/180)
    }
    else
       sc <- 1

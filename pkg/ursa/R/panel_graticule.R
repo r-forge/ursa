@@ -196,6 +196,8 @@
             }
          }
       }
+      else
+         xy <- with(g2,cbind(x,y))
       xy <- xy[which(xy[,2]>=-90 & xy[,2]<=90),]
       n <- nrow(xy)
       i1 <- round(0.05*n)
@@ -347,7 +349,10 @@
          {
             if (isMerc) {
                lon_0 <- as.numeric(.gsub2("\\+lon_0=(\\S+)\\s","\\1",proj4))
-               lon <- c(minx,maxx)/6378137/pi*180+lon_0
+               lat_ts <- .gsub2("\\+lat_ts=(\\S+)\\s","\\1",proj4)
+               lat_ts <- ifelse(lat_ts==proj4,0,as.numeric(lat_ts))
+              # lat_ts <- 0
+               lon <- c(minx,maxx)/6378137/pi*180/cos(lat_ts*pi/180)+lon_0
             }
             v1 <- ifelse(lon[1]>=-180,-180,-360) #floor(min(lon))
             v2 <- 360 #ceiling(max(lon))
@@ -494,6 +499,8 @@
       if (isMerc) {
          B <- .getMajorSemiAxis(g1$proj4)*pi
          lon_0 <- as.numeric(.gsub(".*\\+lon_0=(\\S+)\\s.*","\\1",g1$proj4))
+         lat_ts <- .gsub2("\\+lat_ts=(\\S+)\\s","\\1",g1$proj4)
+         lat_ts <- ifelse(lat_ts==g1$proj4,0,as.numeric(lat_ts))
       }
       for (lon in lonSet)
       {
@@ -505,9 +512,11 @@
          }
          i <- i+1L
          ll <- cbind(rep(lon,length(lat)),lat)
+        # proj4a <- "+proj=merc +lon_0=48 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs "
         # gridline[[i]] <- if (isProj & !isLonLat) proj4::project(t(ll),g1$proj4) else ll
          if (isProj & !isLonLat) {
             gridline[[i]] <- .project(ll,g1$proj4)
+           # gridline[[i]] <- .project(ll,proj4a)
             if ((FALSE)&&(isMerc)) {
                x <- gridline[[i]][1,1]
                print(data.frame(lon=lon,x=x,y=(lon-lon_0)/180*B))
@@ -527,8 +536,8 @@
               #               ,minx=minx,src=xtmp,dst=x,maxx=maxx))
                gridline[[i]][,1] <- x
             }
-            if (isMerc)
-               gridline[[i]][,1] <- (lon-lon_0)/180*B
+            if ((!FALSE)&&(isMerc)) ## -- 20180423
+               gridline[[i]][,1] <- (lon-lon_0)/180*B*cos(lat_ts*pi/180)
            # print(gridline[[i]])
            # if ((isMerc)&&((lon<0)&&(gridline[[i]][1,1]>0)))
            #    gridline[[i]][,1] <- -2*20037508+gridline[[i]][,1]

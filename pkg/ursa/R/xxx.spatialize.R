@@ -48,6 +48,14 @@
    if (isPROJ4 | isEPSG)
       session_grid(NULL)
    isNative <- engine=="native"
+   if (is.character(dsn)) {
+      if (length(dsn)>1) {
+         pattern <- "\\.(gpkg|tab|kml|json|geojson|mif|sqlite|shp|osm)(\\.(zip|gz|bz2))*$"
+         dsn <- dsn[.grep(pattern,basename(dsn))]
+         if (length(dsn)!=1)
+            stop("Either filename is not recognized or multiple files")
+      }
+   }
    if (!((is.character(dsn))&&(length(dsn)==1))) {
       nextCheck <- TRUE
       if (FALSE) { ## 20180125--
@@ -503,7 +511,7 @@
            # str(da)
          }
          if (isSP) {
-            da <- methods::slot(obj,"data")[,dname[i]]
+            da <- methods::slot(obj,"data")[,dname[i],drop=TRUE]
          }
          if (is.character(da)) {
             isDateTime <- FALSE
@@ -512,25 +520,36 @@
                if (all(is.na(a))) {
                   a <- as.POSIXct(da,"",format="%Y-%m-%d %H:%M")
                }
+               if (all(is.na(a))) {
+                  a <- as.Date(da,format="%Y-%m-%d")
+               }
+               if (all(is.na(a))) {
+                  a <- as.Date(da,format="%Y/%m/%d")
+               }
                if (!all(is.na(a))) {
                   da <- a
                   rm(a)
-                  if (nchar(tz <- Sys.getenv("TZ")))
+                  if (nchar(tz <- Sys.getenv("TZ"))) {
                      da <- as.POSIXct(as.POSIXlt(da,tz=tz))
+                  }
                   isDateTime <- TRUE
                }
             }
-            if (!isDateTime)
-               Encoding(da) <- "UTF-8"
+            if (!isDateTime) {
+              # da <- iconv(da,to="UTF-8")
+              # Encoding(da) <- "UTF-8"
+            }
            ## if inherits(da,"POSIXlt") then 'da' is a list with 9 items
             if (isSF)
                obj[,dname[i]] <- da
             if (isSP) {
-               opW <- options(warn=-1)
-               da2 <- as.numeric(da)
-               options(opW)
-               if (!anyNA(da2)) {
-                  da <- if (.is.integer(da2)) as.integer(round(da2)) else da2
+               if (!inherits(da,"Date")) {
+                  opW <- options(warn=-1)
+                  da2 <- as.numeric(da)
+                  options(opW)
+                  if (!anyNA(da2)) {
+                     da <- if (.is.integer(da2)) as.integer(round(da2)) else da2
+                  }
                }
                methods::slot(obj,"data")[,dname[i]] <- da
             }
@@ -596,7 +615,7 @@
    if (is.numeric(size))
       len <- as.integer(round(max(size)))
    g2 <- getOption("ursaSessionGrid")
-   if (is.na(border)) {
+   if (any(is.na(border))) {
       if ((!is.null(g2))||(!is.null(grid)))
          border <- 0L
       else
@@ -966,7 +985,7 @@
       zoom <- which.min(abs(s-res))
       g0 <- regrid(g0,res=s[zoom])
    }
-   if (border>0) {
+   if (any(border!=0)) {
       g0 <- regrid(g0,border=border)
    }
    if ((FALSE)&&(isWeb)) {

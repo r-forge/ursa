@@ -107,6 +107,8 @@
       p4epsg <- paste0("+init=",code)
    else if (.lgrep("^(\\s+)*\\+init=epsg:\\d+",code))
       p4epsg <- .gsub("^\\s+","",code)
+   else if (is.character(code))
+      return(code)
    else
       stop(code)
    if (!force) {

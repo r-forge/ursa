@@ -70,6 +70,8 @@
                       ,"\uA9 Esri: Esri, HERE, Garmin, NGA, USGS")
    s$Esri.Hillshade <- c("https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}.jpg"
                       ,"\uA9 ESRI World Hillshade")
+   s$Esri.Satellite <- c("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.jpg"
+                      ,"\uA9 ESRI Satellite")
    s$HERE.Aerial <- c(url=paste0("https://{1234}.aerial.maps.cit.api.here.com/maptile"
                                 ,"/2.1/maptile/newest/satellite.day/{z}/{x}/{y}/256/png8?"
                                 ,"app_id=",optHERE$id,"&app_code=",optHERE$code,"&lg=eng")

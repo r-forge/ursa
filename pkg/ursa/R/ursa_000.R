@@ -116,7 +116,10 @@
       return(obj)
    }
    if (.lgrep("(categ|class)",attr)) {
-      names(ursa_colortable(obj)) <- value
+      if (!length(value))
+         names(ursa_colortable(obj)) <- NULL
+      else
+         names(ursa_colortable(obj)) <- value
       return(obj)
    }
    if (.lgrep("(name)",attr)) {

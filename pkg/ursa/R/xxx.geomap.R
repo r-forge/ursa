@@ -1,5 +1,5 @@
 '.geomap' <- function(loc=NULL,style="",geocode="",size=NA,zoom="0"
-                     ,border=27,verbose=FALSE) {
+                     ,border=27,cache=TRUE,verbose=FALSE) {
   # if (!nchar(style))
   #    style <- "google static"
    geocodeList <- eval(as.list(args(.geocode))$service)
@@ -91,10 +91,11 @@
    }
    isWMS <- isUrl & .is.wms(style)
    notYetGrid <- TRUE
+   g3 <- NULL
    if ((TRUE)||(isWMS)) {
       if (is.null(loc)) {
          border <- 0
-         g0 <- getOption("ursaSessionGrid")#session_grid()
+         g3 <- g0 <- getOption("ursaSessionGrid")#session_grid()
          notYetGrid <- is.null(g0)
          if (is.null(g0))
             loc <- c(-179,-82,179,82)
@@ -131,9 +132,14 @@
       B <- B0*pi
       x <- B*bbox[c(1,3)]/180
       cross180 <- x[1]>x[2]
-      if (cross180)
+      if (cross180) {
          x[1] <- x[1]-2*B
-      lon_0 <- round(180*mean(x)/B,6)
+         lon_0 <- round(180*mean(x)/B,6)
+      }
+      else if ((!is.null(g3))&&(.grep("\\+proj=merc",g0$proj4))) ## ++20180325
+         lon_0 <- as.numeric(.gsub(".*\\+lon_0=(\\S+)\\s.*","\\1",g0$proj4))
+      else
+         lon_0 <- round(180*mean(x)/B,6)
       proj4 <- paste("","+proj=merc +a=6378137 +b=6378137"
                     ,"+lat_ts=0.0",paste0("+lon_0=",lon_0)
                     ,"+x_0=0.0 +y_0=0 +k=1.0"
@@ -349,8 +355,11 @@
                y <- xy2[,2]
             else if (indY==1)
                y <- xy1[,2]
+            else if (indY==3) { ## ++ 20180331 use case
+               y <- xy1[,2]
+            }
             else
-               stop("extra vertical tile: no heandler (#1)")
+               stop("extra vertical tile: no handler (#1)")
             ind <- which(!is.na(.is.near(y,y0)))
             tgr <- tgr[ind,]
             v <- sort(unique(tgr[,"y"]))
@@ -408,10 +417,10 @@
                               ,fileext=tile$fileext,verbose=verbose)
       nb <- sapply(img1,function(x) {
          if (!is.array(x))
-            return(NULL)
+            return(0)
          dim(x)[3]
       })
-      if (!length(nb))
+      if (all(nb==0))
          stop("all tiles are failed")
       nbmax <- max(nb)
       if (length(unique(nb))>1) {
@@ -451,7 +460,7 @@
       php <- switch(art
          ,sputnikmap=paste0("http://static-api.maps.sputnik.ru/v1/"
                         ,"?width={w}&height={h}&z={z}&clng={lon}&clat={lat}")
-         ,google=paste0("http://maps.googleapis.com/maps/api/staticmap"
+         ,google=paste0("https://maps.googleapis.com/maps/api/staticmap"
                        ,"?center={lat},{lon}&zoom={z}&size={w}x{h}")
          ,openstreetmap=paste0("http://staticmap.openstreetmap.de/staticmap.php"
                               ,"?center={lat},{lon}&zoom={z}&size={w}x{h}")
@@ -536,12 +545,16 @@
             src <- unlist(s1)
             src <- .gsub("^=","",paste(names(src),src,sep="=",collapse="&"))
          }
-        # fname <- tempfile()
-        # download.file(src,fname,mode="wb",quiet=!verbose)
-         fname <- .ursaCacheDownload(src,mode="wb",quiet=!verbose)
+         if (cache)
+            fname <- .ursaCacheDownload(src,mode="wb",quiet=!verbose)
+         else {
+            fname <- tempfile()
+            download.file(src,fname,mode="wb",quiet=!verbose)
+         }
          basemap <- as.integer(255L*as.ursa(png::readPNG(fname)
                                            ,aperm=TRUE,flip=TRUE))
-        # file.remove(fname)
+         if (!cache)
+            file.remove(fname)
       }
       mul <- unique(c(ursa_ncol(basemap)/ursa_ncol(g0)
                      ,ursa_nrow(basemap)/ursa_nrow(g0)))

@@ -44,7 +44,7 @@
    ext <- switch(driver,'ESRI Shapefile'="(cpg|dbf|prj|qpj|shp|shx)"
                        ,'MapInfo File'="(mif|mid)",fext)
    if (isList) {
-      if (!nchar(Sys.which("ogr2ogr")))
+      if (!ogr2ogr)
          stop("'ogr2ogr' is requires to merge layers")
      # fname1 <- paste0("res",seq_along(obj),".gpkg")
       fname1 <- .maketmp(length(obj),ext=interimExt)
@@ -160,7 +160,7 @@
       close(pb)
       return(invisible(0L))
    }
-   if ((nchar(Sys.which("ogr2ogr"))>0)&&(driver %in% "SQLite")) {
+   if ((ogr2ogr)&&(driver %in% "SQLite")) {
       interim <- TRUE
       driver0 <- driver
       fext0 <- fext
@@ -251,8 +251,16 @@
       rgdal::writeOGR(obj,dsn=fname,layer=lname,driver=driver
                      ,dataset_options=dopt,layer_options=lopt
                     # ,encoding="UTF-8"
-                     ,overwrite_layer=TRUE
+                     ,overwrite_layer=TRUE,morphToESRI=FALSE
                      ,verbose=verbose)
+      if ((TRUE)&&(driver=="ESRI Shapefile")) {
+         prj <- sp::proj4string(obj)
+         prj1 <- rgdal::showWKT(prj,morphToESRI=TRUE)
+         prj2 <- rgdal::showWKT(prj,morphToESRI=FALSE)
+         if (!identical(prj1,prj2)) {
+            writeLines(prj2,gsub("\\.shp$",".prj",fname))
+         }
+      }
       options(opW)
    }
    else if (isSF) {
@@ -276,6 +284,13 @@
                   ,delete_layer=file.exists(fname)
                   ,delete_dsn=file.exists(fname)
                   ,quiet=!verbose)
+      if ((TRUE)&&(driver %in% "ESRI Shapefile")) {
+         prjname <- gsub("\\.shp$",".prj",fname)
+         wkt1 <- readLines(prjname,warn=FALSE)
+         wkt2 <- sf::st_as_text(sf::st_crs(spatial_crs(obj)))
+         if (!identical(wkt1,wkt2))
+            writeLines(wkt2,prjname)
+      }
       options(opW)
    }
    if (interim) {

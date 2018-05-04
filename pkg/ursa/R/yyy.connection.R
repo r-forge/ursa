@@ -870,6 +870,8 @@
      # (!("package:rgdal" %in% search()))) {
       if ((nchar(Sys.which("gdalsrsinfo")))&&
           (!(any(c("rgdal","sf") %in% loadedNamespaces())))) {
+         if (lverbose)
+            message("'gdalsrsinfo' engine")
          wktout <- paste0(.maketmp(),".wkt~")
         # shell(paste("gdalsrsinfo -o wkt",paste0("\"",proj4,"\""),"1>",wktout))
         # 20170319 dQuote() returns non-symmetrical quotes in interactive() 
@@ -879,10 +881,14 @@
          file.remove(wktout)
       }
       else if (!("sf" %in% loadedNamespaces())) {
-         if (!.try(wkt <- rgdal::showWKT(proj4)))
+         if (lverbose)
+            message("'rgdal' engine")
+         if (!.try(wkt <- rgdal::showWKT(proj4,morphToESRI=FALSE)))
             wkt <- NULL
       }
       else {
+         if (lverbose)
+            message("'sf' engine")
          if (!.try(wkt <- sf::st_as_text(sf::st_crs(proj4))))
             wkt <- NULL
       }

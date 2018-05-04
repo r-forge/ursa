@@ -15,19 +15,25 @@
    epsg3857 <- paste("","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0"
                     ,"+x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null"
                     ,"+wktext +no_defs")
-   if ((is.na(bbox)[1])&&(length(bbox)==1)) {
+   if ((length(bbox)==1)&&(is.na(bbox))) {
       g0 <- session_grid()
-      if (.lgrep("\\+merc",g0$proj4)) {
+      if (.lgrep("\\+proj=merc",g0$proj4)) {
+        # stop("A")
          ll <- with(g0,.project(cbind(c(minx,maxx),c(miny,maxy)),proj4,inv=TRUE))
          bbox <- c(min(ll[,1]),min(ll[,2]),max(ll[,1]),max(ll[,2]))
       }
-      else if (.gsub("(^\\s|\\s$)",g0$proj4)==.gsub("(^\\s|\\s$)",epsg3413))
+      else if (.gsub("(^\\s|\\s$)","\\1",g0$proj4)==.gsub("(^\\s|\\s$)","\\1",epsg3413)) {
+        # stop("B")
          bbox <- with(g0,c(minx,miny,maxx,maxy))
-      else
+      }
+      else {
+        # stop("C")
          bbox <- NULL
+      }
    }
    if (is.null(bbox))
       return(productList)
+   g4 <- session_grid()
    if (product %in% seq_along(productList))
       product <- productList[product]
    else {
@@ -153,6 +159,13 @@
    if ((nband(b)==4)&&(global_min(b[4])==255)&&(global_max(b[4])==255))
       b <- b[-4]
    attr(b,"copyright") <- "Global Imagery Browse Services, NASA/GSFC/ESDIS"
+   cond1 <- .grep("\\+proj=merc\\s",g1$proj4) & .grep("\\+proj=merc\\s",g4$proj4)
+   cond2 <- g1$columns==g4$columns & g1$rows==g4$rows &
+            .is.near(g1$miny,g4$miny) & .is.near(g1$maxy,g4$maxy) &
+            .is.near(g1$resx,g4$resx) & .is.near(g1$resy,g4$resy) &
+            TRUE
+   if (cond1 & cond2)
+      ursa(b,"grid") <- g4
    session_grid(b)
    if (!display)
       return(b)
@@ -177,7 +190,6 @@
                    ,"best",product,"default",time,matrixSet,paste0(z,"/",y,"/",x,ext))
   # dst <- paste0("tmp-",z,"-",y,"-",x,ext)
   # dst <- sapply(seq_along(src),function(x) tempfile())
-   dst <- sapply(seq_along(src),function(x) tempfile())
    method <- getOption("download.file.method")
    isBundle <-  ((!is.null(method))&&(method=="libcurl")&&(capabilities("libcurl")))
    if (isBundle) {
@@ -186,19 +198,20 @@
    a <- vector("list",length(src))
    for (i in seq_along(a)) {
       if (!isBundle) {
-         res <- try(download.file(src[i],dst[i],mode="wb",quiet=!verbose))
-         if (inherits(res,"try-error")) {
-            print(res)
+        # res <- try(download.file(src[i],dst[i],mode="wb",quiet=!verbose))
+         dst <- try(.ursaCacheDownload(src[i],mode="wb",quiet=!verbose))
+         if (inherits(dst,"try-error")) {
+            print(dst)
             a[[i]] <- NULL
             next
          }
       }
       if (isPNG) {
-         a[[i]] <- aperm(png::readPNG(dst[i]),c(2,1,3))
+         a[[i]] <- aperm(png::readPNG(dst),c(2,1,3))
       }
       else if (isJPG)
-         a[[i]] <- aperm(jpeg::readJPEG(dst[i]),c(2,1,3))
+         a[[i]] <- aperm(jpeg::readJPEG(dst),c(2,1,3))
    }
-   file.remove(dst)
+  # file.remove(dst)
    a
 }
