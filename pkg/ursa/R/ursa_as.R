@@ -6,8 +6,9 @@
       return(obj)
    if (.is.ursa_stack(obj))
       return(ursa_brick(obj)) ## 20170122 removed 'return(obj)'
-   if (is.data.frame(obj))
+   if (is.data.frame(obj)) {
       return(allocate(obj,...))
+   }
    if (inherits(obj,c("SpatialGridDataFrame"))) {
       requireNamespace("sp",quietly=.isPackageInUse())
       cs <- methods::slot(sp::getGridTopology(obj),"cellsize")
@@ -154,7 +155,7 @@
       session_grid(g1)
      # hasData <- inherits("NULL",class(attr(obj,"data")))
       hasData <- !inherits(attr(obj,"data"),"NULL")
-      .elapsedTime("sf::gdal_read -- start")
+     # .elapsedTime("sf::gdal_read -- start")
       if (!hasData) {
          if (!requireNamespace("sf",quietly=.isPackageInUse()))
             stop("Package 'sf' is required for this operation")
@@ -164,7 +165,7 @@
       else {
          res <- as.ursa(attr(obj,"data"),flip=TRUE)
       }
-      .elapsedTime("sf::gdal_read -- finish")
+     # .elapsedTime("sf::gdal_read -- finish")
       return(res)
    }
    if (is.list(obj)) {

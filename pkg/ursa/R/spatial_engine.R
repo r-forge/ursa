@@ -2,6 +2,7 @@
 
 'spatial_crs' <- 'spatial_proj4' <- function(obj,verbose=FALSE) {
    isUrsa <- is.ursa(obj) | is.ursa(obj,"grid")
+   isPrm <- is.numeric(obj) | is.character(obj)
    isSF <- .isSF(obj)
    isSP <- .isSP(obj)
    if (verbose)
@@ -14,6 +15,9 @@
    }
    if (isUrsa)
       return(ursa_proj4(obj))
+   if (isPrm) {
+      return(.epsg2proj4(obj,force=TRUE))
+   }
    return(NULL)
 }
 'spatial_crs<-' <- 'spatial_proj4<-' <- function(obj,verbose=FALSE,value) {
@@ -52,7 +56,11 @@
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    if (isSF) {
-      obj <- sf::st_sf(obj,geom=spatial_geometry(value))
+      if (!.isSF(obj)) # lost geometry colname
+         obj <- sf::st_sf(obj,geom=spatial_geometry(value))
+      else {
+         obj[,attr(obj,"sf_column")][[1]] <- value
+      }
    }
    if (isSP) {
       geotype <- spatial_geotype(value)
@@ -61,6 +69,16 @@
                    ,LINESTRING=sp::SpatialLinesDataFrame(value,obj,match.ID=FALSE)
                    ,POINT=sp::SpatialPointsDataFrame(value,obj,match.ID=FALSE)
                    ,stop(paste("unimplemented selection:",geotype)))
+   }
+   if (!isSP & !isSF) {
+      isSF <- .isSF(obj)
+      isSP <- .isSP(obj)
+      if (is.null(value)) {
+         if (isSF)
+            sf::st_geometry(obj) <- NULL
+         if (isSP)
+            obj <- methods::slot(obj,"data")
+      }
    }
    obj
 }
@@ -195,6 +213,10 @@
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,operation=operation,row.names="engine"))
    if (operation=="geometry") {
+      n <- spatial_count(obj)
+      if (nrow(value)!=n) {
+         value <- value[rep(seq(nrow(value)),len=n),]
+      }
       spatial_geometry(value) <- obj
       return(value)
    }
@@ -212,11 +234,13 @@
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    if (isSF) {
-      return(sf::st_transform(obj,crs,...))
+      return(sf::st_transform(obj,sf::st_crs(crs),...))
    }
    if (isSP) {
       if (is.numeric(crs))
          crs <- .epsg2proj4(crs,force=FALSE)
+      else if (.isSP(crs))
+         crs <- sp::proj4string(crs)
       return(sp::spTransform(obj,crs,...)) ## sp::CRS(crs) ?
    }
    return(NULL)
@@ -265,6 +289,7 @@
         # ret <- do.call("rbind",lapply(sf::st_geometry(obj),unclass))
          ret <- t(sapply(sf::st_geometry(obj),unclass))
          rownames(ret) <- seq(nrow(ret))
+         colnames(ret) <- c("x","y")
          return(ret)
       }
       if (geoType=="LINESTRING") {
@@ -301,6 +326,7 @@
       if (geoType=="POINT") {
          ret <- unname(sp::coordinates(obj))
          rownames(ret) <- seq(nrow(ret))
+         colnames(ret) <- c("x","y")
          return(ret)
       }
       if (geoType=="LINESTRING") {
@@ -538,7 +564,7 @@
    }
    NULL
 }
-'spatial_inside' <- function(obj,verbose=FALSE) {
+'spatial_clip' <- function(obj,verbose=FALSE) {
    isSF <- .isSF(obj)
    isSP <- .isSP(obj)
    if (verbose)

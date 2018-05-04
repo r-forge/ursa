@@ -1,4 +1,5 @@
 \name{as.Raster}
+%%~ \alias{raster}
 \alias{as.Raster}
 \alias{as.Raster.ursaRaster}
 \alias{as.Raster.list}
@@ -17,6 +18,8 @@ as.Raster(obj)
 \method{as.Raster}{list}(obj)
 
 \method{as.Raster}{ursaStack}(obj)
+
+\method{as.Raster}{NULL}(obj)
 
 }
 %- maybe also 'usage' for other objects documented here.

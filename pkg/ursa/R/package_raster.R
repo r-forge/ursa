@@ -1,10 +1,14 @@
 # TODO: replace 'a@value' --> 'methods::slot(a,"value")'
 
-'as.Raster' <- function(obj) UseMethod("as.Raster",obj)
+# 'raster' <- function(obj) UseMethod("as.Raster",obj) 
+## The following object is masked from 'package:...'
+
+'as.Raster' <- function(obj=NULL) UseMethod("as.Raster",obj)
 'as.Raster.ursaRaster' <- function(obj) .as.Raster(obj)
 'as.Raster.list' <- function(obj) .as.Raster(obj)
 'as.Raster.ursaStack' <- function(obj) .as.Raster(obj)
 # 'as.Raster.ursaBrick' <- function(obj) .as.Raster(obj)
+'as.Raster.NULL' <- function(obj) .as.Raster(ursa())
 '.as.Raster' <- function(obj) {
   # suppressMessages({
       requireNamespace("methods",quietly=.isPackageInUse())

@@ -1,4 +1,4 @@
-2018-03-26
+2018-05-04
 
 <style>
    code,
@@ -12,9 +12,18 @@
    }
 </style>
 
+### version 3.8.6
+
+  - Coastline is updated to version 2018-03-27 09:31
+
+  - Corrected graticules and scalebar for ‘+proj=merc’ projection class
+    for non zero latitude of true scale (e.g., ‘+lat\_ts=80.8’)
+
+  - Package `fasterize` is suggested.
+
 ### version 3.8.5
 
-  - Imporing results of `sf::gdal_read`
+  - Imporing results of `sf::gdal_read`.
 
   - Increased contrasting in cubehelix for low-colored palettes.
 

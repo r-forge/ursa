@@ -1,7 +1,7 @@
 panel_legend
 spatial_centroid
+spatial_clip
 spatial_fields<-
-spatial_inside
 spatial_read
 spatial_write
 spatialize

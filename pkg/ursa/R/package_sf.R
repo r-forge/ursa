@@ -11,16 +11,27 @@
    b1 <- .grep(patt,a$meta,value=TRUE)
    bname <- .gsub(patt,"\\2",b1)
    bname[as.integer(.gsub(patt,"\\1",b1))] <- bname
-   resx <- a$geotransform[2]
-   resy <- -a$geotransform[6]
-   minx <- a$geotransform[1]
-   maxy <- a$geotransform[4]
-   maxx <- minx+columns*resx
-   miny <- maxy-rows*resy
+   if (all(is.na(a$geotransform))) {
+      resx <- 1
+      resy <- 1
+      minx <- 0
+      miny <- 0
+      maxx <- columns
+      maxy <- rows
+   }
+   else {
+      resx <- a$geotransform[2]
+      resy <- -a$geotransform[6]
+      minx <- a$geotransform[1]
+      maxy <- a$geotransform[4]
+      maxx <- minx+columns*resx
+      miny <- maxy-rows*resy
+   }
    g1 <- regrid(minx=minx,maxx=maxx,miny=miny,maxy=maxy,columns=columns,rows=rows
                ,proj4=a$proj4string)
    session_grid(g1)
    res <- ursa(attr(sf::gdal_read(fname,read_data=TRUE),"data"),flip=TRUE)
-   names(res) <- bname
+   if (length(bname)==length(res))
+      names(res) <- bname
    res
 }

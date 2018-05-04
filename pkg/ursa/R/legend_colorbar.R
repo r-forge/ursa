@@ -108,11 +108,31 @@
    isInterval <- length(label)!=length(ct)
    if ((isChar)&&(!isInterval))
       label <- names(ct)
+   family <- getOption("ursaPngFamily")
+   side <- .getSide()
+   if ((length(ct)==1)&&(isChar))
+      las <- 0
    if ((isChar)&&(abbrev>0)) {
       if (all(Encoding(label)!="UTF-8")) {
          label2 <- label #iconv(label,to="UTF-8")
          if (.isRscript()) {
-            a <- .try(label <- abbreviate(label2,minlength=abbrev,strict=TRUE))
+            shorten <- side %in% c(1,3) & las %in% c(0,1) |
+                       side %in% c(2,4) & las %in% c(0,3)
+            if (!shorten)
+               a <- .try(label <- abbreviate(label2,minlength=abbrev,strict=TRUE))
+            else {
+               abbrev <- 64
+               mwidth <- par()$fin[ifelse(side %in% c(1,3),1,2)]
+               for (abbr in c(abbrev:2)) {
+                  a <- .try(label <- abbreviate(label2,minlength=abbr,strict=TRUE))
+                  if (!a)
+                     break
+                  width <- max(strwidth(paste0("Ww",label)
+                                   ,units="inches",cex=cex,family=family))
+                  if (width*length(label)<mwidth)
+                     break
+               }
+            }
          }
          else {
            # encdng <- Encoding(label)
@@ -130,15 +150,11 @@
          substr(label[ind],abbrev,abbrev) <- ">"
       }
    }
-   if ((length(ct)==1)&&(isChar))
-      las <- 0
   # maxlabel <- ifelse(isChar || forceLabel,999,21) ## removed 2015-12-13
    maxlabel <- ifelse(forceLabel,999,21) ## added 2015-12-13
-   family <- getOption("ursaPngFamily")
    offset <- NULL
    if (length(offset)!=4)
       offset <- rep(offset[1],4)
-   side <- .getSide()
    if (is.na(adj)) {
       if (!isChar) {
          if (side %in% c(2,4)) {
@@ -365,7 +381,8 @@
             }
             if (exists("ind1"))
                rm(ind1)
-            rm(ind2)
+            if (exists("ind2"))
+               rm(ind2)
          }
          if (!is.null(keepLabel))
             label <- keepLabel[unique(as.integer(round(label)))]

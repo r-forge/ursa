@@ -24,7 +24,7 @@
    if (is.na(verbose))
       verbose <- isSP
    g0 <- session_grid()
-   if ((is.numeric(obj))&&(length(obj)==4)&&
+   if ((!missing(obj))&&(is.numeric(obj))&&(length(obj)==4)&&
        (!anyNA(match(names(obj),c("minx","maxx","miny","maxy"))))) {
       obj <- regrid(bbox=unname(obj),dim=c(1,1),proj4=session_crs())
    }
