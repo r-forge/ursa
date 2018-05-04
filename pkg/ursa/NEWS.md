@@ -19,7 +19,8 @@
   - Corrected graticules and scalebar for ‘+proj=merc’ projection class
     for non zero latitude of true scale (e.g., ‘+lat\_ts=80.8’)
 
-  - Package `fasterize` is suggested.
+  - Package `fasterize` is suggested. Version of suggested package `sf`
+    should be `>=0.6-1`.
 
 ### version 3.8.5
 
