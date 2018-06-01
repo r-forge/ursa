@@ -168,6 +168,39 @@
      # .elapsedTime("sf::gdal_read -- finish")
       return(res)
    }
+   if (inherits(obj,"stars")) {
+      d <- sapply(obj,function(x) length(dim(x)))
+      
+      if (any(d!=3))
+         stop("import 'stars' object: unhandled 4-dimensional arrays")
+      md <- attr(obj,"dimensions")
+      cond1 <- identical(md$x$geotransform,md$y$geotransform)
+      cond2 <- identical(md$x$refsys,md$y$refsys)
+      if ((!cond1)||(!cond2))
+         stop("import 'stars' object: unhandled difference in 'x' and 'y' dimensions")
+      geot <- md$x$geotransform
+      columns <- md$x$to
+      rows <- md$y$to
+      resx <- geot[2]
+      resy <- -geot[6]
+      minx <- geot[1]
+      maxy <- geot[4]
+      maxx <- minx+columns*resx
+      miny <- maxy-rows*resy
+      g1 <- regrid(minx=minx,maxx=maxx,miny=miny,maxy=maxy,columns=columns,rows=rows
+                  ,proj4=md$x$refsys)
+      session_grid(g1)
+      isHomo <- length(obj)==0 ##
+      if (isHomo)
+         res <- as.ursa(obj[[1]],flip=TRUE)
+      else {
+         res <- vector("list",length(obj))
+         names(res) <- names(obj)
+         for (i in seq_along(res))
+            res[[i]] <- as.ursa(obj[[i]],flip=TRUE)
+      }
+      return(res)
+   }
    if (is.list(obj)) {
       if ((length(obj$x)==length(obj$z))&&(length(obj$y)==length(obj$z))) 
          return(allocate(obj,...))

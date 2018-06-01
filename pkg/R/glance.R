@@ -76,8 +76,8 @@
       else {
          if ((TRUE)&&  #(!.isPackageInUse())&&
               (.lgrep("\\.(nc|hdf)$",basename(arglist[[1]])))) { ## dev
-           # obj <- .open_ncdf(arglist[[1]])
-            obj <- .read_ncdf(arglist[[1]],".+")
+           # obj <- .open_nc(arglist[[1]])
+            obj <- .read_nc(arglist[[1]],".+")
             if (!inherits(obj,"data.frame")) {
                obj <- obj[sapply(obj,is.ursa)]
                if (length(arglist)==1)

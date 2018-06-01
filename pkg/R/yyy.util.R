@@ -185,11 +185,12 @@
    }
    if (any(abs(x)>1e9))
       return(FALSE)
-   y <- abs(x-as.integer(round(x)))
+   y <- abs(x-round(x)) ## # y <- abs(x-as.integer(round(x)))
    if (all(x>100)) {
       y <- y/x
    }
-   all(y<tolerance)
+   res <- all(y<tolerance)
+   res
 }
 '.is.rgb' <- function(obj) {
    if (.is.colortable(obj))
@@ -339,17 +340,15 @@
       return(paste0(as.character(x),"\uB0",suffix[1]))
    y
 }
-'.isRscript' <- function() .lgrep("^--file=",commandArgs(FALSE))>0
+'.isRscript' <- function() .lgrep("^(--file=|-f$|--slave$)",commandArgs(FALSE))>=2
 '.isPackageInUse' <- function() "ursa" %in% loadedNamespaces()
 '.argv0path' <- function() {
    arglist <- commandArgs(FALSE)
-   a <- .grep("^--file=",arglist,value=TRUE,ignore.case=FALSE)
-   if (length(a))
-      return(strsplit(a,"=")[[1]][2])
-   ind <- .grep("^-f$",arglist,ignore.case=FALSE)
-   if (!length(ind))
-      return("")
-   arglist[ind+1L]
+   if (length(ind <- .grep("^--file=.+",arglist,ignore.case=FALSE))==1)
+      return(strsplit(arglist[ind],"=")[[1]][2])
+   if (length(ind <- .grep("^-f$",arglist,ignore.case=FALSE))==1)
+      return(arglist[ind+1L])
+   ""
 }
 '.argv0' <- function() basename(.argv0path())
 '.argv0dir' <- function() dirname(.argv0path())

@@ -169,8 +169,8 @@
    dst
 }
 '.atOnceCacheRebuild' <- function() {
-   a <- read.table("_inventory.txt",sep=",",dec=".")
+   a <- utils::read.table("_inventory.txt",sep=",",dec=".")
    a <- data.frame(a[,1:2],B=0,a[,3:5])
    str(a)
-   write.table(a,"_inverntory.new",sep=",",dec=".",col.names=FALSE,row.names=FALSE)
+   utils::write.table(a,"_inverntory.new",sep=",",dec=".",col.names=FALSE,row.names=FALSE)
 }

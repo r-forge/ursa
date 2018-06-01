@@ -58,17 +58,26 @@
    keepColors <- ncolor
    dropIndex <- FALSE
    if (missing(obj)) {
-      v <- 0
-      if (length(name))
+      if (length(value)) {
+        # v <- length(value)
+         obj <- value
+         dropIndex <- TRUE
+      }
+      else if (length(name)) {
          v <- length(name)
-      else if (length(value))
-         v <- length(value)
-      else if (length(breakvalue))
+         obj <- seq_len(v)
+         dropIndex <- TRUE
+      }
+      else if (length(breakvalue)) {
          v <- length(breakvalue)+1L
-      else if ((is.character(pal))&&(length(pal)))
+         obj <- seq_len(v)
+         dropIndex <- TRUE
+      }
+      else if ((is.character(pal))&&(length(pal))) {
          v <- length(pal)
-      obj <- seq_len(v)
-      dropIndex <- TRUE
+         obj <- seq_len(v)
+         dropIndex <- TRUE
+      }
    }
    isList <-  .is.ursa_stack(obj)
    if (isList) { ## recursive!!!

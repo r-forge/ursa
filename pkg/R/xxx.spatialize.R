@@ -34,6 +34,11 @@
    }
    if ((length(crs))&&(style=="auto"))
       style <- .epsg2proj4(crs)
+   else {
+      crs2 <- .epsg2proj4(style)
+      if (.lgrep("\\+(init|proj)",crs2))
+         style <- crs2
+   }
    isEPSG <- FALSE
   # isPROJ4 <- nchar(style)>36 ## need more accurate detecton of proj4
    isPROJ4 <- .lgrep("(\\+init=epsg\\:|\\+proj=\\w+|\\+(ellps|datum=))",style)>0
@@ -128,6 +133,29 @@
          }
          else
             return(display(dsn,...))
+      }
+      if ((nextCheck)&&(is.data.frame(dsn))&&
+          (is.character(coords))&&(length(coords)==2)) {
+         #isCRS <- ((!is.na(crsNow))&&(nchar(crsNow)))
+         if (style!="auto")
+            crsNow <- style
+         else
+            crsNow <- NA
+         isCRS <- ((!is.na(crsNow))&&(nchar(crsNow)))
+         if (isSF) {
+            if (isCRS)
+               obj <- sf::st_as_sf(dsn,coords=coords,crs=crsNow)
+            else
+               obj <- sf::st_as_sf(dsn,coords=coords)
+         }
+         else if (isSP) {
+            obj <- dsn
+            sp::coordinates(obj) <- coords
+            if (isCRS)
+               sp::proj4string(obj) <- crsNow
+         }
+         rm(dsn)
+         nextCheck <- FALSE
       }
       if ((FALSE)&&(nextCheck)&&((isSF)||(isNative))) { ## has checked early
          if (isNative) {
@@ -383,7 +411,7 @@
             system2("bzip2",c("-f -d -c",.dQuote(dsn0)),stdout=dsn)
          }
          if (isCDF <- .lgrep("\\.(nc|hdf)$",dsn)>0) {
-            obj <- .read_ncdf(dsn,".+")
+            obj <- .read_nc(dsn,".+")
             if (!inherits(obj,"data.frame"))
                obj <- as.data.frame(as.ursa(obj[sapply(obj,is.ursa)]))
             else {
@@ -482,6 +510,7 @@
    }
    else
       dname <- spatial_fields(obj)
+   dname0 <- dname
    hasTable <- length(dname)>0
    if (is.na(field)[1])
       field <- ".+"
@@ -494,7 +523,7 @@
      # str(asf)
      # return(invisible(20L))
    }
-   if ((TRUE)&&(length(dname))) {
+   if ((!identical(dname0,dname))&&(length(dname))) {
       if (isSF)
          obj <- obj[,dname]
       if (isSP) {
@@ -502,9 +531,12 @@
       }
    }
    if (hasTable) {
-     # lc <- Sys.getlocale("LC_CTYPE")
-     # Sys.setlocale("LC_CTYPE","Russian")
+      if (isSF)
+         cl <- lapply(obj,class)[dname]
+      else if (isSP)
+         cl <- lapply(methods::slot(obj,"data"),class)[dname]
       for (i in seq_along(dname)) {
+         cl2 <- cl[i]
          if (isSF) {
             da <- obj[,dname[i],drop=TRUE] ## sf>=0.5
            # da <- obj[,dname[i],drop=TRUE][,,drop=TRUE] ## sf>=0.4
@@ -515,10 +547,13 @@
          }
          if (is.character(da)) {
             isDateTime <- FALSE
-            if (dev <- TRUE) {
+            if ((dev <- TRUE)&&(.lgrep("\\d{4}.*\\d{2}.*\\d{2}",da))) {
                a <- as.POSIXct(as.POSIXlt(da,format="%Y-%m-%dT%H:%M:%SZ",tz="UTC"))
                if (all(is.na(a))) {
-                  a <- as.POSIXct(da,"",format="%Y-%m-%d %H:%M")
+                  a <- as.POSIXct(da,tz="",format="%Y-%m-%d %H:%M")
+               }
+               if (all(is.na(a))) {
+                  a <- as.POSIXct(da,tz="",format="%Y-%m-%dT%H:%M")
                }
                if (all(is.na(a))) {
                   a <- as.Date(da,format="%Y-%m-%d")
@@ -538,28 +573,34 @@
             if (!isDateTime) {
               # da <- iconv(da,to="UTF-8")
               # Encoding(da) <- "UTF-8"
+              # if (is.null(cpg)) ## ++ 20180527
+              #    Encoding(da) <- "UTF-8"
             }
            ## if inherits(da,"POSIXlt") then 'da' is a list with 9 items
             if (isSF)
                obj[,dname[i]] <- da
             if (isSP) {
-               if (!inherits(da,"Date")) {
+               if (!inherits(da,c("Date","POSIXct"))) {
                   opW <- options(warn=-1)
                   da2 <- as.numeric(da)
                   options(opW)
-                  if (!anyNA(da2)) {
+                  if ((!anyNA(da2))&&(length(grep("^0.+",da))==0)) {
                      da <- if (.is.integer(da2)) as.integer(round(da2)) else da2
                   }
                }
                methods::slot(obj,"data")[,dname[i]] <- da
             }
          }
-         else if ((TRUE)&&(.is.integer(na.omit(da)))) { # &&(!is.integer(da))
-            da <- as.integer(round(da))
-            if (isSF)
-               obj[,dname[i]] <- da
-            if (isSP)
-               methods::slot(obj,"data")[,dname[i]] <- da
+         else if (TRUE) {
+           # isInt <- .is.integer(na.omit(da))
+            isInt <- .is.integer(da)
+            if (isInt) { # &&(!is.integer(da))
+               da <- as.integer(round(da))
+               if (isSF)
+                  obj[,dname[i]] <- da
+               if (isSP)
+                  methods::slot(obj,"data")[,dname[i]] <- da
+            }
          }
          else if ((FALSE)&&(isSP)) {
             if (.is.integer(na.omit(da))) {
@@ -683,10 +724,15 @@
          proj4 <- sf::st_crs(obj)$proj4string
       if (isSP)
          proj4 <- sp::proj4string(obj)
+      if ((is.na(proj4))&&(nchar(style))&&(.lgrep("\\+proj=.+",style))) { ## ++ 20180530
+         proj4 <- style
+        # isPROJ4 <- FALSE
+      }
       if ((proj4=="")&&(!(proj %in% c("auto","internal")))) {
          resetProj <- TRUE
          proj4 <- "auto"
       }
+     # if (is.na(proj4))
       isLonLat <- .lgrep("(\\+proj=longlat|epsg:4326)",proj4)>0
       if ((proj %in% c("auto"))&&(isLonLat)&&(!isEPSG)) { ## added 2016-08-09
          resetProj <- TRUE

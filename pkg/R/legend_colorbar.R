@@ -112,44 +112,6 @@
    side <- .getSide()
    if ((length(ct)==1)&&(isChar))
       las <- 0
-   if ((isChar)&&(abbrev>0)) {
-      if (all(Encoding(label)!="UTF-8")) {
-         label2 <- label #iconv(label,to="UTF-8")
-         if (.isRscript()) {
-            shorten <- side %in% c(1,3) & las %in% c(0,1) |
-                       side %in% c(2,4) & las %in% c(0,3)
-            if (!shorten)
-               a <- .try(label <- abbreviate(label2,minlength=abbrev,strict=TRUE))
-            else {
-               abbrev <- 64
-               mwidth <- par()$fin[ifelse(side %in% c(1,3),1,2)]
-               for (abbr in c(abbrev:2)) {
-                  a <- .try(label <- abbreviate(label2,minlength=abbr,strict=TRUE))
-                  if (!a)
-                     break
-                  width <- max(strwidth(paste0("Ww",label)
-                                   ,units="inches",cex=cex,family=family))
-                  if (width*length(label)<mwidth)
-                     break
-               }
-            }
-         }
-         else {
-           # encdng <- Encoding(label)
-           # Encoding(label) <- "UTF-8"
-            a <- .try(label <- abbreviate(label2,minlength=abbrev,strict=TRUE))
-           # Encoding(label) <- encdng
-         }
-         rm(label2)
-      }
-      else
-         a <- FALSE
-      if (!a) {
-         ind <- which(nchar(iconv(label,to="UTF-8"))>abbrev)
-         label <- substr(label,1,abbrev)
-         substr(label[ind],abbrev,abbrev) <- ">"
-      }
-   }
   # maxlabel <- ifelse(isChar || forceLabel,999,21) ## removed 2015-12-13
    maxlabel <- ifelse(forceLabel,999,21) ## added 2015-12-13
    offset <- NULL
@@ -224,6 +186,45 @@
    else if (side %in% c(2,4))
       plot(0,0,type="n",ylim=c(min(z0)-0.5,max(z0)+0.5),xlim=c(0,1)
           ,xlab="",ylab="",axes=FALSE)
+   if ((isChar)&&(abbrev>0)) {
+      if (all(Encoding(label)!="UTF-8")) {
+         label2 <- label #iconv(label,to="UTF-8")
+         if (.isRscript()) {
+            shorten <- side %in% c(1,3) & las %in% c(0,1) |
+                       side %in% c(2,4) & las %in% c(0,3)
+            if (!shorten)
+               a <- .try(label <- abbreviate(label2,minlength=abbrev,strict=TRUE))
+            else {
+               abbrev <- 64
+               mwidth <- par()$fin[ifelse(side %in% c(1,3),1,2)]
+               for (abbr in c(abbrev:2)) {
+                  a <- .try(label <- abbreviate(label2,minlength=abbr,strict=TRUE))
+                  if (!a)
+                     break
+                  width <- max(strwidth(paste0("Ww",label)
+                                   ,units="inches",cex=cex,family=family))
+                 # print(c(w0=width,w1=mwidth,w2=width*length(label)))
+                  if (width*length(label)<mwidth)
+                     break
+               }
+            }
+         }
+         else {
+           # encdng <- Encoding(label)
+           # Encoding(label) <- "UTF-8"
+            a <- .try(label <- abbreviate(label2,minlength=abbrev,strict=TRUE))
+           # Encoding(label) <- encdng
+         }
+         rm(label2)
+      }
+      else
+         a <- FALSE
+      if (!a) {
+         ind <- which(nchar(iconv(label,to="UTF-8"))>abbrev)
+         label <- substr(label,1,abbrev)
+         substr(label[ind],abbrev,abbrev) <- ">"
+      }
+   }
    if (isTick)
    {
       if (TRUE) { #(!isChar) {

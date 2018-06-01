@@ -56,8 +56,11 @@
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    if (isSF) {
-      if (!.isSF(obj)) # lost geometry colname
+      if (!.isSF(obj)) {# lost geometry colname
+         cname <- colnames(obj)
          obj <- sf::st_sf(obj,geom=spatial_geometry(value))
+         spatial_fields(obj) <- cname
+      }
       else {
          obj[,attr(obj,"sf_column")][[1]] <- value
       }
@@ -132,7 +135,7 @@
    }
    return(NULL)
 }
-'spatial_fields' <- function(obj,verbose=FALSE) {
+'spatial_fields' <- 'spatial_colnames' <- function(obj,verbose=FALSE) {
    isSF <- .isSF(obj)
    isSP <- .isSP(obj)
    if (verbose)
@@ -160,15 +163,19 @@
    }
    return(NULL)
 }
-'spatial_fields<-' <- function(obj,verbose=FALSE,value) {
+'spatial_fields<-' <- 'spatial_colnames<-' <- function(obj,verbose=FALSE,value) {
    isSF <- .isSF(obj)
    isSP <- .isSP(obj)
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
-   colnames(spatial_data(obj)) <- value
    if (isSF) {
+      oldvalue <- names(attr(obj,"agr"))
+      colnames(obj)[match(oldvalue,colnames(obj))] <- value
      # colnames(obj)[-match(attr(obj,"sf_column"),colnames(obj))] <- value
       names(attr(obj,"agr")) <- value
+   }
+   if (isSP) {
+      colnames(spatial_data(obj)) <- value 
    }
    obj
 }
@@ -189,7 +196,9 @@
          return(NULL)
       res <- methods::slot(obj,"data")
    }
-   else 
+   else if (is.data.frame(obj))
+      return(obj)
+   else
       return(NULL)
    ind <- .grep(subset,colnames(res))
    if (!length(ind))
@@ -215,7 +224,7 @@
    if (operation=="geometry") {
       n <- spatial_count(obj)
       if (nrow(value)!=n) {
-         value <- value[rep(seq(nrow(value)),len=n),]
+         value <- value[rep(seq(nrow(value)),len=n),,drop=FALSE]
       }
       spatial_geometry(value) <- obj
       return(value)
@@ -516,7 +525,9 @@
                               ,recursive=FALSE) {
    if (!is.character(pattern))
       pattern <- "\\.(gpkg|tab|kml|json|geojson|mif|sqlite|shp|osm)(\\.(zip|gz|bz2))*$"
-   dir(path=path,pattern=pattern,full.names=full.names,recursive=recursive)
+   res <- dir(path=path,pattern=pattern,full.names=full.names,recursive=recursive)
+  # res <- gsub("(\\.zip|gz|bz2)*$","",res) ## lack for 'file.info'
+   res
 }
 '.spatial_shape' <- function(data,geometry,verbose=FALSE) { ## not useful
    isSF <- .isSF(geometry)

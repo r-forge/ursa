@@ -14,6 +14,9 @@
 \alias{spatial_transform}
 \alias{spatial_coordinates}
 \alias{spatial_fields}
+\alias{spatial_fields<-}
+\alias{spatial_colnames}
+\alias{spatial_colnames<-}
 \alias{spatial_area}
 \alias{spatial_length}
 \alias{spatial_dim}
@@ -57,6 +60,10 @@ spatial_transform(obj, crs, verbose = FALSE, ...)
 spatial_coordinates(obj, verbose = FALSE)
 
 spatial_fields(obj, verbose = FALSE)
+spatial_colnames(obj, verbose = FALSE)
+
+spatial_fields(obj, verbose = FALSE) <- value
+spatial_colnames(obj, verbose = FALSE) <- value
 
 spatial_area(obj, verbose = FALSE)
 
@@ -135,7 +142,9 @@ Further arguments passed to \code{sf::st_transform} or to \code{sp::spTransform}
 
 \code{spatial_coordinates} returns simpliefied matrix or list of coordinates of original object.
 
-\code{spatial_fields} returns column names of spatial attributive table.
+\emph{Extract} functions \code{spatial_fields} and \code{spatial_columns} return column names of spatial attributive table. \code{spatial_columns} is synonym to \code{spatial_fields}.
+
+\emph{Replace} functions \code{spatial_fields<-} and \code{spatial_columns<-} change column names of spatial attributive table. \code{spatial_columns<-} is synonym to \code{spatial_fields<-}.
 
 \code{spatial_area} is valid for polygonal geometry. It returns area of polygons.
 

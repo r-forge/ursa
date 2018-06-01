@@ -4,6 +4,7 @@
 \alias{as.Raster.ursaRaster}
 \alias{as.Raster.list}
 \alias{as.Raster.ursaStack}
+\alias{as.Raster.NULL}
 \title{
 Coercion to package 'raster' objects
 }

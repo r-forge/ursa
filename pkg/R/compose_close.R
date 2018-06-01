@@ -209,7 +209,7 @@
          file.remove(fileout)
    }
    if (file.exists(fileout)) {
-      return(fileout)
+      return(invisible(fileout))
    }
    invisible(NULL)
 }

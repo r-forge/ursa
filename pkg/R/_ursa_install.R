@@ -125,8 +125,8 @@
    NULL
 }
 invisible({
-  # .a <- .argv0()
-   .a <- basename(strsplit(commandArgs(FALSE)[4],"=")[[1]][2])
+   .a <- try(ursa:::.argv0())
+  # .a <- basename(strsplit(commandArgs(FALSE)[4],"=")[[1]][2])
    if ((!is.na(.a))&&(.a=="_ursa_install.R"))
       .buildAndInstall()
    else {

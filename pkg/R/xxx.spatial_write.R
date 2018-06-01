@@ -1,12 +1,12 @@
-'spatial_write' <- function(obj,fname,driver=NA,compress=""
-                        ,zip=NULL,ogr2ogr=nchar(Sys.which("ogr2ogr"))>0
+'spatial_write' <- function(obj,fname,layer,driver=NA,compress=""
+                        ,ogr2ogr=nchar(Sys.which("ogr2ogr"))>0
                         ,transform=NA,verbose=FALSE) {
   # obj <- head(obj,100)
    bname <- basename(fname)
    dname <- dirname(fname)
    fext <- .gsub("^.+\\.(.+)$","\\1",bname)
    wait <- 60
-   interimExt <- c("gpkg","geojson","shp")[3]
+   interimExt <- c("gpkg","geojson","shp","sqlite")[4]
    driverList <- c(shp="ESRI Shapefile"
                   ,sqlite="SQLite",json="GeoJSON",geojson="GeoJSON",gpkg="GPKG"
                   ,tab="Mapinfo File",kml="KML")
@@ -25,6 +25,15 @@
       cl <- sapply(obj,inherits,c("sf","sfc","SpatialLinesDataFrame"
                           ,"SpatialPointsDataFrame","SpatialPolygonsDataFrame"
                           ,"SpatialLines","SpatialPoints","SpatialPolygons"))
+      cl2 <- sapply(obj,function(x) {
+         if (.isSF(x))
+            return("sf")
+         if (.isSP(x))
+            return("s")
+         return("unknown")
+      })
+      allSF <- all(cl2 %in% "sf")
+      allSP <- all(cl2 %in% "sp")
       if (any(!cl))
          isList <- FALSE
    }
@@ -41,14 +50,17 @@
          fname <- file.path(dname,bname)
       }
    }
+   if ((!missing(layer))&&((is.character(layer))&&(nchar(layer))))
+      lname <- layer
    ext <- switch(driver,'ESRI Shapefile'="(cpg|dbf|prj|qpj|shp|shx)"
                        ,'MapInfo File'="(mif|mid)",fext)
    if (isList) {
-      if (!ogr2ogr)
+      if ((!allSF)&&(!ogr2ogr))
          stop("'ogr2ogr' is requires to merge layers")
      # fname1 <- paste0("res",seq_along(obj),".gpkg")
       fname1 <- .maketmp(length(obj),ext=interimExt)
-      pb <- ursaProgressBar(min=0,max=2*length(obj))
+      if (!allSF)
+         pb <- ursaProgressBar(min=0,max=2*length(obj))
       p4s <- sapply(obj,function(x){
          res <- if (inherits(x,c("sf","sfc"))) sf::st_crs(x)$proj4string
                 else sp::proj4string(x)
@@ -59,25 +71,6 @@
       if (verbose)
          .elapsedTime("list:0")
       iname <- vector("list",length(fname1))
-      for (i in seq_along(obj)) {
-         o <- obj[[i]]
-         isSF <- inherits(o,c("sf","sfc"))
-         isSP <- !isSF
-         if (isSF) {
-            ind <- match(attr(o,"sf_column"),colnames(o))
-            jname <- colnames(o)[-ind]
-            colnames(o)[-ind] <- sprintf("fld%03d",seq_along(jname))
-         }
-         else if (isSP) {
-            jname <- colnames(methods::slot(o,"data"))
-            colnames(methods::slot(o,"data")) <- sprintf("fld%03d",seq_along(jname))
-         }
-         iname[[i]] <- jname
-         spatial_write(o,fname1[i],verbose=verbose) ## RECURSIVE
-         setUrsaProgressBar(pb)
-         if (verbose)
-            .elapsedTime(paste0("list:",i))
-      }
       lname <- names(obj)
       if (is.null(lname))
          lname <- rep("",length(obj))
@@ -85,6 +78,36 @@
          lname[ind] <- as.character(as.list(match.call())$obj)[-1][ind]
         # lname[ind] <- aname[ind]
       }
+      options(ursaSpatialMultiLayer=0L)
+      for (i in seq_along(obj)) {
+         o <- obj[[i]]
+         isSF <- inherits(o,c("sf","sfc"))
+         isSP <- !isSF
+         if (isSF) {
+            ind <- match(attr(o,"sf_column"),colnames(o))
+            jname <- colnames(o)[-ind]
+            if (interimExt=="shp")
+               colnames(o)[-ind] <- sprintf("fld%03d",seq_along(jname))
+         }
+         else if (isSP) {
+            jname <- colnames(methods::slot(o,"data"))
+            if (interimExt=="shp")
+               colnames(methods::slot(o,"data")) <- sprintf("fld%03d",seq_along(jname))
+         }
+         iname[[i]] <- jname
+         options(ursaSpatialMultiLayer=getOption("ursaSpatialMultiLayer")+1L)
+         if (allSF)
+            spatial_write(o,fname,layer=lname[i],verbose=verbose) ## RECURSIVE
+         else
+            spatial_write(o,fname1[i],verbose=verbose) ## RECURSIVE
+         if (!allSF)
+            setUrsaProgressBar(pb)
+         if (verbose)
+            .elapsedTime(paste0("list:",i))
+      }
+      options(ursaSpatialMultiLayer=NULL)
+      if (allSF)
+         return(invisible(0L))
       dopt <- character()
       lopt <- character()
       if (driver=="ESRI Shapefile")
@@ -148,7 +171,7 @@
          if (verbose)
             message(cmd)
          if (!system(cmd)) {
-            if (.grep("\\.shp$",basename(fname1[i])))
+            if (.lgrep("\\.shp$",basename(fname1[i])))
                .shp.remove(fname1[i])
             else if (file.exists(fname1[i]))
                file.remove(fname1[i])
@@ -157,10 +180,13 @@
          if (verbose)
             .elapsedTime(paste0("append:",i))
       }
-      close(pb)
+      if (!allSF)
+         close(pb)
       return(invisible(0L))
    }
-   if ((ogr2ogr)&&(driver %in% "SQLite")) {
+   appendlayer <- getOption("ursaSpatialMultiLayer")
+   appendlayer <- ifelse(is.null(appendlayer),FALSE,appendlayer>0)
+   if ((ogr2ogr)&&(driver %in% "zzzSQLite")) { ## sf>=0.6.3 great improvement
       interim <- TRUE
       driver0 <- driver
       fext0 <- fext
@@ -192,30 +218,32 @@
    if (verbose)
       print(data.frame(fname=fname,pack=compress,bname=bname,layer=lname
                       ,ext=fext,driver=driver))
-   suppressWarnings({
-      first <- TRUE
-      op <- options(warn=2)
-      for (i in seq(wait)) {
-         if (!file.exists(fname))
-            break
-         if (file.remove(fname))
-            break
-         if (first) {
-            cat(paste("Waiting",wait,"seconds for permitted writting"
-                     ,.sQuote(bname)))
-            first <- FALSE
+   if (!appendlayer) {
+      suppressWarnings({
+         first <- TRUE
+         op <- options(warn=2)
+         for (i in seq(wait)) {
+            if (!file.exists(fname))
+               break
+            if (file.remove(fname))
+               break
+            if (first) {
+               cat(paste("Waiting",wait,"seconds for permitted writting"
+                        ,.sQuote(bname)))
+               first <- FALSE
+            }
+            cat(".")
+            Sys.sleep(1)
          }
-         cat(".")
-         Sys.sleep(1)
-      }
-      options(op)
-      if (!first) {
-         if (i==wait)
-            cat(" FAILURE!\n")
-         else
-            cat(" ok!\n")
-      }
-   })
+         options(op)
+         if (!first) {
+            if (i==wait)
+               cat(" FAILURE!\n")
+            else
+               cat(" ok!\n")
+         }
+      })
+   }
    isSF <- inherits(obj,c("sf","sfc"))
    isSP <- !isSF
    if (verbose)
@@ -245,12 +273,13 @@
       }
       opW <- options(warn=1)
      # dsn <- if (driver %in% c("zzzESRI Shapefile")) dname else fname
-      if (interim) {
+      if ((interim)&&(interimExt=="shp")) {
          colnames(methods::slot(obj,"data")) <- iname <- sprintf("fld%03d",seq_along(colnames(methods::slot(obj,"data"))))
       }
+      lch <- getOption("encoding")
       rgdal::writeOGR(obj,dsn=fname,layer=lname,driver=driver
                      ,dataset_options=dopt,layer_options=lopt
-                    # ,encoding="UTF-8"
+                     ,encoding=if (lch=="UTF-8") NULL else localeToCharset()
                      ,overwrite_layer=TRUE,morphToESRI=FALSE
                      ,verbose=verbose)
       if ((TRUE)&&(driver=="ESRI Shapefile")) {
@@ -274,15 +303,23 @@
          obj <- sf::st_transform(obj,4326)
       }
       opW <- options(warn=1)
-      if (interim) {
+      if ((interim)&&(interimExt=="shp")) {
         # ind <- head(seq_along(obj),-1)
          ind <- which(is.na(match(colnames(obj),attr(obj,"sf_column"))))
          names(obj)[ind] <- iname <- sprintf("fld%03d",ind)
       }
+      if (FALSE) {
+         print(c(dsn=fname,layer=lname,appendlayer=as.character(appendlayer))
+              ,quote=FALSE)
+         print(c(delete_layer=file.exists(fname) & !appendlayer
+                ,delete_dsn=file.exists(fname) & !appendlayer
+                ,update=appendlayer))
+      }
       sf::st_write(obj,dsn=fname,layer=lname,driver=driver
                   ,dataset_options=dopt,layer_options=lopt
-                  ,delete_layer=file.exists(fname)
-                  ,delete_dsn=file.exists(fname)
+                  ,delete_layer=file.exists(fname) & !appendlayer
+                  ,delete_dsn=file.exists(fname) & !appendlayer
+                  ,update=appendlayer
                   ,quiet=!verbose)
       if ((TRUE)&&(driver %in% "ESRI Shapefile")) {
          prjname <- gsub("\\.shp$",".prj",fname)
@@ -324,6 +361,7 @@
                   ,.dQuote(fname0),.dQuote(fname),"-nln",lname)
       if (verbose)
          message(cmd)
+      q()
       keepHDR <- length(envi_list(lname))
       if (keepHDR) {
          fhdr2 <- tempfile()

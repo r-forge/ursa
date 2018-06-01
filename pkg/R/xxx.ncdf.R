@@ -1,4 +1,4 @@
-'.read_ncdf' <- function(fname,var="",level=NA,verbose=FALSE) {
+'.read_nc' <- function(fname,var="",level=NA,verbose=FALSE) {
    if (!is.character(fname))
       return(NULL)
    if (!requireNamespace("ncdf4",quietly=.isPackageInUse())) {
@@ -66,7 +66,7 @@
       if (verbose)
          print(varName[i])
      # nc2 <- nc$var[[varName[i]]]
-      b <- .open_ncdf(nc,var=varName[i],grid=TRUE,verbose=FALSE)
+      b <- .open_nc(nc,var=varName[i],grid=TRUE,verbose=FALSE)
       indS <- attr(b,"spatial")
       indT <- attr(b,"temporal")
       bname <- names(b)
@@ -80,7 +80,7 @@
       ##~ q()
       if (!length(indL)) {
         # print("B1")
-         res[[i]] <- .open_ncdf(fname,var=varName[i],verbose=verbose)[]
+         res[[i]] <- .open_nc(fname,var=varName[i],verbose=verbose)[]
       }
       else {
         # indL <- indL+2
@@ -93,7 +93,7 @@
             res2 <- vector("list",length(level))
             names(res2) <- level
             for (j in seq_along(level)) {
-               res2[[j]] <- .open_ncdf(fname,var=varName[i],level=level[j]
+               res2[[j]] <- .open_nc(fname,var=varName[i],level=level[j]
                                       ,verbose=verbose)[]
             }
             res[[i]] <- res2
@@ -102,7 +102,7 @@
          }
          else {
            # print("B3")
-            res[[i]] <- .open_ncdf(fname,var=varName[i],level=level
+            res[[i]] <- .open_nc(fname,var=varName[i],level=level
                                   ,verbose=verbose)[]
          }
       }
@@ -134,7 +134,7 @@
    }
    res
 }
-'.open_ncdf' <- function(fname,var="",level=NA,grid=FALSE,verbose=FALSE) {
+'.open_nc' <- function(fname,var="",level=NA,grid=FALSE,verbose=FALSE) {
    if (!requireNamespace("ncdf4",quietly=.isPackageInUse())) {
       stop("package 'ncdf4' is required for reading NetCDF")
      # return(NULL)

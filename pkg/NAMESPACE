@@ -10,7 +10,8 @@ importFrom("graphics", "abline", "axTicks", "axis", "contour",
 importFrom("stats", "aggregate", "density", "loess", "median", "pf",
            "predict", "runif", "sd", "var", "na.omit")
 importFrom("utils", "str", "download.file", "head", "tail", "methods",
-           "object.size", "unzip", "URLencode")
+           "object.size", "unzip", "URLencode", "localeToCharset",
+           "read.table", "write.table")
 
 export(".onAttach")
 export(".onDetach")
@@ -142,6 +143,8 @@ export("setUrsaProgressBar")
 export("spatial_area")
 export("spatial_bbox")
 export("spatial_bbox<-")
+export("spatial_colnames")
+export("spatial_colnames<-")
 export("spatial_coordinates")
 export("spatial_count")
 export("spatial_crs")
@@ -151,6 +154,7 @@ export("spatial_data<-")
 export("spatial_dim")
 export("spatial_engine")
 export("spatial_fields")
+export("spatial_fields<-")
 export("spatial_filelist")
 export("spatial_geometry")
 export("spatial_geometry<-")

@@ -185,6 +185,12 @@
    }
    ind <- .grep("&[cs]rs=",src)
    if (!length(ind)) {
+      if (cache)
+         dst <- .ursaCacheDownload(src1,mode="wt",quiet=!verbose)
+      else {
+         dst <- tempfile(fileext=".xml") 
+         download.file(src1,dst,mode="wt",quiet=!verbose)
+      }
       if (nchar(as.character(epsg))) {
          if (!nchar(version)) {
             md <- .parse_wms(dst,verbose=verbose)
@@ -200,12 +206,6 @@
         #    download.file(src1,dst,mode="wt",quiet=!verbose)
         # else if ((verbose)&&(!isMetadata))
         #    message(src1)
-         if (cache)
-            dst <- .ursaCacheDownload(src1,mode="wt",quiet=!verbose)
-         else {
-            dst <- tempfile(fileext=".xml") 
-            download.file(src1,dst,mode="wt",quiet=!verbose)
-         }
          if (!isMetadata)
             isMetadata <- TRUE
          md <- .parse_wms(dst,verbose=verbose)
