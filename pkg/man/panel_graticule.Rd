@@ -89,8 +89,9 @@ Nikita Platonov \email{platonov@sevin.ru}
 %%~ }
 \examples{
 session_grid(NULL)
-\dontrun{
-Sys.setenv(LANGUAGE="ru")}
+\donttest{ ## Changing of environmental variables is out of CRAN Policy 
+\dontrun{Sys.setenv(LANGUAGE="ru")}
+}
 
 # example no.1
 cl <- compose_design(layout=c(2,2),legend=NULL)
@@ -114,9 +115,9 @@ for (i in seq(getOption("ursaPngLayout")$image)) {
    if (i==1)
       panel_graticule()
    else if (i==2)
-      panel_graticule(decor=TRUE,lon=seq(0,360,by=20)[-1],lat=seq(-90,90,by=5))
+      panel_graticule(decor=TRUE,lon=seq(0,360,by=40)[-1],lat=seq(-90,90,by=10))
    else if (i==3)
-      panel_graticule(decor=TRUE,lon=seq(0,360,by=10)[-1],lat=seq(-90,90,by=2.5)
+      panel_graticule(decor=TRUE,lon=seq(0,360,by=20)[-1],lat=seq(-90,90,by=5)
                      ,trim=TRUE)
    else if (i==4)
       panel_graticule(gridline=FALSE)
@@ -129,7 +130,9 @@ compose_close()
 session_grid(NULL)
 display(pixelsize(),decor=TRUE,grid.col="green3",coast.col="darkgreen",side=2)
 
+\donttest{ ## Changing of environmental variables is out of CRAN Policy 
 \dontrun{Sys.setenv(LANGUAGE="") # reset environmental variable}
+}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

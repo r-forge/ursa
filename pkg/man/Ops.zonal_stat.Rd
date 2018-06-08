@@ -66,6 +66,7 @@ Nikita Platonov \email{platonov@sevin.ru}
 %%~ }
 \examples{
 session_grid(NULL)
+session_grid(regrid(mul=1/2))
 a <- pixelsize()
 val <- c(normal=a,half=a/2)
 gr <- c(group=colorize(a,nbreak=1))#+0
@@ -84,9 +85,8 @@ da2 <- aggregate(val[1],mgr,table=TRUE,mean)
 print(da2)
 da3 <- aggregate(val,mgr,table=TRUE,mean)
 print(da3)
-ra3 <- aggregate(val,mgr,table=FALSE,mean)
+ra3 <- aggregate(val,mgr,table=FALSE,mean) ## not implemented for rasters
 print(ra3)
-display(ra3)
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

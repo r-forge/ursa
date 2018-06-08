@@ -217,8 +217,8 @@ void focalMean(double *x,double *bg,int *dim,double *W,double *cvr,int *Z,int *E
             }
             else
             {
-              // Iout.line[c]=background;  //­¥ ¡ë«® ¤® 11 ­®ï¡àï 2003 £.
-              // Iout.line[c]=Iin.line[c]; //£«îª¨ á«ãç¨«¨áì 16 ¤¥ª ¡àï 2003 £.
+              // Iout.line[c]=background;  //Ð½Ðµ Ð±Ñ‹Ð»Ð¾ Ð´Ð¾ 11 Ð½Ð¾ÑÐ±Ñ€Ñ 2003 Ð³.
+              // Iout.line[c]=Iin.line[c]; //Ð³Ð»ÑŽÐºÐ¸ ÑÐ»ÑƒÑ‡Ð¸Ð»Ð¸ÑÑŒ 16 Ð´ÐµÐºÐ°Ð±Ñ€Ñ 2003 Ð³.
                if (nout>0.0)
                   res[adr2]=background;
                else
@@ -379,8 +379,8 @@ void focalMeanWithNA(double *x,int *dim,double *W,double *cvr,int *Z,int *verbos
             }
             else
             {
-              // Iout.line[c]=background;  //­¥ ¡ë«® ¤® 11 ­®ï¡àï 2003 £.
-              // Iout.line[c]=Iin.line[c]; //£«îª¨ á«ãç¨«¨áì 16 ¤¥ª ¡àï 2003 £.
+              // Iout.line[c]=background;  //Ð½Ðµ Ð±Ñ‹Ð»Ð¾ Ð´Ð¾ 11 Ð½Ð¾ÑÐ±Ñ€Ñ 2003 Ð³.
+              // Iout.line[c]=Iin.line[c]; //Ð³Ð»ÑŽÐºÐ¸ ÑÐ»ÑƒÑ‡Ð¸Ð»Ð¸ÑÑŒ 16 Ð´ÐµÐºÐ°Ð±Ñ€Ñ 2003 Ð³.
                if (nout>0.0)
                   res[adr2]=NA_REAL;
                else
@@ -627,6 +627,8 @@ void optimalDatatypeDouble(double *x,int *n,int *res)
    int i,len=*n;
    memset(val,0,sizeof(short)*32);
    double eps,eps2;
+   double pos=(double)2147483647;
+   double neg=(double)(-2147483647);
    for (i=0;i<len;i++)
    {
       if (ISNA(x[i]))
@@ -650,9 +652,9 @@ void optimalDatatypeDouble(double *x,int *n,int *res)
          val[12]=12;
      // else if ((!val[3])&&(!((val[1])||(val[2])||(val[12]))))
      //    val[3]=3;
-      else if ((x[i]>=-2147483648)&&(x[i]<=2147483647))
+      else if ((x[i]>=neg)&&(x[i]<=pos))
          val[3]=3;
-      else if ((x[i]<2147483648)||(x[i]>2147483647)) {
+      else if ((x[i]<neg)||(x[i]>pos)) {
          val[4]=4;
          break;
       }
@@ -3249,7 +3251,7 @@ void resampl4(double *obj1,double *bg,int *dim1,int *dim2,double *lim1
                      Rprintf(" %.0f",obj1[adr1]);
                   if (w>0.0)
                      n++;
-                  if ((!resample)&&(abs(w-1.0)>1e-6)&&(abs(w-0.5)>1e-6)&&(abs(w-0.25)>1e-6))
+                  if ((!resample)&&(fabs(w-1.0)>1e-6)&&(fabs(w-0.5)>1e-6)&&(fabs(w-0.25)>1e-6))
                      Rprintf("only resize but w=%f\n",w);
                   if ((!resample)&&(n))
                      break;
@@ -3295,7 +3297,7 @@ void internalMargin(double *x,int *dim,int *indr,int *indc)
    int c,r,s,t;
    double S;
    int l=lines*samples;
-   double *res=(double *)malloc(samples*lines*sizeof(double));
+   double *res=(double *)malloc(l*sizeof(double));
   // Rprintf("dim=c(%d,%d,%d)\n",samples,lines,bands);
    for (s=0;s<l;s++)
    {
@@ -3337,52 +3339,59 @@ void internalMargin(double *x,int *dim,int *indr,int *indc)
    free(res);
    return;
 }
-void areaIncrement(double *x,int *dim,double *res,double *out) {
+double calcAreaIncrement(double *x,int *dim,double *res,int adr0,int c, int r
+                        ,int r1,int c1,int r2,int c2,int r3,int c3,int verbose) {
+   int adr1,adr2,adr3;
    int samples=dim[0];
    int lines=dim[1];
-   int bands=dim[2];
+   double y1,y2,y3,z0,z1,z2,z3,ret;
    double resx=0.25*res[0]*res[0];
    double resy=0.25*res[1]*res[1];
    double resz=resx+resy;
    double resw=res[0]*res[1];
    double retw=1.0/resw;
-   int verbose=0;
-   int c,r,t;
-   int adr,adr0,adr1,adr2,adr3;
-   double y1,y2,y3,z0,z1,z2,z3,val,ret;
-   double calc(int r1,int c1,int r2,int c2,int r3,int c3) {
-      if ((r+r1<0)||(r+r2<0)||(r+r3<0)||
-          (r+r1>=lines)||(r+r2>=lines)||(r+r3>=lines)||
-          (c+c1<0)||(c+c2<0)||(c+c3<0)||
-          (c+c1>=samples)||(c+c2>=samples)||(c+c3>=samples))
-      {
-         if (verbose)
-            Rprintf(" %.3f",ret);
-         return(0.125);
-      }
-      adr1=adr0+(r+r1)*samples+(c+c1);
-     // if (adr1>150000)
-     //    Rprintf(" %d",adr1);
-      adr2=adr0+(r+r2)*samples+(c+c2);
-      adr3=adr0+(r+r3)*samples+(c+c3);
-      if ((ISNA(x[adr1]))||(ISNA(x[adr2]))||(ISNA(x[adr3])))
-      {
-         if (verbose)
-            Rprintf(" %.3f",ret);
-         return(0.125);
-      }
-      y1=x[adr1]-x[adr2];
-      y2=x[adr2]-x[adr3];
-      y3=x[adr3]-x[adr1];
-      z1=sqrt(resz+y1*y1);
-      z2=sqrt(resx+y2*y2);
-      z3=sqrt(resy+y3*y3);
-      z0=0.5*(z1+z2+z3);
-      ret=sqrt(z0*(z0-z1)*(z0-z2)*(z0-z3))*retw;
+   if ((r+r1<0)||(r+r2<0)||(r+r3<0)||
+       (r+r1>=lines)||(r+r2>=lines)||(r+r3>=lines)||
+       (c+c1<0)||(c+c2<0)||(c+c3<0)||
+       (c+c1>=samples)||(c+c2>=samples)||(c+c3>=samples))
+   {
+      ret=0.125;
       if (verbose)
          Rprintf(" %.3f",ret);
       return(ret);
    }
+   adr1=adr0+(r+r1)*samples+(c+c1);
+  // if (adr1>150000)
+  //    Rprintf(" %d",adr1);
+   adr2=adr0+(r+r2)*samples+(c+c2);
+   adr3=adr0+(r+r3)*samples+(c+c3);
+   if ((ISNA(x[adr1]))||(ISNA(x[adr2]))||(ISNA(x[adr3])))
+   {
+      ret=0.125;
+      if (verbose)
+         Rprintf(" %.3f",ret);
+      return(ret);
+   }
+   y1=x[adr1]-x[adr2];
+   y2=x[adr2]-x[adr3];
+   y3=x[adr3]-x[adr1];
+   z1=sqrt(resz+y1*y1);
+   z2=sqrt(resx+y2*y2);
+   z3=sqrt(resy+y3*y3);
+   z0=0.5*(z1+z2+z3);
+   ret=sqrt(z0*(z0-z1)*(z0-z2)*(z0-z3))*retw;
+   if (verbose)
+      Rprintf(" %.3f",ret);
+   return(ret);
+}
+void areaIncrement(double *x,int *dim,double *res,double *out) {
+   int samples=dim[0];
+   int lines=dim[1];
+   int bands=dim[2];
+   int verbose=0;
+   int c,r,t;
+   int adr,adr0;
+   double val;
    for (t=0;t<bands;t++) {
       adr0=t*lines*samples;
      // Rprintf("adr0=%d\n",adr0);
@@ -3390,14 +3399,14 @@ void areaIncrement(double *x,int *dim,double *res,double *out) {
          for (c=0;c<samples;c++) {
             adr=adr0+r*samples+c;
            // Rprintf(" %d",adr);
-            val=calc( 0, 0,-1,-1,-1, 0)+
-                calc( 0, 0,-1, 1,-1, 0)+
-                calc(-1, 1, 0, 0, 0, 1)+
-                calc( 1, 1, 0, 0, 0, 1)+
-                calc( 0, 0, 1, 1, 1, 0)+
-                calc( 0, 0, 1,-1, 1, 0)+
-                calc( 1,-1, 0, 0, 0,-1)+
-                calc(-1,-1, 0, 0, 0,-1);
+            val=calcAreaIncrement(x,dim,res,adr,c,r, 0, 0,-1,-1,-1, 0,verbose)+
+                calcAreaIncrement(x,dim,res,adr,c,r, 0, 0,-1, 1,-1, 0,verbose)+
+                calcAreaIncrement(x,dim,res,adr,c,r,-1, 1, 0, 0, 0, 1,verbose)+
+                calcAreaIncrement(x,dim,res,adr,c,r, 1, 1, 0, 0, 0, 1,verbose)+
+                calcAreaIncrement(x,dim,res,adr,c,r, 0, 0, 1, 1, 1, 0,verbose)+
+                calcAreaIncrement(x,dim,res,adr,c,r, 0, 0, 1,-1, 1, 0,verbose)+
+                calcAreaIncrement(x,dim,res,adr,c,r, 1,-1, 0, 0, 0,-1,verbose)+
+                calcAreaIncrement(x,dim,res,adr,c,r,-1,-1, 0, 0, 0,-1,verbose);
             if (ISNA(x[adr]))
                out[adr]=NA_REAL;
             else
@@ -3426,7 +3435,8 @@ void groupSummary(double *x,int *dim,double *_cover,double *weight,int *_fun
    if ((fun==1001)||(fun==1002)) // how to process NA in 'all', 'any'?
       cover=0.0;
   // Rprintf("dim=c(%d,%d) cover=%f fun=%d\n",spatial,temporal,cover,fun);
-   double *content=(double *)malloc(temporal*sizeof(double));
+   double *content;
+   content=(double *)malloc(temporal*sizeof(double));
    for (c=0;c<spatial;c++)
    {
       Mx=Sx=w=Vx=0.0;

@@ -185,7 +185,7 @@
       return(invisible(0L))
    }
    appendlayer <- getOption("ursaSpatialMultiLayer")
-   appendlayer <- ifelse(is.null(appendlayer),FALSE,appendlayer>0)
+   appendlayer <- ifelse(is.null(appendlayer),FALSE,appendlayer>1)
    if ((ogr2ogr)&&(driver %in% "zzzSQLite")) { ## sf>=0.6.3 great improvement
       interim <- TRUE
       driver0 <- driver
@@ -361,7 +361,6 @@
                   ,.dQuote(fname0),.dQuote(fname),"-nln",lname)
       if (verbose)
          message(cmd)
-      q()
       keepHDR <- length(envi_list(lname))
       if (keepHDR) {
          fhdr2 <- tempfile()
@@ -391,11 +390,11 @@
    if (!nchar(compress))
       return(invisible(NULL))
    if ((.lgrep("gz",compress))&&(nchar(Sys.which("gzip"))))
-      system2("gzip",list(fname))
+      system2("gzip",c(fname))
    else if (.lgrep("bz(ip)*2",compress)&&(nchar(Sys.which("bzip2"))))
-      system2("bzip2",list(fname))
+      system2("bzip2",c(fname))
    else if (.lgrep("xz",compress)&&(nchar(Sys.which("xz"))))
-      system2("xz",list(fname))
+      system2("xz",c(fname))
    else if (compress=="zip") {
       f <- .dir(path=dname
                ,pattern=paste0("^",lname,"\\.",ext,"$")

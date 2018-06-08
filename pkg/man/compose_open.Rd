@@ -111,45 +111,32 @@ Nikita Platonov \email{platonov@sevin.ru}
 %%~ }
 \examples{
 session_grid(NULL)
-
-b <- ursa_dummy(nband=7,min=0,max=50,mul=1/16)
-p <- list(colorize(b[1:4],pal.rich=240,pal.rotate=0)
-         ,colorize(sqrt(b[5:7]),pal.rich=-15,pal.rotate=0,stretch="equal"))
-
+b <- ursa_dummy(nband=4,min=0,max=50,mul=1/4,elements=16)
+p <- list(colorize(b[1:2],pal.rich=240,pal.rotate=0)
+         ,colorize(sqrt(b[3:4]),pal.rich=-15,pal.rotate=0,stretch="equal"))
+p
+ 
 ## exam #01
-ursa:::.ursaOptions()
-compose_open()
-panel_new()
-ursa:::.ursaOptions()
-compose_close()
-ursa:::.ursaOptions()
-   
-## exam #02
-compose_open(height=400,legend=NULL,dev=TRUE)
-
-## exam #03
 compose_open(width=950,dpi=150,pointsize=16,legend=NULL,dev=TRUE)
 
-## exam #04
-a <- pixelsize()
+## exam #02
 compose_open(pointsize=8,dpi=150,scale="1:130000000")
-compose_plot(colorize(a),scalebar=TRUE)
+compose_plot(colorize(b[1]),scalebar=TRUE,coast=FALSE)
 compose_close()
 
-## exam #05
+## exam #03
 cl <- compose_design(layout=c(2,4)
                     ,legend=list(list("top","full"),list("bottom",1:3)))
 compose_open(cl,dev=TRUE)
 
-## exam #06
-cl <- compose_design(p,layout=c(3,3),skip=c(4,6))
+## exam #04
+cl <- compose_design(p,layout=c(2,3),skip=c(2,4,6))
 compose_open(cl,dev=TRUE)
 
-\dontrun{display(p)}
-
-## exam #07
+## exam #05
 cl <- compose_design(p,side=3)
-compose_open(cl,dev=FALSE,bg="transparent");compose_close()
+compose_open(cl,dev=FALSE,bg="transparent")
+compose_close()
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

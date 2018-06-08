@@ -118,8 +118,8 @@
    }
    options(ursaTempFileCount=tcount+n)
    res <- paste0("___",list1)
-  # if (!.isRscript())
-  #    res <- file.path(getOption("ursaTempDir"),res)
+   if ((!TRUE)||(!.isRscript()))
+      res <- file.path(getOption("ursaTempDir"),res)
    res
 }
 '.args2list' <- function(args) {
@@ -176,6 +176,9 @@
 '.is.integer' <- function(x,tolerance=1e-11) {
    if (inherits(x,c("Date","POSIXt")))
       return(FALSE)
+   hasNA <- anyNA(x)
+   if (hasNA)
+      x <- x[!is.na(x)]
    if (is.ursa(x))
       x <- c(x$value)
    else if ((is.character(x))||(is.factor(x))) {
@@ -185,7 +188,8 @@
    }
    if (any(abs(x)>1e9))
       return(FALSE)
-   y <- abs(x-round(x)) ## # y <- abs(x-as.integer(round(x)))
+   y <- abs(x-round(x)) ## ++ 20180531
+  # y <- abs(x-as.integer(round(x))) ## -- 20180531
    if (all(x>100)) {
       y <- y/x
    }
@@ -340,7 +344,7 @@
       return(paste0(as.character(x),"\uB0",suffix[1]))
    y
 }
-'.isRscript' <- function() .lgrep("^(--file=|-f$|--slave$)",commandArgs(FALSE))>=2
+'.isRscript' <- function() .lgrep("^(--file=|-f$|-e$|--slave$)",commandArgs(FALSE))>=2
 '.isPackageInUse' <- function() "ursa" %in% loadedNamespaces()
 '.argv0path' <- function() {
    arglist <- commandArgs(FALSE)
@@ -377,11 +381,14 @@
   # if (!cond1)
   #    return(FALSE)
   # is.character(knitr::current_input())
-   ("knitr" %in% loadedNamespaces())&&(is.character(knitr::current_input()))
+   ("knitr" %in% loadedNamespaces())&&(is.character(knitr::current_input()))||(.isShiny())
 }
 '.isJupyter' <- function() {
    "jupyter:irkernel" %in% search()
   # "IRkernel" %in% loadedNamespaces()
+}
+'.isShiny' <- function() {
+   (("shiny" %in% loadedNamespaces())&&(length(shiny::shinyOptions())>0))
 }
 '.open' <- function(...) {
    arglist <- lapply(list(...), function(x) {
@@ -418,4 +425,62 @@
    sprj2 <- .gsub("(^\\s|\\s$)","",sprj2)
    ret <- identical(oprj2,sprj2)
    ret
+}
+'.system2.patch' <- function(...) {
+  ## in 3.5.0 failure for 'interactive()' & 'system2(...,wait=TRUE)'
+   if (FALSE) #(!interactive())
+      return(system2(...))
+   arglist <- list(...)
+   str(arglist)
+   aname <- names(arglist)
+   if (is.null(aname))
+      return(system2(...))
+   na <- length(arglist)
+   str(aname)
+  # a <- which(sapply(aname,function(x)
+  #                  !inherits(try(match.arg(x,"stdout")),"try-error")))
+   ind <- which(!nchar(aname))
+   cmd1 <- unname(unlist(arglist[ind]))
+   print(cmd1)
+   ind <- seq(na)[-ind]
+   str(ind)
+   isCon <- FALSE
+   arg1 <- list(command=NULL)
+   for (a in aname[ind]) {
+      print(a)
+      ind2 <- try(match.arg(a,"args"))
+      if (!inherits(ind2,"try-error")) {
+         cmd1 <- c(cmd1,arglist[[a]])
+         next
+      }
+      if (!isCon) {
+         ind2 <- try(match.arg(a,"stdout"))
+         if (!inherits(ind2,"try-error")) {
+            cmd1 <- c(cmd1,"1>",arglist[[a]])
+            arg1$show.output.on.console <- FALSE
+            isCon <- TRUE
+            next
+         }
+      }
+      if (!isCon) {
+         ind2 <- try(match.arg(a,"stderr"))
+         if (!inherits(ind2,"try-error")) {
+            cmd1 <- c(cmd1,"2>",arglist[[a]])
+            isCon <- TRUE
+            next
+         }
+      }
+      ind2 <- try(match.arg(a,"wait"))
+      if (!inherits(ind2,"try-error")) {
+         arg1$wait <- arglist[[a]]
+         next
+      }
+     # print(ind2)
+   }
+   arg1$command <- paste(cmd1,collapse=" ")
+   cat("--------\n")
+   str(cmd1)
+   str(arg1)
+  # return(do.call("system",arg1))
+   NULL
 }

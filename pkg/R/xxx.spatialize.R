@@ -403,12 +403,12 @@
          else if ((nchar(Sys.which("gzip")))&&(isZip <- .lgrep("\\.gz$",dsn)>0)) {
             dsn0 <- dsn
             dsn <- tempfile();on.exit(file.remove(dsn))
-            system2("gzip",c("-f -d -c",.dQuote(dsn0)),stdout=dsn)
+            system2("gzip",c("-f -d -c",.dQuote(dsn0)),stdout=dsn,stderr=FALSE)
          }
          else if ((nchar(Sys.which("bzip2")))&&(isZip <- .lgrep("\\.bz2$",dsn)>0)) {
             dsn0 <- dsn
             dsn <- tempfile();on.exit(file.remove(dsn))
-            system2("bzip2",c("-f -d -c",.dQuote(dsn0)),stdout=dsn)
+            system2("bzip2",c("-f -d -c",.dQuote(dsn0)),stdout=dsn,stderr=FALSE)
          }
          if (isCDF <- .lgrep("\\.(nc|hdf)$",dsn)>0) {
             obj <- .read_nc(dsn,".+")
@@ -592,8 +592,8 @@
             }
          }
          else if (TRUE) {
-           # isInt <- .is.integer(na.omit(da))
-            isInt <- .is.integer(da)
+            isInt <- .is.integer(na.omit(da))
+           # isInt <- .is.integer(da)
             if (isInt) { # &&(!is.integer(da))
                da <- as.integer(round(da))
                if (isSF)
