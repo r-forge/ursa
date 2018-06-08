@@ -196,7 +196,7 @@
    a <- try(png(filename=fileout,width=png_width,height=png_height,res=dpi
            ,bg=background,pointsize=pointsize
            ,type=device,antialias=antialias,family=font))
-   if (inherits(a,"try-error")) { ## 20180117 patch for conda without cairo
+   if ((inherits(a,"try-error"))&&(.Platform$OS.type=="windows")) { ## 20180117 patch for conda without cairo
       device <- "windows"
       png(filename=fileout,width=png_width,height=png_height,res=dpi
          ,bg=background,pointsize=pointsize
