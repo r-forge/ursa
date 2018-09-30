@@ -1,6 +1,0 @@
-
-devtools::spell_check()
-goodpractice::gp()
-pkgdown::build_site()
-
-http://www.masalmon.eu/2017/06/17/automatictools/

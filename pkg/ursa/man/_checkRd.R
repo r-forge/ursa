@@ -1,1 +1,0 @@
-tools::checkRd("colorize.Rd")
