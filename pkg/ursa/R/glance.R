@@ -1,6 +1,8 @@
 ## http://leaflet-extras.github.io/leaflet-providers/preview/index.html
 'glance' <- function(...) {
    arglist <- list(...)
+   execute <- .getPrm(arglist,name="(execute|view|open|render)",default=!.isShiny())
+   plotKnitr <- .isKnitr() & execute
    if (!length(arglist)) {
       viewer <- session_pngviewer(TRUE)
       on.exit(session_pngviewer(viewer))
@@ -47,7 +49,7 @@
    }
    if (!is.character(arglist[[1]])) {
       a <- do.call(".glance",arglist)
-      if (.isKnitr())
+      if (plotKnitr)
          return(a)
       return(invisible(a))
    }
@@ -69,7 +71,7 @@
       else if (.lgrep("\\.(gpkg|tab|kml|json|geojson|mif|sqlite|shp|osm)(\\.(zip|gz|bz2))*$"
                      ,arglist[[1]])) {
          ret <- do.call(".glance",arglist)
-         if (.isKnitr())
+         if (plotKnitr)
             return(ret)
          return(invisible(ret))
       }
@@ -137,7 +139,7 @@
          else {
            # message("Cannot complete without suggested package 'sf'.")
             ret <- do.call(".glance",arglist)
-            if (.isKnitr())
+            if (plotKnitr)
                return(ret)
             return(invisible(ret))
          }
@@ -181,6 +183,7 @@
   # obj <- spatialize(dsn)
    if (missing(dsn)) {
       dsn <- if (style!="auto") .geomap(style=style) else .geomap()
+      return(display(dsn,...)) ## ++20180617
    }
    toUnloadMethods <- !("methods" %in% .loaded())
    S4 <- isS4(dsn)
@@ -194,7 +197,6 @@
                    ,expand=expand,border=0
                    ,lat0=lat0,lon0=lon0,resetProj=resetProj,style=style#,zoom=NA
                    ,verbose=verbose)
-   
    if (inherits(obj,"NULL"))
       return(invisible(NULL))
    isSF <- inherits(obj,c("sfc","sf"))
@@ -376,6 +378,7 @@
    if (is.na(alpha))
       alpha <- ifelse(isWeb,ifelse(before,0.75,1),1)
    if (feature=="field") {
+      noData <- length(dname)==0
       ct <- vector("list",length(dname))
       cpg <- NULL#"1251"
       for (i in seq_along(dname)) {
@@ -397,7 +400,11 @@
         # print(ct[[i]])
         # print("-----------------------------------------")
       }
+      if (noData)
+         ct <- list(colorize(seq(spatial_count(obj)),alpha=0.5))
       hasField <- any(sapply(ct,function(x) any(!is.na(x$index))))
+      if ((!hasField)&&(alpha==1))
+         alpha <- 0.5
       if (!gdal_rasterize) {
          if (length(dname))
             res <- lapply(rep(NA,length(ct)),ursa_new)
@@ -522,7 +529,7 @@
          setUrsaProgressBar(pb)
       }
       close(pb)
-      if (length(ct)) {
+      if ((length(ct))&&(!noData)) {
          if (!gdal_rasterize) {
             ct <- lapply(ct,function(x) {
                y <- ursa(x,"colortable") ## y <- x$colortable
@@ -553,22 +560,30 @@
          n <- length(obj_geom)
       if (isSP)
          n <- length(obj_geom)
-      if (isSF) {
-        # da <- obj[,dname,drop=TRUE][,1] ## wrong
-         da <- obj[,dname,drop=TRUE]#[,dname,drop=TRUE]
-         names(da) <- dname
+      if (FALSE) {
+         if (isSF) {
+           # da <- obj[,dname,drop=TRUE][,1] ## wrong
+            da <- obj[,dname,drop=TRUE]#[,dname,drop=TRUE]
+            names(da) <- dname
+         }
+         if (isSP)
+            da <- methods::slot(obj,"data")[,dname,drop=FALSE]
       }
-      if (isSP)
-         da <- methods::slot(obj,"data")[,dname,drop=FALSE]
-      da <- rbind(format(da),paste0(names(da),":"))
-     # print(format(da))
-     # print(da)
-     # e <- format(t(da),justify="right")
-      e <- .gsub("^\\s+","",t(da))
-     # e1 <- paste(apply(e[,c(n+1,1)],1,paste,collapse=" "),collapse="\n")
-     # print(e)
-     # message(e1)
-     # q()
+      else
+         da <- spatial_data(obj)
+      if ((is.data.frame(da))&&(!ncol(da)))
+         da <- NULL
+      if (!is.null(da)) {
+         da <- rbind(format(da),paste0(names(da),":"))
+        # print(da)
+        # print(format(da))
+        # e <- format(t(da),justify="right")
+         e <- .gsub("^\\s+","",t(da))
+        # e1 <- paste(apply(e[,c(n+1,1)],1,paste,collapse=" "),collapse="\n")
+        # print(e)
+        # message(e1)
+        # q()
+     }
       if (!gdal_rasterize)
          res <- ursa_new(nband=n)
       ct <- lapply(seq(n),function(i) colorize(0L))
@@ -633,9 +648,11 @@
             panel_coastline(cline)
          panel_graticule(gline)
          panel_scalebar(pos=ifelse(isWeb,"bottomleft","bottomleft"),...)
-         e1 <- paste(apply(e[,c(n+1,i),drop=FALSE],1,paste,collapse=" ")
-                    ,collapse="\n")
-         panel_annotation(text=e1,adj=0,...) # pos="topleft")
+         if (!is.null(da)) {
+            e1 <- paste(apply(e[,c(n+1,i),drop=FALSE],1,paste,collapse=" ")
+                       ,collapse="\n")
+            panel_annotation(text=e1,adj=0,...) # pos="topleft")
+         }
          setUrsaProgressBar(pb)
       }
       close(pb)
@@ -648,8 +665,17 @@
      # but namespace "methods" is not unloaded, because namespace "sp" is loaded
      # 'as' is not found now
    }
-   if (.isKnitr())
-      return(ret)
+   if (.isKnitr()) {
+      return(invisible(ret))
+      if (proposed <- FALSE) {
+         render <- .getPrm(arglist,name="(open|render|execute|view)",default=TRUE)
+         print(c(render=render))
+         if (render)
+            return(ret)
+         else
+            return(invisible(ret))
+      }
+   }
    invisible(ret)
 }
 '.cmd.glance' <- function() {
