@@ -665,8 +665,9 @@
          sf::st_agr(y) <- "constant"
       res <- sf::st_intersection(x,y)
       if (TRUE) {
-         if (FALSE)
-            spatial_geometry(res) <- sf:::st_cast_sfc_default(spatial_geometry(res))
+         if (FALSE) {
+           # spatial_geometry(res) <- sf:::st_cast_sfc_default(spatial_geometry(res))
+         }
          else {
             geotype <- spatial_geotype(res)
             if ("GEOMETRYCOLLECTION" %in% geotype) {
@@ -837,7 +838,7 @@
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    if (isSF) {
-      res <- sf::st_simlify(obj,preserveTopology=topologyPreserve,dTolerance=tol)
+      res <- sf::st_simplify(obj,preserveTopology=topologyPreserve,dTolerance=tol)
       return(res)
    }
    else if (isSP) {
@@ -858,7 +859,7 @@
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    if (isSF) {
-      valid <- try(sg::st_is_valid(obj,NA_on_exception=TRUE,reason=verbose))
+      valid <- try(sf::st_is_valid(obj,NA_on_exception=TRUE,reason=verbose))
    }
    else if (isSP) {
       if (!requireNamespace("rgeos",quietly=.isPackageInUse()))
@@ -910,7 +911,7 @@
                    ,POINT="SpatialPointsDataFrame"
                    ,stop("geoType"))
    for (i in seq_along(arglist))
-      arglist[[i]] <- as(arglist[[i]],coerce)
+      arglist[[i]] <- methods::as(arglist[[i]],coerce)
    res <- spatial_geometry(do.call("rbind",arglist))
    res
 }

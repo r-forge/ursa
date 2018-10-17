@@ -1,8 +1,12 @@
 '[<-.ursaRaster' <- function(x,i,j,...,value)
 {
-   verbose <- FALSE
-   if (verbose)
-      str(match.call())
+   verbose <- isTRUE(getOption("ursaDevel"))
+   if (verbose) {
+      cat("----------\n")
+      on.exit(cat("==========\n"))
+   }
+  # if (verbose)
+  #    str(match.call())
    dimx <- dim(x$value)
    con <- x$con
    if (!.is.con(con))
@@ -39,7 +43,18 @@
          else
          {
             ind <- !is.na(i$value)
-            obj$value[ind] <- value$value[ind]
+            if (proposed <- TRUE) {
+               if ((length(obj)>1)&&(length(obj)==length(i))) {
+                  k <- rep(seq_along(value),length.out=length(obj))
+                  for (m in seq_along(k))
+                     obj$value[ind[,m],m] <- value$value[ind[,m],k[m]]
+               }
+               else ## common
+                  obj$value[ind] <- value$value[ind]
+            }
+            else {
+               obj$value[ind] <- value$value[ind]
+            }
          }
          if (debug)
          {
@@ -75,6 +90,18 @@
          bg <- ignorevalue(x)
          if (!is.na(bg))
             value[.is.eq(value,bg)] <- NA
+      }
+      if (verbose) {
+         str(value)
+         print(is.null(value))
+         print(dim(value))
+         print(length(value))
+      }
+      if (missingJ) {
+         if (is.null(value))
+            return(obj[-i])
+         if ((is.null(dim(value)))&&(!length(value)))
+            return(obj[-i])
       }
       if (is.array(value))
       {
