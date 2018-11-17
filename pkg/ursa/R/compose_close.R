@@ -15,7 +15,7 @@
 '.compose_close' <- function(kind=c("crop2","crop","nocrop")
                             ,border=5,bpp=0,execute=TRUE#,wait=NA
                             ,verbose=FALSE) {
-   sysRemove <- !FALSE
+   sysRemove <- TRUE
    if (verbose)
       str(list(kind=kind,border=border,bpp=bpp,execute=execute,verbose=verbose))
    toOpen <- session_pngviewer()
@@ -25,15 +25,16 @@
    }
    delafter <- getOption("ursaPngDelafter")
    fileout <- getOption("ursaPngFileout")
+   isJPEG <- .lgrep("(jpg|jpeg)",gsub(".*\\.(.+$)","\\1",fileout))>0
    if (!(bpp %in% c(8,24)))
-      bpp <- switch(getOption("ursaPngDevice"),windows=8,cairo=24)
+      bpp <- switch(getOption("ursaPngDevice"),windows=ifelse(isJPEG,24,8),cairo=24)
    on.exit({
       op <- options()
       if (length(ind <- .grep("^ursaPng.+",names(op))))
          options(lapply(op[ind],function(x) NULL))
       NULL
    })
-   if (sysRemove & execute) { ## patch for "shell" 
+   if (sysRemove & execute) { ## patch for "shell"
       sysWait <- FALSE
       con <- showConnections(all=TRUE)
       ind <- which(!is.na(match(con[,"class"],"file")))
@@ -86,7 +87,9 @@
             }
             if ((execute)&&(.isKnitr())) {
                execute <- FALSE
-               retK <- knitr::include_graphics(fileout,dpi=getOption("ursaPngDpi"))
+               retK <- knitr::include_graphics(fileout
+                                              ,auto_pdf=FALSE
+                                              ,dpi=getOption("ursaPngDpi"))
                return(retK)
             }
             if (.isJupyter()) {
@@ -199,7 +202,16 @@
       }
       if ((execute)&&(.isKnitr())) {
          execute <- FALSE
-         retK <- knitr::include_graphics(fileout,dpi=getOption("ursaPngDpi"))
+         retK <- knitr::include_graphics(fileout
+                                        ,auto_pdf=FALSE
+                                        ,dpi=getOption("ursaPngDpi"))
+         if ((delafter)&&(sysRemove))
+            on.exit({
+               wait <- 5
+               cmd <- paste0("Sys.sleep(",wait,");","file.remove(",sQuote(fileout),")")
+               system2("Rscript",c("-e",dQuote(cmd)),wait=FALSE,stdout=NULL)
+            },add=TRUE)
+        # print(fileout)
          return(retK)
       }
       if (.isJupyter()) {
@@ -210,6 +222,8 @@
         # return(invisible(retK))
       }
    }
+   if (execute | delafter)
+      wait <- getOption("ursaPngWaitBeforeRemove")
    if (execute)
    {
       if (!toOpen) {
@@ -234,7 +248,8 @@
         # system2("R cmd open",list(,fileout),wait=TRUE) #!.isRscript()) ## wait=sysWait
         # stop("How to implement file association in Unix-like systems?")
       }
-      wait <- getOption("ursaPngWaitBeforeRemove")
+      if (normalizePath(tempdir())==normalizePath(dirname(fileout)))
+         sysRemove=FALSE
      # print(wait)
       if ((!sysRemove)&&(delafter))
          Sys.sleep(wait)
