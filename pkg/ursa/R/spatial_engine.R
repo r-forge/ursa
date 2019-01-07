@@ -323,6 +323,14 @@
          names(ret) <- seq_along(ret)
          return(ret)
       }
+      if (geoType=="MULTILINESTRING") {
+         ret <- lapply(sf::st_geometry(obj),unclass) ## Holes are not ignored
+         nseg <- unique(sapply(ret,length))
+         if ((FALSE)&&(length(nseg)==1)&&(nseg==1)) ## consistence with 'sp'
+            ret <- lapply(ret,function(x) x[[1]])
+         names(ret) <- seq_along(ret)
+         return(ret)
+      }
      # ret <- lapply(sf::st_geometry(obj),unclass) ## dummy
       stop(paste("Unimplemented for geometry (sf): "
                 ,paste(geoType,collapse=", ")))
@@ -458,7 +466,10 @@
    if (verbose)
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    if (isSF) {
-      res <- sf::st_length(obj)
+      if (is_spatial_polygons(obj))
+         res <- sf::st_length(sf::st_cast(obj,"MULTILINESTRING"))
+      else
+         res <- sf::st_length(obj)
       if (TRUE) {
          u <- attr(res,"units")$numerator
          m <- rep(1,length(u))
@@ -469,8 +480,14 @@
       return(res)
    }
    if (isSP) {
-      if (!("LINESTRING" %in% spatial_geotype(obj)))
-         return(NA)
+      if (!("LINESTRING" %in% spatial_geotype(obj))) {
+         if (!requireNamespace("rgeos",quietly=.isPackageInUse()))
+            stop("suggested package is required for this operation")
+         res <- try(rgeos::gLength(obj,byid=TRUE))
+         if (inherits(res,"try-error"))
+            res <- try(rgeos::gLength(spatial_buffer(obj),byid=TRUE))
+         return(unname(res))
+      }
       if (FALSE) { ## thesame
          res <- sapply(methods::slot(obj,"lines"),function(x1)
             sum(sapply(methods::slot(x1,"Lines"),function(x2) {
@@ -583,11 +600,39 @@
       print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
    isSF | isSP
 }
-'spatial_filelist' <- function(path=".",pattern=NA,full.names=TRUE
-                              ,recursive=FALSE) {
-   if (!is.character(pattern))
-      pattern <- "\\.(gpkg|tab|kml|json|geojson|mif|sqlite|shp|osm)(\\.(zip|gz|bz2))*$"
-   res <- dir(path=path,pattern=pattern,full.names=full.names,recursive=recursive)
+'spatial_filelist' <- 'spatial_dir' <- function(path=".",pattern=NA,full.names=TRUE
+                                               ,recursive=FALSE) {
+   patt0 <- "\\.(gpkg|tab|kml|json|geojson|mif|sqlite|shp|osm)(\\.(zip|gz|bz2))*$"
+   res <- dir(path=path,pattern=patt0,full.names=full.names,recursive=recursive)
+   if ((!length(res))&&(is.na(pattern))) {
+      if ((path==basename(path))&&(!dir.exists(path))) {
+         print("A")
+         pattern <- path
+         path <- "."
+         res <- dir(path=path,pattern=patt0,full.names=full.names,recursive=recursive)
+      }
+      else {
+         pattern <- basename(path)
+         path2 <- dirname(path)
+         res <- dir(path=path2,pattern=patt0,full.names=full.names,recursive=recursive)
+         if (!length(res)) {
+            pattern <- path
+            path3 <- "."
+            res <- dir(path=path3,pattern=patt0,full.names=full.names,recursive=recursive)
+         }
+      }
+   }
+   if (is.character(pattern)) {
+      ind <- grep(pattern,basename(res))
+      if (!length(ind)) {
+         ind <- na.omit(match(pattern,basename(res)))
+         if (!length(ind)) {
+            ind <- na.omit(match(pattern,spatial_basename(res)))
+           # return(res[ind])
+         }
+      }
+      res <- res[ind]
+   }
   # res <- gsub("(\\.zip|gz|bz2)*$","",res) ## lack for 'file.info'
    res
 }
@@ -832,7 +877,7 @@
    }
    NULL
 }
-'spatial_simplify' <- function(obj,tol,topologyPreserve=TRUE,verbose=FALSE) {
+'spatial_simplify' <- function(obj,tol=0,topologyPreserve=TRUE,verbose=FALSE) {
    isSF <- .isSF(obj)
    isSP <- .isSP(obj)
    if (verbose)
@@ -914,4 +959,54 @@
       arglist[[i]] <- methods::as(arglist[[i]],coerce)
    res <- spatial_geometry(do.call("rbind",arglist))
    res
+}
+'spatial_basename' <- function(fname) {
+   gsub("\\..+(\\.(gz|bz2|zip|rar))*$","",basename(fname),ignore.case=TRUE)
+}
+'spatial_fileext' <- function(fname) {
+   a <- gsub("^(.+)(\\.(gz|bz2|zip|rar))$","\\1",basename(fname),ignore.case=TRUE)
+   gsub(".*\\.(.+)$","\\1",a)
+}
+'spatial_revise' <- function(obj,engine=c("auto","sf","sp"),verbose=FALSE) {
+   engine <- match.arg(engine)
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
+   if (verbose)
+      print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
+   if (engine=="auto")
+      engine <- ifelse(isSF,"sp",ifelse(isSP,"sf",stop('unknown spatial class')))
+   toSP <- engine=="sp"
+   toSF <- engine=="sf" & requireNamespace("sf",quietly=.isPackageInUse())
+   if (isSP & toSP | isSF & toSF)
+      return(obj)
+   if (toSP)
+      return(sf::as_Spatial(obj))
+   if (toSF) {
+     ## 'methods' have already loaded because Spatial* is S4
+      return(methods::as(obj,"sf"))
+   }
+   NULL
+}
+'spatial_valid' <- function(obj,reason=FALSE,verbose=FALSE) {
+   if (is.character(obj))
+      return(all(obj %in% c("Valid Geometry")))
+   isSF <- .isSF(obj)
+   isSP <- .isSP(obj)
+   if (verbose)
+      print(data.frame(sf=isSF,sp=isSP,row.names="engine"))
+   if (isSP) {
+      if (!requireNamespace("rgeos",quietly=.isPackageInUse()))
+         stop("suggested package is required for this operation")
+      res <- rgeos::gIsValid(obj,byid=TRUE,reason=TRUE)
+      if (reason)
+         return(unname(res))
+      return(all(res %in% c("Valid Geometry")))
+   }
+   if (isSF) {
+      res <- sf::st_is_valid(obj,reason=TRUE)
+      if (reason)
+         return(res)
+      return(all(res %in% c("Valid Geometry")))
+   }
+   NULL
 }

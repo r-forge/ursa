@@ -15,8 +15,8 @@
    wait <- .getPrm(arglist,name="wait",default=switch(.Platform$OS.type,windows=1,3))
    dtype <- if (.Platform$OS.type=="windows") c("cairo","windows")
             else c("cairo","cairo-png","Xlib","quartz")
-   device <- .getPrm(arglist,name="^(device|type)",valid=c("cairo","windows"))
-   antialias <- .getPrm(arglist,name="antialias",valid=c("default","none"))
+   device <- .getPrm(arglist,name="^(device|type)",valid=dtype)
+   antialias <- .getPrm(arglist,name="antialias",valid=c("default","none","cleartype"))
   # font <- .getPrm(arglist,name="(font|family)",valid=ifelse(device=="windows","sans","Tahoma"))
    font <- .getPrm(arglist,name="(^font$|family)",default=ifelse(device=="windows","sans","sans"))
    background <- .getPrm(arglist,name="(background|nodata)",default="white")
@@ -82,9 +82,12 @@
    }
    else if (is.na(delafter))
       delafter <- FALSE
-   fileext <- if (.lgrep("\\.(jpeg|jpg)$",fileout)) "jpeg" else "png"
+   fileext <- if (.lgrep("\\.(jpeg|jpg)$",fileout)) "jpeg" 
+              else if (.lgrep("\\.(webp)$",fileout)) "webp"
+              else "png"
    isJPEG <- fileext %in% "jpeg"
-   if ((!isJPEG)&&(!.lgrep("\\.png$",fileout)))
+   isWEBP <- fileext %in% "webp"
+   if ((!isJPEG)&&(!isWEBP)&&(!.lgrep("\\.png$",fileout)))
       fileout <- paste0(fileout,".png")
    g1 <- session_grid()
   # scale1 <- (18.5*96)/(g1$rows*2.54)
