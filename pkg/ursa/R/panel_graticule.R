@@ -86,7 +86,7 @@
    maxy <- g1$maxy
    if (any(is.na(marginalia)))
       marginalia <- TRUE
-   if ((!is.na(lon))&&(!is.na(lat)))
+   if ((!anyNA(lon))&&(!anyNA(lat)))
    {
      # dlon <- unique(diff(lon))
      # dlat <- unique(diff(lat))
@@ -813,7 +813,8 @@
       return(NULL)
    obj <- .getPrm(arglist,class="ursaGridLine",default=NULL)
    g1 <- session_grid()
-   if ((!is.null(g1$labx))&&(!is.null(g1$laby))) {
+  # if ((!is.null(g1$labx))&&(!is.null(g1$laby))) {
+   if ((length(g1$seqx))&&(length(g1$seqy))) {
       .repairForScatterPlot()
       return(NULL)
    }
@@ -821,7 +822,7 @@
       obj <- compose_graticule(...)
    if (is.null(obj$gridline))
       return(NULL)
-   if ((!is.null(attr(g1$columns,"units"))&&(!is.null(attr(g1$rows,"units"))))) {
+   if ((!is.null(attr(g1$seqx,"units"))&&(!is.null(attr(g1$seqy,"units"))))) {
       if (is.null(g1$labx))
          g1$labx <- unique(obj$margin[obj$margin$kind==1,"at"])
       if (is.null(g1$laby))
@@ -892,22 +893,22 @@
       da3 <- if (marginalia[3]) margin[which(margin$side==3),] else NULL
       da4 <- if (marginalia[4]) margin[which(margin$side==4),] else NULL
      # opT <- par(family="Arial Narrow")
-      if (!is.null(da1))
+      if ((!is.null(da1))&&(nrow(da1)))
          with(da1,{
             axis(side=1,at=at,labels=NA,tcl=-0.2,col=border,lwd=0,lwd.ticks=lwd)
             mtext(side=1,at=at,text=lab,padj=0.5,adj=adj,cex=cex,col=border)
          })
-      if (!is.null(da2))
+      if ((!is.null(da2))&&(nrow(da2)))
          with(da2,{
             axis(side=2,at=at,labels=NA,tcl=-0.2,col=border,lwd=0,lwd.ticks=lwd)
             mtext(side=2,at=at,text=lab,padj=0.4,adj=adj,line=0.6,cex=cex,col=border)
          })
-      if (!is.null(da3))
+      if ((!is.null(da3))&&(nrow(da3)))
          with(da3,{
             axis(side=3,at=at,labels=NA,tcl=-0.2,col=border,lwd=0,lwd.ticks=lwd)
             mtext(side=3,at=at,text=lab,padj=-0.25,adj=adj,line=0,cex=cex,col=border)
          })
-      if (!is.null(da4))
+      if ((!is.null(da4))&&(nrow(da4)))
          with(da4,{
             axis(side=4,at=at,labels=NA,tcl=-0.2,col=border,lwd=0,lwd.ticks=lwd)
             mtext(side=4,at=at,text=lab,line=0,adj=adj,padj=0.4,cex=cex,col=border)

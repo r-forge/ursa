@@ -166,7 +166,7 @@
    }
    if (bpp==8) {
       if (nchar(Sys.which("i_view32"))) {
-         FoutTmp <- ifelse(dirname(fileout)==".",fileout,normalizePath(fileout))
+         FoutTmp <- ifelse(dirname(fileout)==".",basename(fileout),normalizePath(fileout))
          cmd <- paste("i_view32",FoutTmp,"/bpp=8",paste0("/convert=",FoutTmp))
       }
       else if ((nchar(im <- Sys.getenv("R_IMAGEMAGICK"))>0)&&(file.exists(im))) {
@@ -204,13 +204,16 @@
       }
       if ((execute)&&(.isKnitr())) {
          execute <- FALSE
+         if (.isKnitr())
+            delafter <- delafter & 
+               length(grep("self-contained",knitr::opts_knit$get()$rmarkdown.pandoc.args))>0
          retK <- knitr::include_graphics(fileout
                                         ,auto_pdf=FALSE
                                         ,dpi=getOption("ursaPngDpi"))
          if ((delafter)&&(sysRemove))
             on.exit({
                wait <- 5
-               cmd <- paste0("Sys.sleep(",wait,");","file.remove(",sQuote(fileout),")")
+               cmd <- paste0("Sys.sleep(",wait,");","if (file.exists(",sQuote(fileout),")) file.remove(",sQuote(fileout),")")
                system2("Rscript",c("-e",dQuote(cmd)),wait=FALSE,stdout=NULL)
             },add=TRUE)
         # print(fileout)

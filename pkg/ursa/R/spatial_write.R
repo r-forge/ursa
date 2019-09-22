@@ -113,7 +113,7 @@
       dopt <- character()
       lopt <- character()
       if (driver=="ESRI Shapefile")
-         lopt <- c(lopt,"ENCODING=UTF-8")
+         lopt <- c(lopt,"ENCODING=UTF-8","ADJUST_GEOM_TYPE=ALL_SHAPES")
       if (driver=="MapInfo File")
          dopt <- c(dopt,"FORMAT=MIF")
       if (driver=="SQLite") {
@@ -257,8 +257,14 @@
    if (inherits(aname,"try-error"))
       aname <- character()
    for (a in aname) {
-      if (is.ordered(obj[[a]]))
-         obj[[a]] <-  factor(obj[[a]],ordered=FALSE)
+      if (is.ordered(obj[[a]])) {
+         if (.is.numeric(levels(obj[[a]])))
+            obj[[a]] <- as.numeric(as.character(obj[[a]]))
+         else
+            obj[[a]] <-  factor(obj[[a]],ordered=FALSE)
+      }
+      else if ((is.factor(obj[[a]]))&&(.is.numeric(levels(obj[[a]]))))
+         obj[[a]] <- as.numeric(as.character(obj[[a]]))
    }
    if (driver %in% c("ESRI Shapefile")) {
       for (a in aname) {
@@ -400,6 +406,8 @@
    }
    if (!nchar(compress))
       return(invisible(NULL))
+   if (verbose)
+      cat("pack...")
    if ((.lgrep("gz",compress))&&(nchar(Sys.which("gzip"))))
       system2("gzip",c("-f",fname))
    else if (.lgrep("bz(ip)*2",compress)&&(nchar(Sys.which("bzip2"))))
@@ -410,6 +418,14 @@
       f <- .dir(path=dname
                ,pattern=paste0("^",lname,"\\.",ext,"$")
                ,full.names=TRUE)
+      if (!length(f)) {
+         s <- paste0("(",paste(paste0("\\",unlist(strsplit("|()[]{}^$*+?",split="+")))
+                              ,collapse="|"),")")
+         lname <- gsub(s,"\\\\\\1",lname)
+         f <- .dir(path=dname
+                  ,pattern=paste0("^",lname,"\\.",ext,"$")
+                  ,full.names=TRUE)
+      }
       z <- paste0(fname,".zip")
       opW <- options(warn=-1)
       first <- TRUE
@@ -432,7 +448,17 @@
             cat(" ok!\n")
       }
       options(opW)
-      utils::zip(z,f,flags="-qm9j") ## verbose output ## 'myzip(z,f,keys="-m -9 -j")'
+      ret <- utils::zip(z,f,flags="-qm9j") ## verbose output ## 'myzip(z,f,keys="-m -9 -j")'
+      if (ret) {
+         opW <- options(warn=1)
+         warning("Unable to compress files (zip)")
+         if (isSevenZip <- nchar(Sys.which("7z"))>0) {
+            ret <- system2("7z",c("a -mx9 -sdel -sccWIN",dQuote(z),dQuote(f)),stdout="nul")
+         }
+        # options(opW)
+      }
    }
+   if (verbose)
+      cat(" done!\n")
    invisible(NULL)
 }

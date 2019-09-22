@@ -25,7 +25,8 @@
       verbose <- isSP
    g0 <- session_grid()
    if ((!missing(obj))&&(is.numeric(obj))&&(length(obj)==4)&&
-       (!anyNA(match(names(obj),c("minx","maxx","miny","maxy"))))) {
+       ((!anyNA(match(names(obj),c("minx","maxx","miny","maxy"))))||
+        (!anyNA(match(names(obj),c("xmin","xmax","ymin","ymax")))))) {
       obj <- regrid(bbox=unname(obj),dim=c(1,1),proj4=session_crs())
    }
    onlyGeometry <- missing(obj) || .is.grid(obj)
@@ -70,7 +71,7 @@
    dy <- g1$resy/2
    if (isSF) {
       if (verbose)
-         cat("create polygons from points...")
+         cat("1 of 3: create polygons from points...")
       xy <- cbind(b$x-dx,b$y-dy,b$x-dx,b$y+dy,b$x+dx,b$y+dy,b$x+dx,b$y-dy
                  ,b$x-dx,b$y-dy)
       if (!onlyGeometry) {
@@ -88,13 +89,13 @@
          res
       })
       if (verbose)
-         cat(" done!\ncreate geometry...")
+         cat(" done!\n2 of 3: create geometry...")
       sa <- sf::st_sfc(sa)
       if (verbose)
          cat(" done!\n")
       if (!onlyGeometry) {
          if (verbose)
-            cat("assign data to geometry...")
+            cat("3 of 3: assign data to geometry...")
          sa <- sf::st_sf(b,coords=sa,crs=g1$proj4)
          if (verbose)
             cat(" done!\n")
@@ -146,11 +147,20 @@
    sa
 }
 '.vectorize' <- function(obj,fname,opt="") {
+   internal <- missing(fname)
+   if (internal) {
+      bname <- tempfile()
+      fname <- paste0(bname,".shp")
+   }
    Fout <- .maketmp()
    write_envi(obj,paste0(Fout,"."))
    cmd <- paste("python",Sys.which("gdal_polygonize.py")
                ,opt," -f \"ESRI Shapefile\"",Fout,".",fname)
    system(cmd)
    envi_remove(Fout)
-   0L
+   if (!internal)
+      return(0L)
+   ret <- spatialize(fname)
+   file.remove(dir(path=dirname(bname),pattern=paste0("^",basename(bname)),full.names=TRUE))
+   ret
 }

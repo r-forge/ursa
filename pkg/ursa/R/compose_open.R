@@ -2,7 +2,7 @@
    arglist <- list(...)
    mosaic <- .getPrm(arglist,name="",default=NA,class="")
    fileout <- .getPrm(arglist,name="fileout",default="")
-   dpi <- .getPrm(arglist,name="dpi",default=96L)
+   dpi <- .getPrm(arglist,name="dpi",default=ifelse(.isKnitr(),150L,96L))
    pointsize <- .getPrm(arglist,name="pointsize",default=NA_real_)
    scale <- .getPrm(arglist,name="^scale$",class="",default=NA_real_)
    width <- .getPrm(arglist,name="width",class=list("integer","character"),default=NA_real_)
@@ -27,15 +27,19 @@
       cr <- attr(mosaic,"copyright")
       if ((is.character(cr))&&(nchar(cr)>1)) {
          mosaic <- compose_design(layout=c(1,1),legend=NULL)
+        # print("WEB #1")
          options(ursaPngWebCartography=TRUE)
-         print("WEB")
          scale <- 1
       }
    }
    else if ((.lgrep("\\+proj=merc",session_proj4()))&&
            (!is.na(.is.near(session_cellsize(),2*6378137*pi/(2^(1:21+8)))))) {
-      options(ursaPngWebCartography=TRUE)
-      scale <- 1
+     # print("WEB #2")
+      arglist <- as.list(match.call())
+      if (!("scale" %in% names(arglist))) {
+         options(ursaPngWebCartography=TRUE)
+         scale <- 1
+      }
    }
    if ((is.character(mosaic))&&(mosaic=="rgb"))
       mosaic <- compose_design(layout=c(1,1),legend=NULL)
@@ -75,6 +79,12 @@
          fileout <- file.path(tempdir(),.maketmp()) ## CRAN Repository Policy
       else if (!TRUE)
          fileout <- file.path(tempdir(),basename(.maketmp()))
+      else if (.isKnitr()) {
+         bname <- basename(.maketmp())
+         bname <- gsub("_[0-9a-f]+"
+                  ,paste0("_",knitr::opts_current$get()$label),bname,ignore.case=TRUE)
+         fileout <- file.path(knitr::opts_current$get()$fig.path,bname)
+      }
       else
          fileout <- .maketmp()
       if (is.na(delafter))
@@ -130,20 +140,22 @@
       }
       width <- 1e6
    }
+  # print(c(width=width,s=ifelse(is.na(width),900,width),r=ifelse(is.na(width),900,width)/g1$columns))
+  # print(c(height=height,s=ifelse(is.na(height),600,height),r=ifelse(is.na(height),600,height)/g1$rows))
    scale1 <- ifelse(is.na(height),600,height)/g1$rows
    scale2 <- ifelse(is.na(width),900,width)/g1$columns
    rescale <- mosaic$image^(0.1)
    autoscale <- min(scale1,scale2)
    if ((is.na(height))&&(is.na(width)))
       autoscale <- autoscale/mosaic$image^0.25
-  # print(c(v=scale1,h=scale2,autoscale=autoscale))
    if (is.na(scale))
       scale <- autoscale
   # dpiscale <- scale*(2.54/96.0) # 2.54cm per inch / 96 dpi screen
    dpiscale <- scale*(2.54/dpi)
    mainc <- g1$columns*dpiscale
    mainr <- g1$rows*dpiscale
-   pointsize0 <- 12
+  # print(c(v=scale1,h=scale2,autoscale=autoscale,scale=scale,c=g1$columns,r=g1$rows))
+   pointsize0 <- ifelse(.isKnitr(),12,12)
    if (is.na(pointsize)) {
      # print(c(pointsize0=pointsize0,dpi=dpi,scale=scale,scale0=autoscale))
      # pointsize <- pointsize0*96/dpi*scale/autoscale ## removed 20161217
@@ -230,6 +242,10 @@
           ,ursaPngFamily=font,ursaPngWaitBeforeRemove=wait
           ,ursaPngDevice=device,ursaPngShadow=""
           ,ursaPngBackground=background,ursaPngPanel="",ursaPngSkip=FALSE)
+  # if (.isKnitr()) {
+  #   # if (knitr::opts_knit$get(""))
+  #    fileout <- paste0("file:///",fileout)
+  # }
    invisible(fileout)
 }
 '.compose_open.example' <- function() {

@@ -8,15 +8,15 @@
   #    writeLines("ursa:::.ursaCacheDirClear(age=2,size=0.2,count=1e3)",fclear)
    fpath
 }
-'.ursaCacheFile' <- function(pattern="cache") {
+'.ursaCacheFile' <- function(pattern="ursaCache") {
   # fpath <- getOption("ursaCacheDir")
   # if (!dir.exists(fpath))
   #    dir.create(fpath)
   # tempfile(tmpdir=fpath,pattern=pattern)
    .normalizePath(tempfile(tmpdir=.ursaCacheDir(),pattern=pattern))
 }
-'.ursaCacheInventory' <- function() file.path(.ursaCacheDir(),"_inventory.txt")
-'.ursaCacheVisits' <- function() file.path(.ursaCacheDir(),"_visits.txt")
+'.ursaCacheInventory' <- function() file.path(.ursaCacheDir(),"ursaCache_inventory.txt")
+'.ursaCacheVisits' <- function() file.path(.ursaCacheDir(),"ursaCache_visits.txt")
 '.ursaCacheDirClear' <- function(size=getOption("ursaCacheSize")
                                 ,age=getOption("ursaCacheAge")
                                 ,count=10000,completely=FALSE) {
@@ -30,7 +30,14 @@
    if (completely) {
       if (!dir.exists(fpath))
          return(invisible(NULL))
-      file.remove(.dir(path=fpath,full.names=TRUE))
+      file.remove(.dir(path=fpath,pattern=as.list(args(.ursaCacheFile))$pattern
+                      ,full.names=TRUE))
+      if (develHtmlWidgets <- TRUE) {
+         file.remove(.dir(path=fpath,pattern="^htmlwidgets.+\\.html$",full.names=TRUE))
+         dhw <- file.path(fpath,"htmlwidgets")
+         if (dir.exists(dhw))
+            unlink(dhw)
+      }
       unlink(fpath)
       return(invisible(NULL))
    }
@@ -38,7 +45,7 @@
    if (!file.exists(inventory)) {
       return(.ursaCacheDirClear(completely=TRUE)) ## RECURSIVE
    }
-   was <- try(utils::read.table(inventory,sep=","))
+   was <- try(utils::read.table(inventory,sep=",",encoding="UTF-8"))
    if (inherits(was,"try-error")) {
       message("cache was removed completely due to damaged structure")
       return(.ursaCacheDirClear(completely=TRUE)) ## RECURSIVE
@@ -61,14 +68,21 @@
    }
    dst <- file.path(fpath,was0$dst[ind])
    dst <- dst[file.exists(dst)]
+   if (FALSE) {
+      print(was)
+      print(c(size=size,age=age,count=count))
+      print(c(toRemove=dst))
+      q()
+   }
    file.remove(dst)
    dst <- paste0(dst,".hdr")
    dst <- dst[file.exists(dst)]
    file.remove(dst)
    was0 <- was0[-ind,]
    was0 <- was0[rev(seq(nrow(was0))),]
-   utils::write.table(was0,quote=TRUE,col.names=FALSE,row.name=FALSE,sep=","
-                     ,file=inventory)
+   ##~ utils::write.table(was0,quote=TRUE,col.names=FALSE,row.name=FALSE,sep=","
+                     ##~ ,file=inventory)
+   .ursaCacheWrite(was0,append=FALSE)
    return(invisible(NULL))
 }
 '.ursaCacheDownload' <- function(src,dst,method,quiet=FALSE,cache=TRUE,mode="w") {
@@ -107,14 +121,16 @@
       if (inherits(ret,"try-error"))
          return(ret)
       if (cache)
-         utils::write.table(data.frame(time=format(Sys.time()
-                                                ,"%Y-%m-%dT%H:%M:%SZ",tz="UTC")
-                                      ,stamp=as.integer(Sys.time())
-                                      ,visits=0L
-                                      ,size=file.size(dst)
-                                      ,src=src0,dst=basename(dst))
-                           ,quote=TRUE,col.names=FALSE,row.name=FALSE,sep=","
-                           ,file=inventory,append=TRUE,fileEncoding=enc)
+         ##~ utils::write.table(
+            ##~ data.frame(time=format(Sys.time(),"%Y-%m-%dT%H:%M:%SZ",tz="UTC")
+                      ##~ # ,stamp=as.integer(Sys.time())
+                       ##~ ,stamp=as.integer(file.mtime(dst))
+                       ##~ ,visits=0L
+                       ##~ ,size=file.size(dst)
+                       ##~ ,src=src0,dst=basename(dst))
+            ##~ ,quote=TRUE,col.names=FALSE,row.name=FALSE,sep=","
+            ##~ ,file=inventory,append=TRUE,fileEncoding=enc)
+         .ursaCacheWrite(.ursaCacheRecord(dst,src=src0),append=TRUE)
    }
    else if (cache) {
       Fout <- file(.ursaCacheVisits(),"at")
@@ -180,16 +196,26 @@
                system2("gzip",c("-f -d -c",.dQuote(src)),stdout=dst,stderr=FALSE)
             else if (unpack=="bzip2")
                system2("bzip2",c("-f -d -c",.dQuote(src)),stdout=dst,stderr=FALSE)
+            if (debugExact <- F) {
+               str(src)
+               str(dst)
+               cat("------------\n")
+               str(envi_list(src,exact=TRUE))
+               cat("------------\n")
+               q()
+            }
             if (length(listE <- envi_list(src,exact=TRUE)))
                file.copy(paste0(listE,".hdr"),paste0(dst,".hdr"),copy.date=TRUE)
          }
-         da <- data.frame(time=format(Sys.time(),"%Y-%m-%dT%H:%M:%SZ",tz="UTC")
-                         ,stamp=ftime,visits=0L,size=file.size(dst)
-                         ,src=.normalizePath(src),dst=basename(dst))
+         ##~ da <- data.frame(time=format(Sys.time(),"%Y-%m-%dT%H:%M:%SZ",tz="UTC")
+                         ##~ ,stamp=ftime,visits=0L,size=file.size(dst)
+                         ##~ ,src=.normalizePath(src),dst=basename(dst))
+         da <- .ursaCacheRecord(dst,src=.normalizePath(src),ftime=ftime)
          if (reset)
             da <- rbind(was,da)
-         utils::write.table(da,quote=TRUE,col.names=FALSE,row.name=FALSE,sep=","
-                           ,file=inventory,append=!reset,fileEncoding=enc)
+         ##~ utils::write.table(da,quote=TRUE,col.names=FALSE,row.name=FALSE,sep=","
+                           ##~ ,file=inventory,append=!reset,fileEncoding=enc)
+         .ursaCacheWrite(da,append=!reset)
       }
       else {
          Fout <- file(.ursaCacheVisits(),"at")
@@ -199,7 +225,49 @@
    }
    dst
 }
-'.atOnceCacheRebuild' <- function() {
+'.ursaCacheRecord' <- function(dst,src=NULL,ftime=NULL) {
+   if (.lgrep("^file:///",dst))
+      dst <- .gsub("^file:///","",dst)
+   if (is.null(src))
+      src <- basename(dst)
+   if (is.null(ftime))
+      ftime <- file.mtime(dst)
+   da <- data.frame(time=format(Sys.time(),"%Y-%m-%dT%H:%M:%SZ",tz="UTC")
+                   ,stamp=as.integer(ftime)
+                   ,visits=0L
+                   ,size=file.size(dst)
+                   ,src=src
+                   ,dst=basename(dst)
+                   )
+   da
+}
+'.ursaCacheWrite' <- function(da,append=TRUE) {
+   inventory <- .ursaCacheInventory()
+   utils::write.table(da,quote=TRUE,col.names=FALSE,row.name=FALSE,sep=","
+                     ,file=inventory,append=append,fileEncoding="UTF-8")
+}
+'.ursaCacheRead' <- function(fname) {
+   inventory <- .ursaCacheInventory()
+   if (!file.exists(inventory))
+      return(NULL)
+   was <- utils::read.table(inventory,sep=",",encoding="UTF-8")
+   stopifnot(ncol(was)==6)
+   colnames(was) <- c("time","stamp","visits","size","src","dst")
+   was
+}
+'.ursaCacheFind' <- function(loc) {
+   was <- .ursaCacheRead()
+   if (is.null(was))
+      return(0L)
+   ind <- match(loc,was$src)
+   if (is.na(ind)) {
+      ind <- match(basename(loc),was$dst)
+   }
+   if (is.na(ind))
+      return(0L)
+   ind
+}
+'.atOnceCacheRebuildAndForget' <- function() {
    a <- utils::read.table("_inventory.txt",sep=",",dec=".")
    a <- data.frame(a[,1:2],B=0,a[,3:5])
    str(a)

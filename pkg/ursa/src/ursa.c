@@ -367,7 +367,7 @@ void focalMeanWithNA(double *x,int *dim,double *W,double *cvr,int *Z,int *verbos
            // continue;
             if ((nout>0.0)&&(nout>=sizex*sizey*cover))
             {
-               if ((1)||(!fillNA))
+               if ((0)||(!fillNA))
                   res[adr2]=Mout/nout;
                else
                {
@@ -390,11 +390,11 @@ void focalMeanWithNA(double *x,int *dim,double *W,double *cvr,int *Z,int *verbos
         //   printf("\n");
       }
    }
-   for (adr=0;adr<(samples*lines*bands);adr++)
-   {
+  // for (adr=0;adr<(samples*lines*bands);adr++)
+  // {
      // printf(" %4.1f",res[adr]);
      // res[adr]=x[adr];
-   }
+  // }
   // printf("\n");
    return;
 }
@@ -1378,13 +1378,36 @@ void readBilBandInteger(char **fname,int *dim,int *index,int *nindex,int *dtype
    else if ((datatype==3)||(datatype==13))
       datasize=4;
    int i,j,k,adr;
+  // Rprintf("malloc=%ld max=%ld\n",samples*count*datasize,MAX_INT);
    char *buf1=malloc(samples*count*datasize);
    char *buf2=malloc(8);
+   int ret;
+   __int64 offset,o1,o2;
+   int MAXINT=2147483647;
    for (i=0;i<lines;i++)
    {
       for (k=0;k<count;k++)
       {
-         fseek(Fin,(i*bands+index[k]-1)*samples*datasize,SEEK_SET);
+        // Rprintf("fseek=%d\n",(i*bands+index[k]-1)*samples*datasize-MAX_INT);
+         ret=fseek(Fin,(i*bands+index[k]-1)*samples*datasize,SEEK_SET);
+         if (ret) {
+            o1=(__int64)(i*bands+index[k]-1)*samples*datasize;
+            o2=(__int64)0;
+            ret=fseek(Fin,MAXINT,SEEK_SET);
+            offset=o1-MAXINT;
+            o2+=MAXINT;
+            Rprintf("fseek0[%04d][%04d]=%d o1=%lld o2=%lld\n",i,index[k],ret,o1,o2);
+            while (offset>MAXINT) {
+               ret=fseek(Fin,MAXINT,SEEK_CUR);
+               Rprintf("   fseekI=%d\n",ret);
+               offset-=MAXINT;
+            }
+            fseek(Fin,offset,SEEK_CUR);
+            o2+=offset;
+            Rprintf("      offset: %lld %lld %lld\n",o1,o2,o1-o2);
+         }
+        // Rprintf("fseek=%d\n",ret);
+        // fsetpos(Fin,(i*bands+index[k]-1)*samples*datasize);
          if (fread(buf1,datasize,samples,Fin)) {};
          for (j=0;j<samples;j++)
          {
@@ -3649,6 +3672,21 @@ void isNear(double *x1,double *x2,int *len1,int *len2,int *res)
          //~ Rprintf("ratio=%f\n",fabs(x1[i1]/x2[i2]-1.0));
       if (i2<n2)
          res[i1]=i2+1;
+   }
+   return;
+}
+void scatterplot(int *x,int *y,int *n,int *nbreakX,int *nbreakY
+                ,int *histX,int *histY,int *hist2d) {
+   int i,ndata=*n;
+  // int nx=*nbreakX;
+   int ny=*nbreakY;
+   int c,r;
+   for (i=0;i<ndata;i++) {
+      c=x[i];
+      r=y[i];
+      histX[c]+=1;
+      histY[r]+=1;
+      hist2d[ny*c+r]+=1;
    }
    return;
 }

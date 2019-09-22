@@ -1,8 +1,10 @@
 # 'ursa_write' <- function(...) .syn('.write_gdal',2,...)
 'ursa_write' <- function(obj,fname) {
-   if (!.lgrep("\\..+$",fname))
+   if (!.lgrep("\\..+$",basename(fname))) {
       return(write_envi(obj,fname))
-   if (.lgrep("\\.zip$",fname)) {
+   }
+      stop("B")
+   if (.lgrep("\\.zip$",basename(fname))) {
       aname <- paste0(names(obj),".tif")
       td <- file.path(tempdir(),basename(.maketmp()))
       dir.create(td)
@@ -11,17 +13,20 @@
          write_gdal(obj[i],aname[i])
       if (!.is.colortable(obj))
          file.remove(dir(pattern="\\.aux\\.xml$"))
-      utils::zip(file.path(wd,fname),dir(),"-qmj9")
+      zname <- file.path(wd,fname)
+      if (file.exists(zname))
+         file.remove(zname)
+      utils::zip(zname,dir(),"-qmj9")
       setwd(wd)
       return(invisible(integer()))
    }
-   if ((TRUE)&&(.lgrep("\\.tif$",fname))&&(nchar(Sys.which("gdal_translate")))) {
+   if ((TRUE)&&(.lgrep("\\.tif$",basename(fname)))&&(nchar(Sys.which("gdal_translate")))) {
       ftmp <- .maketmp()
       ret <- write_envi(obj,paste0(ftmp,"."))
       system2("gdal_translate",c("-q","-of","GTiff"
-                                ,"-co",dQuote("COMPRESS=DEFLATE")
-                                ,"-co",dQuote("PREDICTOR=2")
-                                ,"-co",dQuote("TILED=NO")
+                                ,"-co",.dQuote("COMPRESS=DEFLATE")
+                                ,"-co",.dQuote("PREDICTOR=2")
+                                ,"-co",.dQuote("TILED=NO")
                                 ,ftmp,fname))
       envi_remove(ftmp)
       return(invisible(ret))
