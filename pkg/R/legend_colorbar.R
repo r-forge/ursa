@@ -303,7 +303,10 @@
                      }
                   }
                   else {
-                     label <- .prettyLabel(y,ncol=labels)$at
+                     labelProposed <- .prettyLabel(y,ncol=labels)$at
+                     if (is.null(labelProposed))
+                        break
+                     label <- labelProposed
                      if (!.is.integer(label)) {
                         labels <- labels-1
                         next
@@ -321,6 +324,8 @@
                label <- keepIrreg
           # print(c(have=(length(label)+1)*height,lim=mheight))
          }
+         print("-----")
+         print(label)
          if ((!isRegular)&&(is.numeric(label))&&(!isSpecified)) {
             y <- as.numeric(label)
             uniy <- unique(diff(y))
