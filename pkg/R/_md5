@@ -194,7 +194,7 @@ ac835a2b307e4ccceb22cf661e1cb081 ursa/R/envi_files.R
 b66aaa9905fec6cdbbba1727a11cb9e4 ursa/R/identify.R
 5b4aeef582d170458f8c7a8be40b1deb ursa/R/ignorevalue.R
 b2a71fd5c3719013c7773f630f517546 ursa/R/legend_align.R
-59822aa9490c57063e11b5bc86d31892 ursa/R/legend_colorbar.R
+c85455d1f4acde8ea7468c3064d99012 ursa/R/legend_colorbar.R
 2035da78372492b0b73f458fe9ac9774 ursa/R/legend_mtext.R
 78a89b19a5722d962e3613f716c01d5c ursa/R/Ops.band_group.R
 5458fae5d15bbab9747166d5a5c1342e ursa/R/Ops.band_stat.R
@@ -274,4 +274,3 @@ be01c7cb26034860dd2ba4f61055c66c ursa/R/zzz.R
 3fe56df30819b1d3f5e64d0e7fcb0a37 ursa/src/ursa.c
 bb484db92cdf2d3b7b08ce0a97830648 ursa/src/ursa.dll
 425e3517b7b116b94050c8a5444c1547 ursa/src/ursa.h
-23454dd46051f1f8f44c26c1c0148d66 ursa/src/ursa.o
