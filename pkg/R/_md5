@@ -180,7 +180,7 @@ c20e71bb221717b0919db18b2605f4a4 ursa/R/conn.open_gdal.R
 5c9dcacce6da94dd5e6eedba0c972d24 ursa/R/conn.read_gdal.R
 d41d8cd98f00b204e9800998ecf8427e ursa/R/conn.read_stars.R
 334a3244da8bc871a7912a0f4867b50f ursa/R/conn.write_envi.R
-1dfc7d02a0b0682eecee483e2eb94c43 ursa/R/conn.write_gdal.R
+b71ab53d5726a98b6276c038152f44f0 ursa/R/conn.write_gdal.R
 68a883c878cd32b899c1a3633aaab60a ursa/R/cubehelix.R
 5ad0cbca3952bfe4a1f2645a4542fd1b ursa/R/discolor.R
 4852fb9e8885d1be723739743fdaf0a2 ursa/R/display.R
