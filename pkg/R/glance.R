@@ -62,18 +62,18 @@
   # }
   # str(arglist)
    if (is.character(arglist[[1]])) {
-      if (envi_exists(arglist[[1]],exact=TRUE)) {
-         return(do.call("display",arglist))
-      }
-      else if (.lgrep("\\.(tif|tiff|img|png|bmp|dat)$",arglist[[1]])) {
-         return(do.call("display",arglist))
-      }
-      else if (.lgrep("\\.(gpkg|tab|kml|json|geojson|mif|sqlite|shp|osm)(\\.(zip|gz|bz2))*$"
+      if (.lgrep("\\.(gpkg|tab|kml|json|geojson|mif|sqlite|shp|osm)(\\.(zip|gz|bz2))*$"
                      ,arglist[[1]])) {
          ret <- do.call(".glance",arglist)
          if (plotKnitr)
             return(ret)
          return(invisible(ret))
+      }
+      else if (envi_exists(arglist[[1]],exact=TRUE)) {
+         return(do.call("display",arglist))
+      }
+      else if (.lgrep("\\.(tif|tiff|img|png|bmp|dat)$",arglist[[1]])) {
+         return(do.call("display",arglist))
       }
       else {
          if ((TRUE)&&  #(!.isPackageInUse())&&
@@ -418,7 +418,7 @@
             res <- list(geometry=ursa_new())
       }
       if (isWeb) {
-         compose_open(res,scale=1,...)
+         compose_open(res,scale=1,retina=1,...)
       }
       else
          compose_open(res,...)
