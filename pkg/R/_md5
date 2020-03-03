@@ -241,7 +241,7 @@ e45b8606466cd79e16d55f6665362d86 ursa/R/ursa_dummy.R
 8da814298485d80f6346352c3074e83e ursa/R/ursa_info.R
 eb2058f820b2269401b09b36d2746bdb ursa/R/ursa_new.R
 3b874964f90981cc22670039c512399f ursa/R/ursa_proj.R
-809ab03b9e18f4face23d1dc669e9760 ursa/R/xxx.browse.R
+6f7784a8e8e2d62ce3196df5f60a6417 ursa/R/xxx.browse.R
 d9ebef06491faa30d3fc99059cc60cb5 ursa/R/xxx.fasterize.R
 f6aa2084059c45da54e7d5f8872f6498 ursa/R/xxx.gdal_rasterize.R
 7cb0696d609b85a70eda93fa818b0e88 ursa/R/xxx.gdalwarp.R
