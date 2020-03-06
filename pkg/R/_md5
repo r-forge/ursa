@@ -1,4 +1,4 @@
-9b8d2ccfb9c81aa2aea189d7ffc5e268 ursa/DESCRIPTION
+f52587d9bc31c4599b05041df62760da ursa/DESCRIPTION
 829941ed9b665f9f35a784122f5b1eb4 ursa/inst/optional/glance/_glance-example.sh
 79139ed615c49cfd1b42a9585ec195dc ursa/inst/optional/glance/glance.c
 c3ea23c1f33df33771f1a2956d23f8a2 ursa/inst/optional/sponsorship/pb316.png
@@ -121,7 +121,7 @@ b88e6477f4bf7472b11a3db4b0ee7487 ursa/man/ursa_info.Rd
 25926f621e1b9f96423f1a877fa8d722 ursa/man/ursa_new.Rd
 d4083b79627f078cd46a946d655a6834 ursa/man/ursa_proj.Rd
 d9f801d4630c37ca27e9f2acd0c1629e ursa/NAMESPACE
-3f3616aeb215696c25705e389140ee5b ursa/NEWS.md
+d1e9ca5c4c32a4a177da53593c2d9b08 ursa/NEWS.md
 71c62ecf9a0f011f62e77c248595b645 ursa/R/__how_to_name__
 a8f3155556d2dc1ce0b3b1da4875ce20 ursa/R/__namespaces
 177952bc024f1db9756b1056d72edd5e ursa/R/__S3generic
@@ -212,7 +212,7 @@ e8b35c870d2cd7da6da2d37fdfa1b572 ursa/R/package_sf.R
 8e4766f1c3afee71f41eb761f26a1cca ursa/R/panel_coastline.R
 7d972f71ce4e0a6f65b2f88c926f78a6 ursa/R/panel_contour.R
 9bc5f9f18477fcb6dfe42523e2f40862 ursa/R/panel_decor.R
-43277c2be7512dc01563cd33fd559b56 ursa/R/panel_graticule.R
+3b2fe97d16630c1b55ff0db7ea778692 ursa/R/panel_graticule.R
 8d547661d28431b6a6e5cc57defee6bd ursa/R/panel_new.R
 07f93918f574f33b01abf8d73464c20b ursa/R/panel_plot.R
 c040ed2d52a437a7162360352fb074cb ursa/R/panel_raster.R
@@ -262,7 +262,7 @@ d3840aa847ac9d00dc43b50987f15287 ursa/R/yyy.getPrm.R
 4e4eebeeafbf8cc0dfa18330f42678c0 ursa/R/yyy.misc.R
 0816d0f62fc268582bb8c49ab03f5d0d ursa/R/yyy.plot.R
 baf0483d871630b523550d27a3cfeed9 ursa/R/yyy.prettyLabel.R
-ee84b1cc5745e165f439aa1b80c44bf0 ursa/R/yyy.project.R
+41f55e479c07a77fc130b8496aacda57 ursa/R/yyy.project.R
 40066d6b3791217f5280fd749b12513c ursa/R/yyy.shp.R
 4efa091e4b1ab0799dc8d296f5dd2771 ursa/R/yyy.syno.R
 53a3d663332c6d219e6bfdbb12f275fb ursa/R/yyy.tile.R
@@ -272,6 +272,6 @@ be01c7cb26034860dd2ba4f61055c66c ursa/R/zzz.R
 951078889874d3188721bdcc7857e27a ursa/README.md
 7db8e6c4b4ca1c5de00c19650c450464 ursa/src/init.c
 9d4c0ce66c913e72b6d38c4a2f8c51db ursa/src/ursa.c
-4efb0e8230ab5c36ab4c67148f6f41c2 ursa/src/ursa.dll
+8965c8af64f8bc76df4d80929bad3b9d ursa/src/ursa.dll
 425e3517b7b116b94050c8a5444c1547 ursa/src/ursa.h
 15c78e4e1a10efb336dcf1ae5d2484aa ursa/src/ursa.o
